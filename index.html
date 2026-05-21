@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Send Operations Planner</title>
-<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
 /* ─── LIQUID GLASS DARK SYSTEM ─────────────────────────────────── */
 :root {
@@ -801,19 +800,12 @@ body::before {
 <body>
 
 <!-- ─── LOCK SCREEN ─────────────────────────────────────────────────────── -->
-<div id="lock-screen">
+<div id="lock-screen" style="display: flex;">
   <div class="lock-box" id="lock-box">
     <div class="lock-logo">Send Operations · Planner</div>
     <div class="lock-title">Restricted Access</div>
     <div class="lock-sub">Enter your access code to continue.</div>
-    <input
-      class="lock-input"
-      id="lock-input"
-      type="password"
-      placeholder="••••"
-      autocomplete="current-password"
-      onkeydown="if(event.key==='Enter')tryLogin()"
-    >
+    <input class="lock-input" id="lock-input" type="password" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')tryLogin()">
     <button class="lock-btn" onclick="tryLogin()">Unlock</button>
     <div class="lock-error" id="lock-error"></div>
   </div>
@@ -824,7 +816,7 @@ body::before {
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
-  <button class="sync-pill s-local" id="sync-pill" onclick="openSyncSettings()" title="Click to manage Google Sheets sync">● Local only</button>
+  <button class="sync-pill s-syncing" id="sync-pill" onclick="openSyncSettings()" title="Pushing to Sheet">● Syncing…</button>
   <div class="spacer"></div>
   <div class="top-actions">
     <button class="top-btn" id="undo-btn" onclick="doUndo()" title="Undo (Ctrl+Z)" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↩</button>
@@ -833,7 +825,7 @@ body::before {
     <button class="top-btn" onclick="backupData()" title="Save all data as a portable JSON file" style="color:var(--green);border-color:var(--green-border)">⇩ Backup</button>
     <button class="top-btn" onclick="document.getElementById('restore-input').click()" title="Load data from a backup JSON file" style="color:var(--green);border-color:var(--green-border)">⇧ Restore</button>
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
-    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" style="color:var(--blue);border-color:var(--blue-border)">⬆ GitHub</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
+    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" style="color: var(--tx2);" disabled="">⏳ Pushing…</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
     <button class="top-btn" onclick="exportCSV()">Export CSV</button>
     <button class="top-btn" onclick="window.print()">Print</button>
     <button class="top-btn" style="color:var(--red);border-color:var(--red-border)" onclick="resetAll()">Reset</button>
@@ -849,9 +841,9 @@ body::before {
   <button class="main-tab" id="mt-bmor" onclick="swMain('bmor')">BMOR</button>
   <div class="spacer"></div>
   <div class="month-nav" id="month-nav-bar">
-    <button class="mnav-btn" onclick="prevMonth()">&#8249;</button>
+    <button class="mnav-btn" onclick="prevMonth()">‹</button>
     <div class="month-label" id="monthLabel">May 2026</div>
-    <button class="mnav-btn" onclick="nextMonth()">&#8250;</button>
+    <button class="mnav-btn" onclick="nextMonth()">›</button>
     <button class="top-btn" onclick="goToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
   </div>
 </div>
@@ -881,16 +873,16 @@ body::before {
 
 <!-- DAILY VIEW -->
 <div class="pane" id="pane-daily">
-  <div class="alert-bar" id="alert-bar"></div>
-  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px"></span></div>
-  <div class="agent-status-grid" id="agent-status-grid"></div>
+  <div class="alert-bar" id="alert-bar"><div class="alert alert-yellow">△ <strong>REDUCED COVERAGE</strong> &nbsp; 4 agents on floor — <span class="alert-dates">Day(s): 13, 20, 25, 26, 28, 29</span></div></div>
+  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Thursday, May 21, 2026</span></div>
+  <div class="agent-status-grid" id="agent-status-grid"><div class="asc present"><div class="asc-init">JA</div><div class="asc-name">Javier</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">AI</div><div class="asc-name">Aiman</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">JU</div><div class="asc-name">Julian</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">TI</div><div class="asc-name">Tina</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">RI</div><div class="asc-name">Rina</div><div class="asc-badge present">On Floor</div></div></div>
   <div class="slabel">Month summary</div>
   <div class="stat-row">
-    <div class="stat-box" id="sb-avg"><div class="stat-label">Avg floor</div><div class="stat-val" id="sv-avg">-</div><div class="stat-sub">agents on floor avg</div></div>
-    <div class="stat-box"><div class="stat-label">Total MC</div><div class="stat-val" style="color:var(--red)" id="sv-mc">0</div><div class="stat-sub">medical leave days</div></div>
-    <div class="stat-box"><div class="stat-label">Total AL</div><div class="stat-val" style="color:var(--yellow)" id="sv-al">0</div><div class="stat-sub">annual leave days</div></div>
+    <div class="stat-box g" id="sb-avg"><div class="stat-label">Avg floor</div><div class="stat-val" id="sv-avg" style="color: var(--green);">4.7</div><div class="stat-sub">agents on floor avg</div></div>
+    <div class="stat-box"><div class="stat-label">Total MC</div><div class="stat-val" style="color:var(--red)" id="sv-mc">1</div><div class="stat-sub">medical leave days</div></div>
+    <div class="stat-box"><div class="stat-label">Total AL</div><div class="stat-val" style="color:var(--yellow)" id="sv-al">5</div><div class="stat-sub">annual leave days</div></div>
     <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sv-crit">0</div><div class="stat-sub">3 or fewer on floor</div></div>
-    <div class="stat-box"><div class="stat-label">Turn-up rate</div><div class="stat-val" id="sv-att">-</div><div class="stat-sub">tracked weekdays</div></div>
+    <div class="stat-box"><div class="stat-label">Turn-up rate</div><div class="stat-val" id="sv-att" style="color: var(--green);">93.7%</div><div class="stat-sub">tracked weekdays</div></div>
   </div>
 </div>
 
@@ -903,9 +895,9 @@ body::before {
       <button class="cvt-btn" id="cvt-week" onclick="setCalView('week')">Week</button>
     </div>
     <div id="week-nav" style="display:none;align-items:center;gap:6px">
-      <button class="mnav-btn" onclick="prevWeek()">&#8249;</button>
+      <button class="mnav-btn" onclick="prevWeek()">‹</button>
       <div class="week-label" id="weekLabel"></div>
-      <button class="mnav-btn" onclick="nextWeek()">&#8250;</button>
+      <button class="mnav-btn" onclick="nextWeek()">›</button>
     </div>
     <div class="cal-quick-actions">
       <button class="cal-qa-btn" onclick="openLongLeave()" title="Log a multi-day leave block">
@@ -915,11 +907,11 @@ body::before {
         <span class="cal-qa-icon">⏱</span> Hours Payback
       </button>
     </div>
-    <div class="cal-toolbar-right" id="cal-shrink-summary"></div>
+    <div class="cal-toolbar-right" id="cal-shrink-summary"><div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)"><span>AL</span>5</div><div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)"><span>MC</span>1</div><div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">△ 6 reduced</div></div>
   </div>
 
   <!-- Hours payback availability strip — shows agents with unsettled hours -->
-  <div class="payback-strip" id="payback-strip"></div>
+  <div class="payback-strip" id="payback-strip"><div class="payback-strip-label">Payback Available · 2h total</div><button class="payback-pill" onclick="openPaybackModal()" title="Click to view / settle Javier's payback hours">Javier <span class="h">2h</span></button><button class="payback-pill action" onclick="openPaybackModal()">Manage →</button></div>
 
   <!-- Calendar grid -->
   <div class="cal-wrap" id="cal-wrap">
@@ -927,11 +919,61 @@ body::before {
       <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
       <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
     </div>
-    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell today"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
   </div>
 
   <!-- Shrinkage stats panel -->
-  <div class="shrink-panel" id="shrink-panel"></div>
+  <div class="shrink-panel" id="shrink-panel"><div class="sp-card"><div class="sp-card-title">Shrinkage days <span style="color:var(--green)">6.3%</span></div><div class="sp-week-group">Wk May 10 – May 16</div><div class="sp-day-row" onclick="openModal('2026-05-13')">
+    <span class="sp-day-date">Wed, May 13</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Javier·AL</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div><div class="sp-week-group">Wk May 17 – May 23</div><div class="sp-day-row" onclick="openModal('2026-05-20')">
+    <span class="sp-day-date">Wed, May 20</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-mc">Javier·MC</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div><div class="sp-week-group">Wk May 24 – May 30</div><div class="sp-day-row" onclick="openModal('2026-05-25')">
+    <span class="sp-day-date">Mon, May 25</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div><div class="sp-day-row" onclick="openModal('2026-05-26')">
+    <span class="sp-day-date">Tue, May 26</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div><div class="sp-day-row" onclick="openModal('2026-05-28')">
+    <span class="sp-day-date">Thu, May 28</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div><div class="sp-day-row" onclick="openModal('2026-05-29')">
+    <span class="sp-day-date">Fri, May 29</span>
+    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
+    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
+  </div></div><div class="sp-card"><div class="sp-card-title">By agent <span style="color:var(--tx2);font-size:13px">6 absent days</span></div>
+        <div class="sp-day-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
+          <div style="display:flex;align-items:center;width:100%;gap:8px">
+            <span style="font-size:13px;font-weight:500;min-width:70px">Tina</span>
+            <span class="sp-agent-tag sp-tag-al">AL ×4</span>
+            
+            
+            
+            <span style="margin-left:auto;font-size:11px;color:var(--tx3)">4d / 21%</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+            <div style="width:21%;height:100%;border-radius:2px;background:var(--yellow)"></div>
+          </div>
+        </div>
+        <div class="sp-day-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
+          <div style="display:flex;align-items:center;width:100%;gap:8px">
+            <span style="font-size:13px;font-weight:500;min-width:70px">Javier</span>
+            <span class="sp-agent-tag sp-tag-al">AL ×1</span>
+            <span class="sp-agent-tag sp-tag-mc">MC ×1</span>
+            
+            
+            <span style="margin-left:auto;font-size:11px;color:var(--tx3)">2d / 11%</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+            <div style="width:11%;height:100%;border-radius:2px;background:var(--purple)"></div>
+          </div>
+        </div></div></div>
 </div>
 
 <!-- DASHBOARD VIEW -->
@@ -1084,9 +1126,9 @@ body::before {
 <div class="pane" id="pane-ops">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
-      <button class="mnav-btn" onclick="opsPrevDay()">&#8249;</button>
+      <button class="mnav-btn" onclick="opsPrevDay()">‹</button>
       <div class="day-nav-label" id="ops-day-label"></div>
-      <button class="mnav-btn" onclick="opsNextDay()">&#8250;</button>
+      <button class="mnav-btn" onclick="opsNextDay()">›</button>
       <button class="top-btn" onclick="opsGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
     <button class="mbtn mbtn-save" onclick="saveOpsDay()" style="padding:7px 22px">Save</button>
@@ -1145,9 +1187,9 @@ body::before {
 <div class="pane" id="pane-orders">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
-      <button class="mnav-btn" onclick="ordPrevDay()">&#8249;</button>
+      <button class="mnav-btn" onclick="ordPrevDay()">‹</button>
       <div class="day-nav-label" id="ord-day-label"></div>
-      <button class="mnav-btn" onclick="ordNextDay()">&#8250;</button>
+      <button class="mnav-btn" onclick="ordNextDay()">›</button>
       <button class="top-btn" onclick="ordGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
     <button class="mbtn mbtn-save" onclick="saveOrderDay()" style="padding:7px 22px">Save</button>
@@ -1174,7 +1216,7 @@ body::before {
   <div class="modal-box" style="width:480px">
     <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(191,90,242,0.08),rgba(10,132,255,0.04))">
       <div><div class="modal-title">Long Leave Entry</div><div class="modal-sub">Apply leave to an agent across a date range in one shot</div></div>
-      <button class="modal-x" onclick="closeLongLeave()">&#10005;</button>
+      <button class="modal-x" onclick="closeLongLeave()">✕</button>
     </div>
     <div class="modal-body">
 
@@ -1206,10 +1248,10 @@ body::before {
           </div>
         </div>
         <label class="ll-skip-row">
-          <input type="checkbox" id="ll-skip-we" checked onchange="llPreview()"> Skip weekends
+          <input type="checkbox" id="ll-skip-we" checked="" onchange="llPreview()"> Skip weekends
         </label>
         <label class="ll-skip-row">
-          <input type="checkbox" id="ll-skip-ph" checked onchange="llPreview()"> Skip public holidays
+          <input type="checkbox" id="ll-skip-ph" checked="" onchange="llPreview()"> Skip public holidays
         </label>
       </div>
 
@@ -1230,7 +1272,7 @@ body::before {
   <div class="modal-box">
     <div class="modal-hdr">
       <div><div class="modal-title" id="modal-title">-</div><div class="modal-sub" id="modal-sub">-</div></div>
-      <button class="modal-x" onclick="closeModal()">&#10005;</button>
+      <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot">
@@ -1251,7 +1293,7 @@ body::before {
         <div class="modal-title">Google Sheets Sync</div>
         <div class="modal-sub">Optional · keeps data in sync across devices</div>
       </div>
-      <button class="modal-x" onclick="closeSyncSettings()">&#10005;</button>
+      <button class="modal-x" onclick="closeSyncSettings()">✕</button>
     </div>
     <div class="modal-body">
       <div class="ll-section">
@@ -1287,7 +1329,7 @@ body::before {
         <div class="modal-title">GitHub Push Settings</div>
         <div class="modal-sub">One-time setup — push index.html to GitHub Pages in one click</div>
       </div>
-      <button class="modal-x" onclick="closeGhSettings()">&#10005;</button>
+      <button class="modal-x" onclick="closeGhSettings()">✕</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1333,7 +1375,7 @@ body::before {
   <div class="modal-box" style="width:500px">
     <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(10,132,255,0.08),rgba(48,209,88,0.04))">
       <div><div class="modal-title">Hours Payback Log</div><div class="modal-sub">Track hours agents owe the company</div></div>
-      <button class="modal-x" onclick="closePaybackModal()">&#10005;</button>
+      <button class="modal-x" onclick="closePaybackModal()">✕</button>
     </div>
     <div class="modal-body" style="padding:0">
       <!-- Add entry form -->
@@ -3417,7 +3459,7 @@ async function tryLogin() {
     const ls = document.getElementById('lock-screen');
     ls.style.transition = 'opacity .3s';
     ls.style.opacity = '0';
-    setTimeout(() => ls.remove(), 320);
+    setTimeout(() => { ls.style.display = 'none'; ls.style.opacity = ''; }, 320);
   } else {
     errEl.textContent = 'Incorrect code. Try again.';
     box.classList.remove('shake');
@@ -3430,11 +3472,11 @@ async function tryLogin() {
 }
 
 (function checkAuth() {
+  const ls = document.getElementById('lock-screen');
   if (sessionStorage.getItem(AUTH_KEY) === '1') {
-    const ls = document.getElementById('lock-screen');
-    if (ls) ls.remove();
+    if (ls) ls.style.display = 'none';
   } else {
-    // Defer focus so the element is ready
+    if (ls) ls.style.display = 'flex';
     setTimeout(() => {
       const inp = document.getElementById('lock-input');
       if (inp) inp.focus();
@@ -3444,52 +3486,24 @@ async function tryLogin() {
 
 /* ─── GITHUB PUSH ──────────────────────────────────────────────────────── */
 const GH_CFG_KEY = 'sops-gh-cfg-v1';
-const GH_IDB = 'sops-idb-v1'; const GH_STORE = 'handles';
 
 function getGhCfg() { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || '{}'); }
 function setGhCfg(o){ localStorage.setItem(GH_CFG_KEY, JSON.stringify(o)); }
 
-/* IndexedDB — persist FileSystemFileHandle across sessions */
-function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open(GH_IDB,1); r.onupgradeneeded=e=>e.target.result.createObjectStore(GH_STORE); r.onsuccess=e=>res(e.target.result); r.onerror=e=>rej(e.target.error); }); }
-async function idbGet(k){ const db=await idbOpen(); return new Promise(res=>{ const r=db.transaction(GH_STORE,'readonly').objectStore(GH_STORE).get(k); r.onsuccess=()=>res(r.result??null); r.onerror=()=>res(null); }); }
-async function idbSet(k,v){ const db=await idbOpen(); return new Promise(res=>{ const tx=db.transaction(GH_STORE,'readwrite'); tx.objectStore(GH_STORE).put(v,k); tx.oncomplete=res; }); }
-
-/* Get file — reuse remembered handle if possible, else prompt picker */
-async function getHtmlFile() {
-  if (window.showOpenFilePicker) {
-    // Try stored handle first
-    const h = await idbGet('htmlFile');
-    if (h) {
-      let perm = await h.queryPermission({ mode: 'read' });
-      if (perm !== 'granted') perm = await h.requestPermission({ mode: 'read' });
-      if (perm === 'granted') return h.getFile();
-    }
-    // First time — show picker and remember handle
-    const [handle] = await window.showOpenFilePicker({
-      types: [{ description: 'Send Ops HTML', accept: { 'text/html': ['.html'] } }],
-      multiple: false,
-    });
-    await idbSet('htmlFile', handle);
-    return handle.getFile();
-  }
-  // Fallback for browsers without File System Access API
-  return new Promise((resolve, reject) => {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = '.html,text/html';
-    input.onchange = e => { const f = e.target.files[0]; f ? resolve(f) : reject(new Error('No file')); };
-    input.click();
-  });
-}
-
-/* UTF-8-safe base64 encode */
-async function fileToBase64(file) {
-  const buf = await file.arrayBuffer();
-  const bytes = new Uint8Array(buf);
+/* Capture the current page source as UTF-8 base64.
+   Temporarily shows the lock screen so it is included in the snapshot. */
+function captureSourceBase64() {
+  const ls = document.getElementById('lock-screen');
+  const prev = ls ? ls.style.display : '';
+  if (ls) ls.style.display = 'flex';
+  const source = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  if (ls) ls.style.display = prev;
+  const bytes = new TextEncoder().encode(source);
   let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
   return btoa(bin);
 }
 
-/* Main push */
+/* One-click push — no file picker, works in every browser */
 async function pushToGitHub() {
   const cfg = getGhCfg();
   if (!cfg.pat || !cfg.owner || !cfg.repo || !cfg.path) { openGhSettings(); return; }
@@ -3501,13 +3515,9 @@ async function pushToGitHub() {
   };
 
   try {
-    setBtn('⏳ Reading…', 'var(--tx2)', '', true);
-    let file;
-    try { file = await getHtmlFile(); }
-    catch(e) { setBtn(origHtml, origColor, origBorder, false); return; }
-
     setBtn('⏳ Pushing…', 'var(--tx2)', '', true);
-    const encoded = await fileToBase64(file);
+
+    const encoded = captureSourceBase64();
     const headers = { 'Authorization': `Bearer ${cfg.pat}`, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' };
     const apiBase = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`;
 
@@ -3555,5 +3565,5 @@ function saveGhSettings() {
   pushToGitHub();
 }
 </script>
-</body>
-</html>
+
+</body></html>
