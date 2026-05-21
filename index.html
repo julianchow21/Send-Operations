@@ -2316,23 +2316,31 @@ function restoreData(evt){
    - On every save: debounced push to remote (1.5s after last edit)
    - Sync status pill in topbar shows current state
    Conflict policy: last write wins. */
-const SYNC_URL_KEY = 'sops-sync-url-v1';
-const SYNC_TS_KEY  = 'sops-sync-ts-v1';
+const SYNC_URL_KEY   = 'sops-sync-url-v1';
+const SYNC_TS_KEY    = 'sops-sync-ts-v1';
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxqilBJzdGEvRYGJ9oDecycLlCmLA0mDBeZltBfRKnHDlsI5XgsiAplgUvEBIbVKRfE/exec';
 let _syncTimer = null;
-let _syncing = false;
+let _syncing   = false;
 
-function getSyncUrl(){ return localStorage.getItem(SYNC_URL_KEY) || ''; }
+function getSyncUrl(){ return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL; }
 function setSyncUrl(u){
   if(u) localStorage.setItem(SYNC_URL_KEY, u.trim());
-  else localStorage.removeItem(SYNC_URL_KEY);
+  else  localStorage.removeItem(SYNC_URL_KEY); // falls back to DEFAULT_SYNC_URL
   updateSyncStatus();
 }
 
 function scheduleSync(){
-  if(!getSyncUrl()) return;
   if(_syncTimer) clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(pushToRemote, 1500);
+  _syncTimer = setTimeout(pushToRemote, 800); // push 800ms after last edit
 }
+
+// Best-effort push on tab close / navigate away — fires even mid-debounce
+window.addEventListener('beforeunload', () => {
+  if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer = null; }
+  try {
+    navigator.sendBeacon(getSyncUrl(), new Blob([JSON.stringify(syncPayload())], { type: 'text/plain' }));
+  } catch(e){}
+});
 
 function syncPayload(){
   return {
@@ -2972,27 +2980,16 @@ renderAll();
 updateUndoUI();
 updateSyncStatus();
 
-// Boot sync: if a sync URL is configured, pull remote state and re-render
+// Boot sync: always pull from Google Sheet on load so every user starts with latest data
 (async function bootSync(){
-  if(!getSyncUrl()) return;
-  await pullFromRemote();
+  // Seed URL into localStorage on first visit so the sync pill shows green
+  if(!localStorage.getItem(SYNC_URL_KEY)){
+    localStorage.setItem(SYNC_URL_KEY, DEFAULT_SYNC_URL);
+  }
+  await pullFromRemote({ allowSeed: true });
 })();
 
-// First-load nudge: if there's no existing data AND no sync configured,
-// offer Restore (from backup) OR Sync setup
-(function nudgeRestore(){
-  const isEmpty = !load(SK) && !load(HK) && !load(LK);
-  if(!isEmpty || getSyncUrl()) return;
-  setTimeout(()=>{
-    const nudge=document.createElement('div');
-    nudge.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(18,18,28,0.95);border:1px solid var(--blue-border);backdrop-filter:blur(20px);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:10px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.5);flex-wrap:wrap;max-width:90vw'
-    nudge.innerHTML=`<div style="font-size:13px;color:var(--tx)">No data yet — how do you want to start?</div>
-      <button onclick="openSyncSettings();this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">⚙ Connect Sheet</button>
-      <button onclick="document.getElementById('restore-input').click();this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--green-border);background:var(--green-soft);color:var(--green);cursor:pointer">⇧ Restore JSON</button>
-      <button onclick="this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Start fresh</button>`;
-    document.body.appendChild(nudge);
-  }, 600);
-})();
+// Nudge removed — sync URL is now hard-coded so all users auto-connect on load.
 
 // Refresh the "X minutes ago" label on the sync pill periodically
 setInterval(()=>{ if(getSyncUrl()) updateSyncStatus(); }, 30000);
