@@ -1,0 +1,3299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Send Operations Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── LIQUID GLASS DARK SYSTEM ─────────────────────────────────── */
+:root {
+  --bg: #080810;
+  --bg2: #0e0e1a;
+  --glass: rgba(255,255,255,0.055);
+  --glass-hover: rgba(255,255,255,0.085);
+  --glass-active: rgba(255,255,255,0.11);
+  --glass-border: rgba(255,255,255,0.1);
+  --glass-border-bright: rgba(255,255,255,0.18);
+  --glass-shine: rgba(255,255,255,0.06);
+  --blur: blur(32px) saturate(180%);
+  --blur-sm: blur(16px) saturate(160%);
+
+  --tx: rgba(255,255,255,0.92);
+  --tx2: rgba(255,255,255,0.52);
+  --tx3: rgba(255,255,255,0.28);
+
+  --green: #30d158;
+  --green-soft: rgba(48,209,88,0.14);
+  --green-border: rgba(48,209,88,0.3);
+
+  --red: #ff453a;
+  --red-soft: rgba(255,69,58,0.14);
+  --red-border: rgba(255,69,58,0.3);
+
+  --yellow: #ffd60a;
+  --yellow-soft: rgba(255,214,10,0.14);
+  --yellow-border: rgba(255,214,10,0.3);
+
+  --blue: #0a84ff;
+  --blue-soft: rgba(10,132,255,0.14);
+  --blue-border: rgba(10,132,255,0.3);
+
+  --purple: #bf5af2;
+  --purple-soft: rgba(191,90,242,0.14);
+
+  --orange: #ff9f0a;
+  --orange-soft: rgba(255,159,10,0.14);
+  --orange-border: rgba(255,159,10,0.3);
+
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --sans: -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--tx); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+
+/* Animated background orbs */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 15% 20%, rgba(10,132,255,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 85% 70%, rgba(191,90,242,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 700px 300px at 50% 100%, rgba(48,209,88,0.03) 0%, transparent 70%);
+}
+
+/* ─── GLASS MIXINS ───────────────────────────────────────────── */
+.glass {
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+}
+.glass-sm {
+  background: var(--glass);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--glass-border);
+}
+
+/* ─── LAYOUT ───────────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
+
+/* ─── TOPBAR ─────────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; height: 52px;
+  padding: 0 24px; flex-shrink: 0;
+  background: rgba(8,8,16,0.7);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 16px;
+}
+.brand {
+  font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.brand-dot { color: var(--blue); -webkit-text-fill-color: var(--blue); }
+.spacer { flex: 1; }
+.top-actions { display: flex; gap: 6px; }
+.top-btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 5px 12px; border-radius: 8px; cursor: pointer; border: none;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--tx2); transition: 0.2s; backdrop-filter: var(--blur-sm);
+}
+.top-btn:hover { background: var(--glass-hover); color: var(--tx); }
+
+/* ─── TABS ───────────────────────────────────────────────── */
+.tabbar {
+  display: flex; align-items: center;
+  padding: 0 24px; flex-shrink: 0; height: 44px;
+  background: rgba(8,8,16,0.5);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 2px;
+}
+.tab {
+  font-size: 12px; font-weight: 500; color: var(--tx2);
+  padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent; background: none; transition: 0.2s;
+  letter-spacing: -0.1px;
+}
+.tab:hover { color: var(--tx); background: var(--glass); }
+.tab.active {
+  color: var(--tx);
+  background: var(--glass-active);
+  border-color: var(--glass-border);
+  backdrop-filter: var(--blur-sm);
+}
+.tab-alert { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-left: 5px; vertical-align: middle; }
+.month-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.mnav-btn {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--glass-border);
+  background: var(--glass); color: var(--tx2); cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; transition: 0.2s;
+  backdrop-filter: var(--blur-sm);
+}
+.mnav-btn:hover { background: var(--glass-hover); color: var(--tx); }
+.month-label { font-size: 13px; font-weight: 500; min-width: 120px; text-align: center; color: var(--tx); }
+
+/* ─── BODY / PANES ───────────────────────────────────────── */
+.body { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
+.pane { display: none; }
+.pane.active { display: block; animation: fadeUp 0.3s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ─── SECTION LABEL ──────────────────────────────────────── */
+.slabel {
+  font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--tx3); margin: 0 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.slabel::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+/* ─── ALERTS ─────────────────────────────────────────────── */
+.alert-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.alert {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 500;
+  backdrop-filter: var(--blur-sm);
+}
+.alert-red { background: var(--red-soft); border: 1px solid var(--red-border); color: var(--red); }
+.alert-yellow { background: var(--yellow-soft); border: 1px solid var(--yellow-border); color: var(--yellow); }
+.alert-dates { font-family: var(--mono); font-size: 11px; opacity: 0.8; }
+
+/* ─── KPI GRID ───────────────────────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.kpi {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 16px 18px;
+  backdrop-filter: var(--blur); position: relative; overflow: hidden;
+  transition: 0.25s;
+}
+.kpi::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+.kpi:hover { background: var(--glass-hover); border-color: var(--glass-border-bright); transform: translateY(-1px); }
+.kpi.good { border-color: var(--green-border); }
+.kpi.warn { border-color: var(--yellow-border); }
+.kpi.bad { border-color: var(--red-border); }
+.kpi-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); margin-bottom: 8px; }
+.kpi-value { font-size: 30px; font-weight: 300; letter-spacing: -1px; line-height: 1; }
+.kpi.good .kpi-value { color: var(--green); }
+.kpi.warn .kpi-value { color: var(--yellow); }
+.kpi.bad .kpi-value { color: var(--red); }
+.kpi-delta { font-size: 11px; color: var(--tx2); margin-top: 6px; }
+
+/* ─── AGENT STATUS CARDS ─────────────────────────────────── */
+.agent-status-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+.asc {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 14px 16px; backdrop-filter: var(--blur);
+  display: flex; flex-direction: column; gap: 6px; transition: 0.2s; position: relative; overflow: hidden;
+}
+.asc::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+.asc.present { border-color: var(--green-border); background: rgba(48,209,88,0.07); }
+.asc.mc  { border-color: var(--red-border); background: rgba(255,69,58,0.07); }
+.asc.al  { border-color: var(--yellow-border); background: rgba(255,214,10,0.07); }
+.asc.oil { border-color: var(--purple-soft); background: rgba(191,90,242,0.07); }
+.asc.trn { border-color: var(--orange-border); background: rgba(255,159,10,0.07); }
+.asc.ph  { border-color: rgba(255,255,255,0.15); }
+.asc-init { font-size: 22px; font-weight: 300; letter-spacing: -1px; }
+.asc-name { font-size: 12px; font-weight: 500; color: var(--tx2); }
+.asc-badge {
+  font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 99px; width: fit-content;
+}
+.asc-badge.present { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
+.asc-badge.mc  { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+.asc-badge.al  { background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.asc-badge.oil { background: var(--purple-soft); color: var(--purple); }
+.asc-badge.trn { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
+.asc-badge.ph  { background: rgba(255,255,255,0.08); color: var(--tx2); }
+
+/* ─── STAT ROW ───────────────────────────────────────────── */
+.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-box {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 14px 16px; backdrop-filter: var(--blur); position: relative; overflow: hidden;
+}
+.stat-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.stat-box.g { border-color: var(--green-border); background: rgba(48,209,88,0.06); }
+.stat-box.y { border-color: var(--yellow-border); background: rgba(255,214,10,0.06); }
+.stat-box.r { border-color: var(--red-border); background: rgba(255,69,58,0.06); }
+.stat-label { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); margin-bottom: 8px; }
+.stat-val { font-size: 28px; font-weight: 300; letter-spacing: -1px; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--tx3); margin-top: 5px; }
+
+/* ─── CALENDAR ───────────────────────────────────────────── */
+.cal-wrap {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); overflow: hidden; backdrop-filter: var(--blur);
+}
+.cal-head { display: grid; grid-template-columns: repeat(7,1fr); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.cal-dh {
+  padding: 10px 0; text-align: center;
+  font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3);
+}
+.cal-dh.we { color: rgba(10,132,255,0.6); }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+.cal-cell {
+  min-height: 80px; border-right: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+  transition: background 0.15s; position: relative; overflow: hidden;
+}
+.cal-cell:hover { background: rgba(255,255,255,0.04); }
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell.outside { background: rgba(0,0,0,0.25); cursor: default; }
+.cal-cell.outside:hover { background: rgba(0,0,0,0.25); }
+.cal-cell.weekend { background: rgba(10,132,255,0.02); }
+.cal-cell.ph-day { background: rgba(255,255,255,0.02); }
+.cal-cell.today { box-shadow: inset 0 0 0 1.5px var(--blue); background: rgba(10,132,255,0.05); }
+.cell-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.cell-num {
+  width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; color: var(--tx2);
+}
+.today .cell-num { background: var(--blue); color: #fff; }
+.ph-label { font-size: 8px; color: var(--tx3); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+.cell-floor { font-size: 15px; font-weight: 300; letter-spacing: -0.5px; line-height: 1; }
+.cell-chips { display: flex; flex-direction: row; flex-wrap: wrap; gap: 3px; margin-top: 4px; align-content: flex-start; }
+.chip {
+  font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chip-al  { background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.chip-mc  { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+.chip-oil { background: var(--purple-soft); color: var(--purple); }
+.chip-trn { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
+.chip-ph  { background: rgba(255,255,255,0.06); color: var(--tx2); }
+/* str-bar removed — floor strength shown via cell tint + number colour */
+.cell-edit { position: absolute; bottom: 5px; right: 8px; font-size: 8px; color: var(--tx3); opacity: 0; transition: 0.15s; }
+.cal-cell:hover .cell-edit { opacity: 1; }
+
+/* ─── CALENDAR LAYOUT ────────────────────────────────────── */
+/* Body scrolls naturally — no fixed-height grid rows that clip content */
+.cal-cell { min-height: 100px; }
+.cal-cell.week-cell { min-height: 160px; }
+
+/* ─── GLASS PANELS / CARDS ───────────────────────────────── */
+.glass-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); backdrop-filter: var(--blur); position: relative; overflow: hidden;
+}
+.glass-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.card-pad { padding: 18px 20px; }
+.card-title { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); margin-bottom: 14px; }
+
+/* ─── TABLES ─────────────────────────────────────────────── */
+.glass-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.glass-table th {
+  font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--tx3); padding: 10px 14px; text-align: left;
+  background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.glass-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.glass-table tr:last-child td { border-bottom: none; }
+.glass-table tr:hover td { background: rgba(255,255,255,0.03); }
+.glass-table td.num, .glass-table th.num { text-align: right; font-family: var(--mono); }
+.glass-table .highlight td { background: rgba(10,132,255,0.08); }
+.glass-table .total-row td { font-weight: 600; background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.08); }
+
+/* inline bar */
+.ibar { display: inline-block; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; width: 80px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.ibar span { display: block; height: 100%; border-radius: 3px; }
+
+/* pills */
+.tpill { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 99px; }
+.tpill-al  { background: var(--yellow-soft); color: var(--yellow); }
+.tpill-mc  { background: var(--red-soft); color: var(--red); }
+.tpill-oil { background: var(--purple-soft); color: var(--purple); }
+.tpill-trn { background: var(--orange-soft); color: var(--orange); }
+.tpill-g { background: var(--green-soft); color: var(--green); }
+.tpill-y { background: var(--yellow-soft); color: var(--yellow); }
+.tpill-r { background: var(--red-soft); color: var(--red); }
+
+/* ─── GRID LAYOUTS ───────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+
+/* ─── STRENGTH CHART ─────────────────────────────────────── */
+.chart-wrap { padding: 18px 20px; }
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.chart-legend { display: flex; gap: 14px; }
+.cli { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tx2); }
+.cld { width: 8px; height: 8px; border-radius: 2px; }
+.breakdown-row {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px;
+  padding: 10px 14px; background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.06); min-height: 44px; align-items: center;
+}
+.br-hint { font-size: 11px; color: var(--tx3); }
+.br-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 6px; }
+.brp { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
+.brm { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+.bra { background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.bro { background: rgba(255,255,255,0.07); color: var(--tx2); border: 1px solid rgba(255,255,255,0.1); }
+.broi { background: var(--purple-soft); color: var(--purple); }
+
+/* ─── YEAR VIEW ──────────────────────────────────────────── */
+.year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.mini-month {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm); padding: 14px; backdrop-filter: var(--blur-sm);
+  cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+}
+.mini-month::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.mini-month:hover { background: var(--glass-hover); border-color: var(--blue-border); transform: translateY(-1px); }
+.mini-month-title { font-size: 11px; font-weight: 600; text-align: center; margin-bottom: 10px; color: var(--tx); }
+.mini-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.mini-day { aspect-ratio: 1; border-radius: 3px; background: rgba(255,255,255,0.04); font-size: 0; }
+.mini-day.outside { visibility: hidden; }
+.mini-day.weekend { background: rgba(255,255,255,0.02); }
+.mini-day.ph-d { background: rgba(255,255,255,0.1); }
+
+/* ─── PER-AGENT CARDS ────────────────────────────────────── */
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.agent-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 18px 20px; backdrop-filter: var(--blur);
+  position: relative; overflow: hidden; transition: 0.2s;
+}
+.agent-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+.agent-card:hover { background: var(--glass-hover); transform: translateY(-1px); }
+.agent-card-name { font-size: 17px; font-weight: 400; letter-spacing: -0.4px; margin-bottom: 3px; }
+.agent-card-role { font-size: 11px; color: var(--tx2); margin-bottom: 16px; }
+.agent-balance { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.ab { text-align: center; padding: 10px 8px; background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.06); }
+.ab-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--tx3); margin-bottom: 4px; }
+.ab-val { font-size: 20px; font-weight: 300; letter-spacing: -0.5px; }
+.ab-sub { font-size: 9px; color: var(--tx3); margin-top: 2px; }
+.agent-card-footer { font-size: 11px; color: var(--tx2); display: flex; flex-direction: column; gap: 3px; }
+
+/* ─── CHANGELOG ──────────────────────────────────────────── */
+.cl-wrap { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); backdrop-filter: var(--blur); overflow: hidden; }
+.cl-head-row { display: grid; grid-template-columns: 120px 170px 1fr 70px; gap: 12px; padding: 8px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.cl-head-label { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); }
+.cl-row { display: grid; grid-template-columns: 120px 170px 1fr 70px; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); transition: 0.1s; }
+.cl-row:last-child { border-bottom: none; }
+.cl-row:hover { background: rgba(255,255,255,0.03); }
+.cl-time { font-family: var(--mono); font-size: 11px; color: var(--tx2); }
+.cl-date { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.cl-detail { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.cl-floor { font-family: var(--mono); font-size: 12px; font-weight: 500; text-align: right; }
+.cl-badge { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.clb-al { background: var(--yellow-soft); color: var(--yellow); }
+.clb-mc { background: var(--red-soft); color: var(--red); }
+.clb-oil { background: var(--purple-soft); color: var(--purple); }
+.clb-trn { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
+.cl-empty { text-align: center; padding: 48px 0; font-size: 12px; color: var(--tx3); }
+
+/* ─── OPS PORTAL ─────────────────────────────────────────── */
+.ops-input { background: transparent; border: none; color: var(--tx); font-family: var(--sans); font-size: 28px; font-weight: 300; width: 100%; outline: none; letter-spacing: -0.5px; }
+.ops-metric-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+.ops-table-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: var(--tx); font-family: var(--mono); font-size: 13px; padding: 5px 8px; width: 70px; text-align: center; outline: none; }
+.ops-table-input:focus { border-color: var(--blue-border); }
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(12px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; animation: fadeIn 0.15s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-box {
+  background: rgba(18,18,28,0.92);
+  backdrop-filter: blur(48px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 24px; width: 520px; max-width: 95vw;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.08) inset;
+  overflow: hidden; animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  max-height: 90vh; overflow-y: auto;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: none; } }
+.modal-hdr {
+  padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(135deg, rgba(10,132,255,0.06), rgba(191,90,242,0.04));
+  display: flex; align-items: flex-start; justify-content: space-between; position: sticky; top: 0; z-index: 2;
+}
+.modal-title { font-size: 17px; font-weight: 500; letter-spacing: -0.3px; }
+.modal-sub { font-size: 12px; color: var(--tx2); margin-top: 3px; }
+.modal-x { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--tx2); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; }
+.modal-x:hover { background: rgba(255,255,255,0.15); color: var(--tx); }
+.modal-body { padding: 20px 24px; }
+.agent-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.agent-row:last-child { border-bottom: none; }
+.agent-row-name { font-size: 13px; font-weight: 500; }
+.status-group { display: flex; gap: 5px; flex-wrap: wrap; }
+.status-opt {
+  padding: 5px 12px; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px; cursor: pointer; font-size: 11px; font-weight: 500;
+  background: rgba(255,255,255,0.05); color: var(--tx2); transition: 0.15s; user-select: none;
+}
+.status-opt:hover { background: rgba(255,255,255,0.1); color: var(--tx); }
+.status-opt.active[data-v="W"]   { background: var(--green-soft);  color: var(--green);  border-color: var(--green-border); }
+.status-opt.active[data-v="AL"]  { background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-border); }
+.status-opt.active[data-v="MC"]  { background: var(--red-soft);    color: var(--red);    border-color: var(--red-border); }
+.status-opt.active[data-v="OIL"] { background: var(--purple-soft); color: var(--purple); border-color: var(--purple-soft); }
+.status-opt.active[data-v="TRN"] { background: var(--orange-soft); color: var(--orange); border-color: var(--orange-border); }
+.modal-foot { padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ph-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx2); cursor: pointer; }
+.ph-toggle input { accent-color: var(--blue); }
+.duration-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; margin-bottom: 14px;
+  background: rgba(10,132,255,0.05); border: 1px solid var(--blue-border);
+  border-radius: 10px;
+}
+.duration-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); }
+.duration-input {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; color: var(--tx); font-family: var(--mono); font-size: 12px;
+  padding: 6px 10px; outline: none; color-scheme: dark; transition: 0.15s;
+}
+.duration-input:focus { border-color: var(--blue-border); background: rgba(10,132,255,0.1); }
+.duration-hint {
+  font-size: 11px; font-weight: 500; color: var(--blue);
+  margin-left: auto; padding: 3px 10px;
+  background: var(--blue-soft); border: 1px solid var(--blue-border); border-radius: 99px;
+}
+.duration-hint.range { color: var(--purple); background: var(--purple-soft); border-color: rgba(191,90,242,0.3); }
+.modal-actions { display: flex; gap: 8px; }
+.mbtn { font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; transition: 0.2s; }
+.mbtn-cancel { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: var(--tx2); }
+.mbtn-cancel:hover { background: rgba(255,255,255,0.13); color: var(--tx); }
+.mbtn-save { background: var(--blue); color: #fff; box-shadow: 0 4px 16px rgba(10,132,255,0.35); }
+.mbtn-save:hover { filter: brightness(1.1); }
+
+.toast { position: fixed; bottom: 24px; right: 24px; background: rgba(18,18,28,0.9); border: 1px solid var(--green-border); color: var(--green); font-size: 12px; font-weight: 500; padding: 9px 18px; border-radius: 10px; opacity: 0; transition: 0.3s; z-index: 999; pointer-events: none; backdrop-filter: var(--blur-sm); }
+.toast.show { opacity: 1; transform: translateY(-4px); }
+
+/* weekly risk */
+.rb { font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 99px; }
+.rl { background: var(--green-soft); color: var(--green); }
+.rm { background: var(--yellow-soft); color: var(--yellow); }
+.rh { background: var(--red-soft); color: var(--red); }
+.mbar { display: flex; gap: 2px; align-items: flex-end; height: 20px; }
+.mbd { width: 7px; border-radius: 2px 2px 0 0; min-height: 2px; }
+
+/* ─── LONG LEAVE MODAL ───────────────────────────────────── */
+.ll-section { margin-bottom: 20px; }
+.ll-section-title { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.ll-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+.ll-agent-select { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.ll-agent-btn {
+  padding: 6px 14px; border: 1px solid rgba(255,255,255,0.1); border-radius: 99px;
+  font-size: 12px; font-weight: 500; cursor: pointer; background: rgba(255,255,255,0.05);
+  color: var(--tx2); transition: 0.15s; font-family: var(--sans); user-select: none;
+}
+.ll-agent-btn:hover { background: rgba(255,255,255,0.1); color: var(--tx); }
+.ll-agent-btn.sel { background: rgba(191,90,242,0.18); color: var(--purple); border-color: rgba(191,90,242,0.4); }
+.ll-type-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.ll-type-btn {
+  flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+  font-size: 12px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05);
+  color: var(--tx2); transition: 0.15s; font-family: var(--sans); text-align: center; user-select: none;
+}
+.ll-type-btn:hover { background: rgba(255,255,255,0.09); color: var(--tx); }
+.ll-type-btn.sel-al  { background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-border); }
+.ll-type-btn.sel-mc  { background: var(--red-soft);    color: var(--red);    border-color: var(--red-border); }
+.ll-type-btn.sel-oil { background: var(--purple-soft); color: var(--purple); border-color: rgba(191,90,242,0.4); }
+.ll-type-btn.sel-trn { background: var(--orange-soft); color: var(--orange); border-color: var(--orange-border); }
+.ll-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.ll-date-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); margin-bottom: 5px; }
+.ll-date-input {
+  width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; color: var(--tx); font-family: var(--mono); font-size: 13px;
+  padding: 9px 12px; outline: none; transition: 0.2s; -webkit-appearance: none;
+  color-scheme: dark;
+}
+.ll-date-input:focus { border-color: var(--blue-border); background: rgba(10,132,255,0.08); }
+.ll-skip-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--tx2); margin-bottom: 6px; }
+.ll-skip-row input { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
+.ll-preview {
+  margin-top: 14px; padding: 12px 14px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
+  font-size: 11px; color: var(--tx2); min-height: 38px; line-height: 1.7;
+}
+.ll-preview strong { color: var(--tx); }
+.ll-preview .ll-cnt { font-size: 13px; font-weight: 600; }
+
+/* ─── MAIN TAB BAR ─────────────────────────────────────────── */
+.main-tabbar {
+  display: flex; align-items: center;
+  padding: 0 24px; flex-shrink: 0; height: 46px;
+  background: rgba(8,8,16,0.75);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  gap: 4px;
+}
+.main-tab {
+  font-size: 13px; font-weight: 600; color: var(--tx2);
+  padding: 7px 18px; border-radius: 9px; cursor: pointer;
+  border: 1px solid transparent; background: none; transition: 0.2s;
+  letter-spacing: -0.2px; font-family: var(--sans);
+}
+.main-tab:hover { color: var(--tx); background: var(--glass); }
+.main-tab.active {
+  color: var(--tx);
+  background: var(--glass-active);
+  border-color: var(--glass-border-bright);
+  backdrop-filter: var(--blur-sm);
+  box-shadow: 0 1px 12px rgba(10,132,255,0.15);
+}
+/* ─── CAL TOOLBAR ────────────────────────────────────────── */
+.cal-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.cal-view-toggle {
+  display: flex; background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 10px; overflow: hidden; flex-shrink: 0;
+}
+.cvt-btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 6px 16px; border: none; background: none; color: var(--tx2);
+  cursor: pointer; transition: 0.15s;
+}
+.cvt-btn:hover { color: var(--tx); }
+.cvt-btn.active { background: var(--glass-active); color: var(--tx); }
+.week-label {
+  font-size: 13px; font-weight: 500; color: var(--tx); min-width: 200px; text-align: center;
+}
+.cal-toolbar-right {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.cal-quick-actions {
+  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.06);
+}
+.cal-qa-btn {
+  font-family: var(--sans); font-size: 11.5px; font-weight: 500;
+  padding: 5px 11px; border-radius: 8px; cursor: pointer;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--tx2); transition: 0.15s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.cal-qa-btn:hover { background: var(--glass); color: var(--tx); border-color: var(--glass-border-bright); }
+.cal-qa-btn:nth-child(1):hover { color: var(--purple); border-color: rgba(191,90,242,0.35); }
+.cal-qa-btn:nth-child(2):hover { color: var(--blue); border-color: var(--blue-border); }
+.cal-qa-icon { font-size: 13px; opacity: 0.85; line-height: 1; }
+.cal-summary-pill {
+  font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 99px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* ─── WEEK VIEW CELLS ────────────────────────────────────── */
+.cal-cell.week-cell { min-height: 160px; }
+
+/* ─── SYNC STATUS PILL ───────────────────────────────────── */
+.sync-pill {
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  padding: 4px 11px; border-radius: 99px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+  color: var(--tx2); margin-left: 8px; transition: 0.15s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.sync-pill:hover { background: var(--glass); color: var(--tx); }
+.sync-pill.s-local { color: var(--tx3); }
+.sync-pill.s-synced { color: var(--green); border-color: var(--green-border); background: var(--green-soft); }
+.sync-pill.s-syncing { color: var(--blue); border-color: var(--blue-border); background: var(--blue-soft); animation: pulse 1.2s ease-in-out infinite; }
+.sync-pill.s-failed { color: var(--red); border-color: var(--red-border); background: var(--red-soft); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+/* ─── PAYBACK AVAILABILITY STRIP ─────────────────────────── */
+.payback-strip {
+  display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+  background: rgba(10,132,255,0.06); border: 1px solid var(--blue-border);
+  border-radius: 10px; backdrop-filter: var(--blur-sm); flex-wrap: wrap;
+}
+.payback-strip:empty { display: none; }
+.payback-strip-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--blue); margin-right: 4px;
+}
+.payback-pill {
+  font-size: 11.5px; font-weight: 500; padding: 4px 11px; border-radius: 99px;
+  background: var(--blue-soft); color: var(--blue); border: 1px solid var(--blue-border);
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-family: var(--sans); transition: 0.15s;
+}
+.payback-pill:hover { background: rgba(10,132,255,0.2); transform: translateY(-1px); }
+.payback-pill .h { font-family: var(--mono); font-weight: 600; opacity: 0.9; }
+.payback-pill.action { margin-left: auto; background: transparent; color: var(--tx2); border-color: rgba(255,255,255,0.1); }
+.payback-pill.action:hover { background: var(--glass); color: var(--tx); }
+
+/* ─── SHRINKAGE PANEL ────────────────────────────────────── */
+.shrink-panel {
+  margin-top: 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.shrink-panel:empty { display: none; }
+.sp-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); backdrop-filter: var(--blur); overflow: hidden;
+  position: relative;
+}
+.sp-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.sp-card-title {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--tx3); padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sp-card-title span { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; text-transform: none; letter-spacing: 0; }
+.sp-day-row {
+  display: flex; align-items: center; padding: 7px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04); gap: 10px; font-size: 12px;
+  transition: background 0.1s; cursor: pointer;
+}
+.sp-day-row:last-child { border-bottom: none; }
+.sp-day-row:hover { background: rgba(255,255,255,0.03); }
+.sp-day-date { font-family: var(--mono); font-size: 11px; color: var(--tx2); width: 110px; flex-shrink: 0; }
+.sp-day-agents { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.sp-day-floor { font-family: var(--mono); font-size: 12px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+.sp-agent-tag { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.sp-tag-al { background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.sp-tag-mc { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+.sp-tag-oil { background: var(--purple-soft); color: var(--purple); }
+.sp-tag-trn { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
+.sp-empty { padding: 18px 16px; font-size: 12px; color: var(--tx3); }
+.sp-week-group { padding: 6px 16px 2px; font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); background: rgba(255,255,255,0.02); }
+
+/* ─── ROSTER TAB ─────────────────────────── */
+.roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.roster-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.roster-card-name { font-size: 16px; font-weight: 600; color: var(--tx); }
+.roster-field-row { display: flex; gap: 10px; }
+.roster-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.roster-field label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); }
+.roster-field input[type="number"], .roster-field input[type="date"], .roster-field input[type="text"] {
+  font-family: var(--sans); font-size: 13px; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--tx);
+  width: 100%; box-sizing: border-box;
+}
+.roster-field input:focus { outline: none; border-color: var(--blue); }
+.wtype-row { display: flex; gap: 6px; }
+.wtype-btn { font-family: var(--sans); font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--tx2); cursor: pointer; transition: all .15s; }
+.wtype-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--tx); }
+.wtype-btn.wt-full.active { background: var(--blue-soft); color: var(--blue); border-color: var(--blue-border); }
+.wtype-btn.wt-intern.active { background: var(--purple-soft); color: var(--purple); border-color: var(--purple-border,rgba(191,90,242,0.3)); }
+.wtype-btn.wt-contract.active { background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-border); }
+.roster-ent-row { display: flex; gap: 10px; }
+.roster-ent-box { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; }
+.roster-ent-label { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-bottom: 4px; }
+.roster-ent-input { font-family: var(--mono); font-size: 20px; font-weight: 700; background: none; border: none; color: var(--tx); width: 100%; }
+.roster-ent-input:focus { outline: none; }
+.roster-ent-sub { font-size: 10px; color: var(--tx3); margin-top: 2px; }
+.roster-contract-warn { font-size: 11px; padding: 5px 10px; border-radius: 8px; background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.roster-contract-end { font-size: 11px; padding: 5px 10px; border-radius: 8px; background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+.roster-saved-tick { font-size: 10px; color: var(--green); opacity: 0; transition: opacity .3s; }
+.roster-saved-tick.show { opacity: 1; }
+
+/* ─── NEW PORTAL TABS ──────────────────── */
+.day-nav { display: flex; align-items: center; gap: 8px; }
+.day-nav-label { font-size: 15px; font-weight: 500; min-width: 200px; text-align: center; color: var(--tx); }
+.metric-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 18px; }
+.mic { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 16px 18px; backdrop-filter: var(--blur); position: relative; overflow: hidden; }
+.mic::before { content:''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); }
+.mic-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); margin-bottom: 8px; }
+.mic-input { background: transparent; border: none; color: var(--tx); font-family: var(--sans); font-size: 28px; font-weight: 300; width: 100%; outline: none; letter-spacing: -0.5px; }
+.mic-unit { font-size: 14px; font-weight: 300; color: var(--tx2); }
+.mic-sub { font-size: 11px; color: var(--tx3); margin-top: 4px; }
+.notes-ta { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--tx); font-family: var(--sans); font-size: 13px; padding: 12px 14px; outline: none; resize: vertical; min-height: 68px; transition: 0.15s; }
+.notes-ta:focus { border-color: var(--blue-border); }
+/* Upload zone */
+.upload-zone { border: 2px dashed rgba(255,255,255,0.1); border-radius: var(--radius); padding: 56px 24px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.02); }
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--blue-border); background: var(--blue-soft); }
+.upload-zone-icon { font-size: 40px; margin-bottom: 12px; }
+.upload-zone-title { font-size: 15px; font-weight: 400; margin-bottom: 6px; }
+.upload-zone-sub { font-size: 12px; color: var(--tx3); }
+/* Column mapper */
+.col-mapper { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.cm-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-bottom: 6px; }
+.cm-select { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: var(--tx); font-family: var(--sans); font-size: 13px; padding: 9px 12px; outline: none; cursor: pointer; color-scheme: dark; transition: 0.15s; }
+.cm-select:focus { border-color: var(--blue-border); }
+
+/* ─── LOCK SCREEN ──────────────────────── */
+#lock-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+#lock-screen::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 30%, rgba(10,132,255,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 80% 70%, rgba(191,90,242,0.06) 0%, transparent 70%);
+}
+.lock-box {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 20px; padding: 40px 44px; width: 340px;
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  display: flex; flex-direction: column; gap: 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  position: relative; z-index: 1;
+}
+.lock-logo { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2); }
+.lock-title { font-size: 22px; font-weight: 600; color: var(--tx); line-height: 1.2; }
+.lock-sub { font-size: 12px; color: var(--tx3); margin-top: -12px; }
+.lock-input {
+  font-family: var(--sans); font-size: 18px; letter-spacing: .25em;
+  padding: 12px 16px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+  color: var(--tx); width: 100%; box-sizing: border-box; outline: none;
+  transition: border-color .15s;
+}
+.lock-input:focus { border-color: var(--blue); }
+.lock-btn {
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  padding: 12px; border-radius: 12px; border: none;
+  background: var(--blue); color: #fff; cursor: pointer; width: 100%;
+  transition: opacity .15s;
+}
+.lock-btn:hover { opacity: .88; }
+.lock-error { font-size: 12px; color: var(--red); text-align: center; min-height: 16px; }
+@keyframes lockShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+.lock-box.shake { animation: lockShake .35s ease; }
+</style>
+</head>
+<body>
+
+<!-- ─── LOCK SCREEN ─────────────────────────────────────────────────────── -->
+<div id="lock-screen">
+  <div class="lock-box" id="lock-box">
+    <div class="lock-logo">Send Operations · Planner</div>
+    <div class="lock-title">Restricted Access</div>
+    <div class="lock-sub">Enter your access code to continue.</div>
+    <input
+      class="lock-input"
+      id="lock-input"
+      type="password"
+      placeholder="••••"
+      autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')tryLogin()"
+    >
+    <button class="lock-btn" onclick="tryLogin()">Unlock</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
+  <button class="sync-pill s-local" id="sync-pill" onclick="openSyncSettings()" title="Click to manage Google Sheets sync">● Local only</button>
+  <div class="spacer"></div>
+  <div class="top-actions">
+    <button class="top-btn" id="undo-btn" onclick="doUndo()" title="Undo (Ctrl+Z)" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↩</button>
+    <button class="top-btn" id="redo-btn" onclick="doRedo()" title="Redo (Ctrl+Y)" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↪</button>
+    <button class="top-btn" onclick="openSyncSettings()" title="Configure Google Sheets sync">⚙</button>
+    <button class="top-btn" onclick="backupData()" title="Save all data as a portable JSON file" style="color:var(--green);border-color:var(--green-border)">⇩ Backup</button>
+    <button class="top-btn" onclick="document.getElementById('restore-input').click()" title="Load data from a backup JSON file" style="color:var(--green);border-color:var(--green-border)">⇧ Restore</button>
+    <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
+    <button class="top-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="top-btn" onclick="window.print()">Print</button>
+    <button class="top-btn" style="color:var(--red);border-color:var(--red-border)" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+
+<!-- MAIN TAB BAR -->
+<div class="main-tabbar">
+  <button class="main-tab active" id="mt-manpower" onclick="swMain('manpower')">Manpower</button>
+  <button class="main-tab" id="mt-ops" onclick="swMain('ops')">Daily Ops</button>
+  <button class="main-tab" id="mt-incidents" onclick="swMain('incidents')">Incidents</button>
+  <button class="main-tab" id="mt-orders" onclick="swMain('orders')">Orders</button>
+  <button class="main-tab" id="mt-bmor" onclick="swMain('bmor')">BMOR</button>
+  <div class="spacer"></div>
+  <div class="month-nav" id="month-nav-bar">
+    <button class="mnav-btn" onclick="prevMonth()">&#8249;</button>
+    <div class="month-label" id="monthLabel">May 2026</div>
+    <button class="mnav-btn" onclick="nextMonth()">&#8250;</button>
+    <button class="top-btn" onclick="goToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
+  </div>
+</div>
+
+<!-- SUB TAB BAR — Manpower -->
+<div class="tabbar" id="subtabbar-manpower">
+  <button class="tab" id="t-daily" onclick="sw('daily')">Daily</button>
+  <button class="tab active" id="t-calendar" onclick="sw('calendar')">Calendar</button>
+  <button class="tab" id="t-dashboard" onclick="sw('dashboard')">Dashboard</button>
+  <button class="tab" id="t-strength" onclick="sw('strength')">Strength</button>
+  <button class="tab" id="t-agents" onclick="sw('agents')">Per-Agent</button>
+  <button class="tab" id="t-roster" onclick="sw('roster')">Roster</button>
+  <button class="tab" id="t-forecast" onclick="sw('forecast')">Forecast</button>
+  <button class="tab" id="t-insights" onclick="sw('insights')">Insights</button>
+  <button class="tab" id="t-headcount" onclick="sw('headcount')">Headcount</button>
+  <button class="tab" id="t-year" onclick="sw('year')">Year View</button>
+  <button class="tab" id="t-log" onclick="sw('log')">Changelog</button>
+</div>
+
+<!-- SUB TAB BAR — BMOR (placeholder) -->
+<div class="tabbar" id="subtabbar-bmor" style="display:none">
+  <button class="tab active" id="t-bmor-home" onclick="swBmor('bmor-home')">Overview</button>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- DAILY VIEW -->
+<div class="pane" id="pane-daily">
+  <div class="alert-bar" id="alert-bar"></div>
+  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px"></span></div>
+  <div class="agent-status-grid" id="agent-status-grid"></div>
+  <div class="slabel">Month summary</div>
+  <div class="stat-row">
+    <div class="stat-box" id="sb-avg"><div class="stat-label">Avg floor</div><div class="stat-val" id="sv-avg">-</div><div class="stat-sub">agents on floor avg</div></div>
+    <div class="stat-box"><div class="stat-label">Total MC</div><div class="stat-val" style="color:var(--red)" id="sv-mc">0</div><div class="stat-sub">medical leave days</div></div>
+    <div class="stat-box"><div class="stat-label">Total AL</div><div class="stat-val" style="color:var(--yellow)" id="sv-al">0</div><div class="stat-sub">annual leave days</div></div>
+    <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sv-crit">0</div><div class="stat-sub">3 or fewer on floor</div></div>
+    <div class="stat-box"><div class="stat-label">Turn-up rate</div><div class="stat-val" id="sv-att">-</div><div class="stat-sub">tracked weekdays</div></div>
+  </div>
+</div>
+
+<!-- CALENDAR VIEW -->
+<div class="pane active" id="pane-calendar">
+  <!-- View toggle -->
+  <div class="cal-toolbar">
+    <div class="cal-view-toggle">
+      <button class="cvt-btn active" id="cvt-month" onclick="setCalView('month')">Month</button>
+      <button class="cvt-btn" id="cvt-week" onclick="setCalView('week')">Week</button>
+    </div>
+    <div id="week-nav" style="display:none;align-items:center;gap:6px">
+      <button class="mnav-btn" onclick="prevWeek()">&#8249;</button>
+      <div class="week-label" id="weekLabel"></div>
+      <button class="mnav-btn" onclick="nextWeek()">&#8250;</button>
+    </div>
+    <div class="cal-quick-actions">
+      <button class="cal-qa-btn" onclick="openLongLeave()" title="Log a multi-day leave block">
+        <span class="cal-qa-icon">＋</span> Long Leave
+      </button>
+      <button class="cal-qa-btn" onclick="openPaybackModal()" title="Log hours an agent owes back">
+        <span class="cal-qa-icon">⏱</span> Hours Payback
+      </button>
+    </div>
+    <div class="cal-toolbar-right" id="cal-shrink-summary"></div>
+  </div>
+
+  <!-- Hours payback availability strip — shows agents with unsettled hours -->
+  <div class="payback-strip" id="payback-strip"></div>
+
+  <!-- Calendar grid -->
+  <div class="cal-wrap" id="cal-wrap">
+    <div class="cal-head" id="cal-head">
+      <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
+      <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <!-- Shrinkage stats panel -->
+  <div class="shrink-panel" id="shrink-panel"></div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div class="pane" id="pane-dashboard">
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="grid-2">
+    <div class="glass-card">
+      <div class="card-pad">
+        <div class="card-title">Shrinkage by leave type — <span id="dash-month"></span></div>
+        <table class="glass-table" id="shrink-table">
+          <thead><tr><th>Type</th><th class="num">Man-days</th><th class="num">% capacity</th><th>Trend</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-pad">
+        <div class="card-title">Weekly turn-up</div>
+        <table class="glass-table" id="weekly-table">
+          <thead><tr><th>Week</th><th class="num">Capacity</th><th class="num">Absent</th><th class="num">Turn-up</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="glass-card" style="margin-top:14px">
+    <div class="card-pad">
+      <div class="card-title">Monthly summary — Full year 2026</div>
+      <table class="glass-table" id="year-table">
+        <thead><tr><th>Month</th><th class="num">Workdays</th><th class="num">Capacity</th><th class="num">AL</th><th class="num">MC</th><th class="num">OIL</th><th class="num">TRN</th><th class="num">Unplanned%</th><th class="num">Shrinkage</th><th class="num">Turn-up</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- STRENGTH VIEW -->
+<div class="pane" id="pane-strength">
+  <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-box" id="sl-avg-box"><div class="stat-label">Avg floor</div><div class="stat-val" id="sl-avg">-</div><div class="stat-sub">weekdays</div></div>
+    <div class="stat-box r"><div class="stat-label">Lowest day</div><div class="stat-val" style="color:var(--red)" id="sl-low">-</div><div class="stat-sub">on floor</div></div>
+    <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sl-crit">-</div><div class="stat-sub">3 or fewer</div></div>
+    <div class="stat-box" id="sl-att-box"><div class="stat-label">Avg turn-up</div><div class="stat-val" id="sl-att">-</div><div class="stat-sub">this month</div></div>
+  </div>
+  <div class="glass-card">
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div class="slabel" style="margin:0">Agent floor strength — weekdays</div>
+        <div class="chart-legend">
+          <div class="cli"><div class="cld" style="background:var(--green)"></div>Full (5)</div>
+          <div class="cli"><div class="cld" style="background:var(--yellow)"></div>Reduced (4)</div>
+          <div class="cli"><div class="cld" style="background:var(--red)"></div>Critical (≤3)</div>
+        </div>
+      </div>
+      <div style="height:280px"><canvas id="strChart"></canvas></div>
+      <div class="breakdown-row" id="breakdown-row"><span class="br-hint">Click a bar to see who is absent that day</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PER-AGENT VIEW -->
+<div class="pane" id="pane-agents">
+  <div class="agent-grid" id="agent-grid"></div>
+</div>
+
+<!-- YEAR VIEW -->
+<div class="pane" id="pane-year">
+  <div class="year-grid" id="year-grid"></div>
+</div>
+
+<!-- CHANGELOG -->
+<div class="pane" id="pane-log">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="slabel" style="margin:0;flex:1">Persistent activity log</div>
+    <button onclick="clearLog()" style="font-family:var(--sans);font-size:11px;background:var(--red-soft);border:1px solid var(--red-border);color:var(--red);padding:5px 12px;border-radius:8px;cursor:pointer">Clear log</button>
+  </div>
+  <div id="cl-container"></div>
+</div>
+
+<!-- ROSTER PANE -->
+<div class="pane" id="pane-roster">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div class="slabel" style="margin-bottom:4px">Agent Roster</div>
+      <div style="font-size:12px;color:var(--tx3)">Set each agent's work type, leave entitlements, and contract end date. Changes auto-save and update the Per-Agent tab.</div>
+    </div>
+  </div>
+  <div class="roster-grid" id="roster-grid"></div>
+</div>
+
+<!-- FORECAST PANE -->
+<div class="pane" id="pane-forecast">
+  <div class="slabel">4-Week Forward Coverage</div>
+  <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Shows floor strength for the next 28 calendar days based on scheduled leave. Update leave entries in the Calendar to see this refresh.</div>
+  <div id="forecast-grid" style="display:flex;flex-direction:column;gap:12px"></div>
+</div>
+
+<!-- INSIGHTS PANE -->
+<div class="pane" id="pane-insights">
+  <div class="slabel">Absenteeism Insights</div>
+  <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Pattern detection across all logged absence data. Flags agents with high MC frequency or day-of-week clustering.</div>
+  <div id="insights-body" style="display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+<!-- HEADCOUNT LOG PANE -->
+<div class="pane" id="pane-headcount">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div class="slabel" style="margin:0">Headcount Log</div>
+  </div>
+  <!-- Add event form -->
+  <div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px;margin-bottom:18px">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Log Event</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end">
+      <div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Date</div>
+        <input type="date" id="hc-date" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Type</div>
+        <select id="hc-type" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(18,18,28,0.8);color:var(--tx);box-sizing:border-box">
+          <option value="hire">Hire</option>
+          <option value="departure">Departure</option>
+          <option value="adjustment">Adjustment</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Agent / Name</div>
+        <input type="text" id="hc-agent" placeholder="Name or headcount #" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Note</div>
+        <input type="text" id="hc-note" placeholder="Optional note" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+      </div>
+    </div>
+    <button onclick="addHeadcountEvent()" style="margin-top:12px;font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 20px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">Add Event</button>
+  </div>
+  <!-- Log -->
+  <div id="hc-log-body"></div>
+</div>
+
+<!-- BMOR PANE -->
+<div class="pane" id="pane-bmor-home">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:340px;gap:14px;opacity:0.5">
+    <div style="font-size:48px;font-weight:200;letter-spacing:-2px;color:var(--tx2)">BMOR</div>
+    <div style="font-size:13px;color:var(--tx3)">This section is under construction</div>
+  </div>
+</div>
+
+<!-- DAILY OPS SNAPSHOT -->
+<div class="pane" id="pane-ops">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div class="day-nav">
+      <button class="mnav-btn" onclick="opsPrevDay()">&#8249;</button>
+      <div class="day-nav-label" id="ops-day-label"></div>
+      <button class="mnav-btn" onclick="opsNextDay()">&#8250;</button>
+      <button class="top-btn" onclick="opsGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
+    </div>
+    <button class="mbtn mbtn-save" onclick="saveOpsDay()" style="padding:7px 22px">Save</button>
+  </div>
+  <div class="slabel">Operational metrics</div>
+  <div class="metric-5">
+    <div class="mic"><div class="mic-label">Active Buddies</div><input class="mic-input" type="number" id="ops-buddies" min="0" placeholder="—"><div class="mic-sub">on ground</div></div>
+    <div class="mic"><div class="mic-label">Total Orders</div><input class="mic-input" type="number" id="ops-orders" min="0" placeholder="—"><div class="mic-sub">all orders</div></div>
+    <div class="mic"><div class="mic-label">Completion Rate</div><div style="display:flex;align-items:baseline;gap:4px"><input class="mic-input" type="number" id="ops-completion" min="0" max="100" step="0.1" placeholder="—" style="font-size:26px"><span class="mic-unit">%</span></div><div class="mic-sub">delivered</div></div>
+    <div class="mic"><div class="mic-label">Open Incidents</div><input class="mic-input" type="number" id="ops-incidents" min="0" placeholder="—"><div class="mic-sub">unresolved</div></div>
+    <div class="mic"><div class="mic-label">Avg Delivery Time</div><div style="display:flex;align-items:baseline;gap:4px"><input class="mic-input" type="number" id="ops-avgtime" min="0" placeholder="—" style="font-size:26px"><span class="mic-unit">min</span></div><div class="mic-sub">minutes</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px"><div class="card-pad"><div class="card-title">Notes</div><textarea class="notes-ta" id="ops-notes" placeholder="Notable events, issues or context for today…"></textarea></div></div>
+  <div class="slabel">Recent history</div>
+  <div class="glass-card"><div id="ops-history-body"></div></div>
+</div>
+
+<!-- INCIDENT ANALYSIS -->
+<div class="pane" id="pane-incidents">
+  <div id="inc-upload-section">
+    <div class="slabel">Upload incident export</div>
+    <div class="upload-zone" id="inc-drop-zone" onclick="document.getElementById('inc-file-input').click()" ondragover="incDragOver(event)" ondragleave="incDragLeave(event)" ondrop="incDrop(event)">
+      <div class="upload-zone-icon">📋</div>
+      <div class="upload-zone-title">Drop your CSV here, or click to browse</div>
+      <div class="upload-zone-sub">Exported from your company's incident portal · CSV or TSV</div>
+    </div>
+    <input type="file" id="inc-file-input" accept=".csv,.tsv,.txt" style="display:none" onchange="incFileSelected(event)">
+  </div>
+  <div id="inc-mapper-section" style="display:none">
+    <div class="glass-card" style="margin-top:16px"><div class="card-pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Map columns</div>
+        <button class="top-btn" onclick="incReset()" style="font-size:11px;color:var(--red);border-color:var(--red-border)">Clear CSV</button>
+      </div>
+      <div id="inc-file-info" style="font-size:12px;color:var(--tx3);margin-bottom:14px"></div>
+      <div class="col-mapper" id="inc-col-mapper"></div>
+      <button class="mbtn mbtn-save" onclick="analyseIncidents()" style="width:100%;margin-top:8px">Analyse</button>
+    </div></div>
+  </div>
+  <div id="inc-results-section" style="display:none;margin-top:20px">
+    <div class="kpi-row" id="inc-kpi-row" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="glass-card"><div class="chart-wrap"><div class="card-title">Top incident types</div><div style="height:240px"><canvas id="incTypeChart"></canvas></div></div></div>
+      <div class="glass-card"><div class="chart-wrap"><div class="card-title">Weekly trend</div><div style="height:240px"><canvas id="incTrendChart"></canvas></div></div></div>
+    </div>
+    <div class="glass-card"><div class="card-pad"><div class="card-title">Breakdown by type</div>
+      <table class="glass-table" id="inc-breakdown-table">
+        <thead><tr><th>Type</th><th class="num">Count</th><th class="num">% of total</th><th class="num">Open</th><th class="num">Resolved</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<!-- ORDER VOLUME -->
+<div class="pane" id="pane-orders">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div class="day-nav">
+      <button class="mnav-btn" onclick="ordPrevDay()">&#8249;</button>
+      <div class="day-nav-label" id="ord-day-label"></div>
+      <button class="mnav-btn" onclick="ordNextDay()">&#8250;</button>
+      <button class="top-btn" onclick="ordGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
+    </div>
+    <button class="mbtn mbtn-save" onclick="saveOrderDay()" style="padding:7px 22px">Save</button>
+  </div>
+  <div class="slabel">Order metrics</div>
+  <div class="metric-5">
+    <div class="mic"><div class="mic-label">Total Orders</div><input class="mic-input" type="number" id="ord-total" min="0" placeholder="—" oninput="updateOrdRate()"><div class="mic-sub">all orders</div></div>
+    <div class="mic"><div class="mic-label">Completed</div><input class="mic-input" type="number" id="ord-completed" min="0" placeholder="—" oninput="updateOrdRate()"><div class="mic-sub">delivered</div></div>
+    <div class="mic"><div class="mic-label">Cancelled</div><input class="mic-input" type="number" id="ord-cancelled" min="0" placeholder="—"><div class="mic-sub">cancelled orders</div></div>
+    <div class="mic"><div class="mic-label">Peak Hour</div><input class="mic-input" type="text" id="ord-peak" placeholder="—" style="font-size:20px"><div class="mic-sub">e.g. 12:00–13:00</div></div>
+    <div class="mic"><div class="mic-label">Completion Rate</div><div style="display:flex;align-items:baseline;gap:4px"><div id="ord-rate-display" style="font-size:28px;font-weight:300;letter-spacing:-0.5px;color:var(--tx2)">—</div><span class="mic-unit" id="ord-rate-unit" style="display:none">%</span></div><div class="mic-sub">auto-calculated</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px"><div class="card-pad"><div class="card-title">Notes</div><textarea class="notes-ta" id="ord-notes" placeholder="Peak demand context, issues, promotions running…"></textarea></div></div>
+  <div class="glass-card" style="margin-bottom:16px"><div class="chart-wrap"><div class="card-title">14-day order trend</div><div style="height:200px"><canvas id="ordTrendChart"></canvas></div></div></div>
+  <div class="slabel">Recent history</div>
+  <div class="glass-card"><div id="ord-history-body"></div></div>
+</div>
+
+</div><!-- /body -->
+</div><!-- /app -->
+
+<!-- LONG LEAVE MODAL -->
+<div class="modal-overlay" id="ll-overlay" onclick="llOverlayClick(event)">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(191,90,242,0.08),rgba(10,132,255,0.04))">
+      <div><div class="modal-title">Long Leave Entry</div><div class="modal-sub">Apply leave to an agent across a date range in one shot</div></div>
+      <button class="modal-x" onclick="closeLongLeave()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="ll-section">
+        <div class="ll-section-title">Agent</div>
+        <div class="ll-agent-select" id="ll-agents"></div>
+      </div>
+
+      <div class="ll-section">
+        <div class="ll-section-title">Leave type</div>
+        <div class="ll-type-row">
+          <button class="ll-type-btn" id="ll-t-AL" onclick="llSelectType('AL')">Annual Leave (AL)</button>
+          <button class="ll-type-btn" id="ll-t-MC" onclick="llSelectType('MC')">Medical Cert (MC)</button>
+          <button class="ll-type-btn" id="ll-t-OIL" onclick="llSelectType('OIL')">Off-in-Lieu (OIL)</button>
+          <button class="ll-type-btn" id="ll-t-TRN" onclick="llSelectType('TRN')">Training (TRN)</button>
+        </div>
+      </div>
+
+      <div class="ll-section">
+        <div class="ll-section-title">Date range</div>
+        <div class="ll-date-row">
+          <div>
+            <div class="ll-date-label">From</div>
+            <input class="ll-date-input" type="date" id="ll-from" onchange="llPreview()">
+          </div>
+          <div>
+            <div class="ll-date-label">To</div>
+            <input class="ll-date-input" type="date" id="ll-to" onchange="llPreview()">
+          </div>
+        </div>
+        <label class="ll-skip-row">
+          <input type="checkbox" id="ll-skip-we" checked onchange="llPreview()"> Skip weekends
+        </label>
+        <label class="ll-skip-row">
+          <input type="checkbox" id="ll-skip-ph" checked onchange="llPreview()"> Skip public holidays
+        </label>
+      </div>
+
+      <div class="ll-preview" id="ll-preview">Select an agent, leave type and date range to preview.</div>
+    </div>
+    <div class="modal-foot">
+      <div style="font-size:11px;color:var(--tx3)">Existing entries within the range will be overwritten for the selected agent.</div>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeLongLeave()">Cancel</button>
+        <button class="mbtn mbtn-save" id="ll-apply-btn" onclick="applyLongLeave()" style="background:var(--purple);box-shadow:0 4px 16px rgba(191,90,242,0.3)">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div><div class="modal-title" id="modal-title">-</div><div class="modal-sub" id="modal-sub">-</div></div>
+      <button class="modal-x" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <label class="ph-toggle"><input type="checkbox" id="ph-toggle"> Mark as Public Holiday</label>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="mbtn mbtn-save" onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC SETTINGS MODAL -->
+<div class="modal-overlay" id="sync-modal" onclick="syncOverlayClick(event)">
+  <div class="modal-box" style="width:560px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Google Sheets Sync</div>
+        <div class="modal-sub">Optional · keeps data in sync across devices</div>
+      </div>
+      <button class="modal-x" onclick="closeSyncSettings()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ll-section">
+        <div class="ll-section-title">Web App URL</div>
+        <input type="text" id="sync-url-input" class="ll-date-input" style="width:100%;font-family:var(--mono);font-size:12px" placeholder="https://script.google.com/macros/s/AKfy.../exec">
+        <div id="sync-test-result" style="font-size:11px;color:var(--tx3);margin-top:8px;min-height:14px"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="mbtn mbtn-cancel" onclick="syncTest()">Test Connection</button>
+        <button class="mbtn mbtn-cancel" onclick="syncPullNow()" style="border-color:var(--blue-border);color:var(--blue)">⇧ Pull from Sheet</button>
+        <button class="mbtn mbtn-cancel" onclick="syncPushNow()" style="border-color:var(--green-border);color:var(--green)">⇩ Push to Sheet</button>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:18px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);line-height:1.5">
+        <strong style="color:var(--tx2)">How sync works:</strong> Once configured, every save auto-pushes to the Sheet (1.5s debounce). Open the HTML on another device with the same URL → click "Pull from Sheet" to load. Last write wins — coordinate with teammates editing simultaneously.<br><br>
+        <strong style="color:var(--tx2)">No URL set?</strong> Tracker works offline using browser storage. Use Backup / Restore for manual transfer.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="mbtn mbtn-cancel" onclick="setSyncUrl('');closeSyncSettings();showToast('Sync disabled')" style="color:var(--red);border-color:var(--red-border)">Disable Sync</button>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeSyncSettings()">Cancel</button>
+        <button class="mbtn mbtn-save" onclick="syncSave()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<!-- PAYBACK HOURS MODAL -->
+<div class="modal-overlay" id="pb-overlay" onclick="pbOverlayClick(event)">
+  <div class="modal-box" style="width:500px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(10,132,255,0.08),rgba(48,209,88,0.04))">
+      <div><div class="modal-title">Hours Payback Log</div><div class="modal-sub">Track hours agents owe the company</div></div>
+      <button class="modal-x" onclick="closePaybackModal()">&#10005;</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <!-- Add entry form -->
+      <div style="padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.07)">
+        <div class="ll-section-title" style="margin-bottom:12px">Add payback entry</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="ll-date-label">Agent</div>
+            <select id="pb-agent" class="ll-date-input" style="width:100%;cursor:pointer">
+              <option value="">— pick agent —</option>
+            </select>
+          </div>
+          <div>
+            <div class="ll-date-label">Date</div>
+            <input type="date" id="pb-date" class="ll-date-input" style="width:100%">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="ll-date-label">Hours</div>
+            <input type="number" id="pb-hours" class="ll-date-input" style="width:100%" min="0.5" max="24" step="0.5" placeholder="e.g. 2">
+          </div>
+          <div>
+            <div class="ll-date-label">Reason</div>
+            <input type="text" id="pb-reason" class="ll-date-input" style="width:100%" placeholder="e.g. Early leave, extended break…">
+          </div>
+        </div>
+        <button onclick="addPaybackEntry()" class="mbtn mbtn-save" style="width:100%;margin-top:2px">Add Entry</button>
+      </div>
+      <!-- Log table -->
+      <div id="pb-log-body" style="max-height:340px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ═══════════════════════════════════
+   CONFIG
+═══════════════════════════════════ */
+const AGENTS = ['Javier','Aiman','Julian','Tina','Rina'];
+const STATUSES = [{v:'W',label:'Working'},{v:'AL',label:'AL'},{v:'MC',label:'MC'},{v:'OIL',label:'OIL'},{v:'TRN',label:'Training'}];
+const ENTITLEMENT = {AL:18, MC:14};
+const PLANNED_CATS = ['AL','OIL','TRN'];   // planned shrinkage
+const UNPLANNED_CATS = ['MC'];             // unplanned shrinkage
+const SHRINK_TARGET_UNPLANNED = 10;        // % — flag red if exceeded
+const SHRINK_TARGET_TOTAL = 30;            // % — flag red if exceeded
+// Singapore Public Holidays 2026 — official MOM gazette
+// Source: https://www.mom.gov.sg/employment-practices/public-holidays
+// Substitute Mondays included for PHs that fall on Sunday (Vesak, National Day, Deepavali)
+const SG_PH = {
+  '2026-01-01':'New Year\'s Day',
+  '2026-02-17':'Chinese New Year',
+  '2026-02-18':'Chinese New Year',
+  '2026-03-21':'Hari Raya Puasa',
+  '2026-04-03':'Good Friday',
+  '2026-05-01':'Labour Day',
+  '2026-05-27':'Hari Raya Haji',
+  '2026-05-31':'Vesak Day',
+  '2026-06-01':'Vesak Day (substitute)',
+  '2026-08-09':'National Day',
+  '2026-08-10':'National Day (substitute)',
+  '2026-11-08':'Deepavali',
+  '2026-11-09':'Deepavali (substitute)',
+  '2026-12-25':'Christmas Day'
+};
+const PLANNED = 5;
+// PK bumped to v3 so users with stale PH data get the corrected list automatically
+const SK = 'sops-state-v2', PK = 'sops-ph-v3', LK = 'sops-log-v2', HK = 'sops-hours-v1';
+const OPS_KEY = 'sops-ops-v1', ORD_KEY = 'sops-ord-v1', HCL_KEY = 'sops-hc-log-v1', ROSTER_KEY = 'sops-roster-v1';
+
+let state = load(SK) || {};
+let phMap = load(PK) || {...SG_PH};
+let changelog = load(LK) || [];
+let hoursLog = load(HK) || [];
+let opsData = load(OPS_KEY) || {}, ordersData = load(ORD_KEY) || {};
+let hcLog = load(HCL_KEY) || []; // [{id, date, type:'hire'|'departure'|'adjustment', agent, note, ts}]
+let roster = load(ROSTER_KEY) || {}; // {agentName: {type:'full-timer'|'intern'|'contract', AL, MC, contractEnd, note}}
+let cursor = new Date(2026, new Date().getFullYear()===2026?new Date().getMonth():0, 1);
+let modalKey = null, modalDraft = {};
+let strChart = null;
+
+function load(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));scheduleSync();}
+// Returns the stored roster record for an agent, with defaults if not yet configured
+function getAgentRoster(a){ return Object.assign({type:'full-timer',AL:ENTITLEMENT.AL,MC:ENTITLEMENT.MC,contractEnd:'',note:''},roster[a]||{}); }
+// Returns {AL, MC} entitlement for an agent — uses per-agent roster if set
+function getEnt(a){ const r=getAgentRoster(a); return {AL:+r.AL||ENTITLEMENT.AL, MC:+r.MC||ENTITLEMENT.MC}; }
+// Internal save (no sync trigger) — used by pullFromRemote so we don't loop
+function saveLocal(k,v){localStorage.setItem(k,JSON.stringify(v));}
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const monthName = m => ['January','February','March','April','May','June','July','August','September','October','November','December'][m];
+const isWeekend = d => d.getDay()===0||d.getDay()===6;
+const isPH = k => !!phMap[k];
+const isWorkday = d => !isWeekend(d)&&!isPH(ymd(d));
+
+/* ─── COLOR HELPERS ─────────────────── */
+const fc = f => f<=3?'var(--red)':f===4?'var(--yellow)':'var(--green)';
+const fcl = f => f<=3?'r':f===4?'y':'g';
+const bgc = f => f<=3?'rgba(255,69,58,0.7)':f===4?'rgba(255,214,10,0.7)':'rgba(48,209,88,0.7)';
+const bdc = f => f<=3?'#ff453a':f===4?'#ffd60a':'#30d158';
+
+/* ─── FLOOR CALC ─────────────────────── */
+function floorForDay(key){
+  const day = state[key]||{};
+  const absent = AGENTS.filter(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes(day[a])).length;
+  return PLANNED - absent;
+}
+function selForDay(key){
+  const day = state[key]||{};
+  const mc=[],al=[],oil=[],trn=[];
+  AGENTS.forEach(a=>{
+    if(day[a]==='MC')mc.push(a);
+    else if(day[a]==='AL')al.push(a);
+    else if(day[a]==='OIL')oil.push(a);
+    else if(day[a]==='TRN')trn.push(a);
+  });
+  return{mc,al,oil,trn};
+}
+
+/* ─── MONTH / NAV ───────────────────── */
+function prevMonth(){
+  cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);
+  if(calView==='week'){ weekCursor=new Date(cursor); weekCursor.setDate(cursor.getDate()-cursor.getDay()); }
+  renderAll();
+}
+function nextMonth(){
+  cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);
+  if(calView==='week'){ weekCursor=new Date(cursor); weekCursor.setDate(cursor.getDate()-cursor.getDay()); }
+  renderAll();
+}
+function goToday(){
+  cursor=new Date(2026,new Date().getFullYear()===2026?new Date().getMonth():0,1);
+  if(calView==='week'){ const t=new Date(); weekCursor=new Date(t); weekCursor.setDate(t.getDate()-t.getDay()); }
+  renderAll();
+}
+
+/* ─── STATS ─────────────────────────── */
+function statsForMonth(y,m){
+  const last=new Date(y,m+1,0).getDate();
+  const s={workdays:0,capacity:0,AL:0,MC:0,OIL:0,TRN:0};
+  for(let i=1;i<=last;i++){
+    const d=new Date(y,m,i);if(!isWorkday(d))continue;
+    s.workdays++;s.capacity+=AGENTS.length;
+    const day=state[ymd(d)]||{};
+    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')s.AL++;else if(v==='MC')s.MC++;else if(v==='OIL')s.OIL++;else if(v==='TRN')s.TRN++;});
+  }
+  s.planned=s.AL+s.OIL+s.TRN;   // planned shrinkage total
+  s.unplanned=s.MC;               // unplanned shrinkage total
+  s.absent=s.planned+s.unplanned;
+  s.present=s.capacity-s.absent;
+  s.turnup=s.capacity?(s.present/s.capacity)*100:100;
+  s.shrink=s.capacity?(s.absent/s.capacity)*100:0;
+  s.shrinkPlanned=s.capacity?(s.planned/s.capacity)*100:0;
+  s.shrinkUnplanned=s.capacity?(s.unplanned/s.capacity)*100:0;
+  return s;
+}
+function statsForAgent(agent){
+  const r={AL:0,MC:0,OIL:0,TRN:0};
+  Object.keys(state).forEach(k=>{
+    const d=new Date(k+'T00:00:00');if(d.getFullYear()!==2026||!isWorkday(d))return;
+    const v=state[k][agent];if(v==='AL')r.AL++;else if(v==='MC')r.MC++;else if(v==='OIL')r.OIL++;else if(v==='TRN')r.TRN++;
+  });
+  return r;
+}
+function weeklyStats(y,m){
+  const last=new Date(y,m+1,0).getDate(),buckets={};
+  for(let i=1;i<=last;i++){
+    const d=new Date(y,m,i);if(!isWorkday(d))continue;
+    const ws=new Date(d);ws.setDate(d.getDate()-d.getDay());const k=ymd(ws);
+    if(!buckets[k]){buckets[k]={start:ws,capacity:0,absent:0};}
+    buckets[k].capacity+=AGENTS.length;
+    const day=state[ymd(d)]||{};
+    AGENTS.forEach(a=>{const v=day[a];if([...PLANNED_CATS,...UNPLANNED_CATS].includes(v))buckets[k].absent++;});
+  }
+  return Object.values(buckets).sort((a,b)=>a.start-b.start);
+}
+function workdaysInYear(y){let n=0;for(let m=0;m<12;m++){const l=new Date(y,m+1,0).getDate();for(let i=1;i<=l;i++){if(isWorkday(new Date(y,m,i)))n++;}}return n;}
+
+/* ─── MAIN TAB SWITCH ─────────────────── */
+function swMain(main){
+  document.querySelectorAll('.main-tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('mt-'+main).classList.add('active');
+  document.getElementById('subtabbar-manpower').style.display = main==='manpower'?'':'none';
+  document.getElementById('subtabbar-bmor').style.display = main==='bmor'?'':'none';
+  document.getElementById('month-nav-bar').style.display = main==='manpower'?'':'none';
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  if(main==='manpower'){
+    const curTab = document.querySelector('#subtabbar-manpower .tab.active');
+    const id = curTab ? curTab.id.replace('t-','') : 'calendar';
+    activatePane(id);
+  } else if(main==='bmor'){
+    const curTab = document.querySelector('#subtabbar-bmor .tab.active');
+    const id = curTab ? curTab.id.replace('t-','') : 'bmor-home';
+    activatePane(id);
+  } else if(main==='ops'){
+    document.getElementById('pane-ops').classList.add('active');
+    renderOpsSnapshot();
+  } else if(main==='incidents'){
+    document.getElementById('pane-incidents').classList.add('active');
+    renderIncidents();
+  } else if(main==='orders'){
+    document.getElementById('pane-orders').classList.add('active');
+    renderOrders();
+  }
+}
+
+function swBmor(t){
+  document.querySelectorAll('#subtabbar-bmor .tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  activatePane(t);
+}
+
+function activatePane(t){
+  const pane = document.getElementById('pane-'+t);
+  if(pane) pane.classList.add('active');
+  if(t==='calendar')renderCalendar();
+  if(t==='dashboard')renderDashboard();
+  if(t==='strength')setTimeout(renderStrength,50);
+  if(t==='agents')renderAgents();
+  if(t==='year')renderYear();
+  if(t==='log')renderLog();
+  if(t==='daily')renderDaily();
+  if(t==='forecast')renderForecast();
+  if(t==='insights')renderInsights();
+  if(t==='headcount')renderHeadcount();
+  if(t==='roster')renderRoster();
+}
+
+/* ─── TAB SWITCH ─────────────────────── */
+function sw(t){
+  document.querySelectorAll('#subtabbar-manpower .tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  saveActiveTab(t);
+  activatePane(t);
+}
+
+/* ─── DAILY VIEW ─────────────────────── */
+function renderDaily(){
+  const y=cursor.getFullYear(),m=cursor.getMonth(),now=new Date();
+  const isNow=now.getFullYear()===y&&now.getMonth()===m;
+  const d=isNow?now.getDate():1;
+  document.getElementById('today-date-label').textContent=
+    new Intl.DateTimeFormat('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(y,m,d));
+  const key=ymd(new Date(y,m,d));
+  const day=state[key]||{};
+  const grid=document.getElementById('agent-status-grid');grid.innerHTML='';
+  AGENTS.forEach(n=>{
+    const v=day[n]||'W';
+    let sc='present',lb='On Floor';
+    if(v==='MC'){sc='mc';lb='MC';}else if(v==='AL'){sc='al';lb='AL';}else if(v==='OIL'){sc='oil';lb='OIL';}
+    else if(v==='TRN'){sc='trn';lb='Training';}else if(isPH(key)){sc='ph';lb='PH';}
+    const init=n.slice(0,2).toUpperCase();
+    grid.innerHTML+=`<div class="asc ${sc}"><div class="asc-init">${init}</div><div class="asc-name">${n}</div><div class="asc-badge ${sc}">${lb}</div></div>`;
+  });
+  // Stats
+  const s=statsForMonth(y,m);
+  const y2=cursor.getFullYear(),m2=cursor.getMonth();
+  const wdays=[];
+  const dim2=new Date(y2,m2+1,0).getDate();
+  for(let dd=1;dd<=dim2;dd++){const dobj=new Date(y2,m2,dd);if(!isWeekend(dobj)&&!isPH(ymd(dobj))){const f=floorForDay(ymd(dobj));wdays.push(f);}}
+  const tracked=wdays.filter(f=>f<PLANNED);
+  const avgF=wdays.length?+(wdays.reduce((a,b)=>a+b,0)/wdays.length).toFixed(1):PLANNED;
+  const crit=wdays.filter(f=>f<=3).length;
+  document.getElementById('sv-avg').textContent=avgF;document.getElementById('sv-avg').style.color=fc(Math.round(avgF));
+  document.getElementById('sb-avg').className='stat-box '+fcl(Math.round(avgF));
+  document.getElementById('sv-mc').textContent=s.MC;
+  document.getElementById('sv-al').textContent=s.AL;
+  document.getElementById('sv-crit').textContent=crit;
+  const ae=document.getElementById('sv-att');ae.textContent=s.turnup.toFixed(1)+'%';
+  ae.style.color=s.turnup>=85?'var(--green)':s.turnup>=70?'var(--yellow)':'var(--red)';
+  // Alerts
+  const ab=document.getElementById('alert-bar');ab.innerHTML='';
+  const critDays=[];const warnDays=[];
+  for(let dd=1;dd<=dim2;dd++){
+    const dobj=new Date(y2,m2,dd);if(isWeekend(dobj)||isPH(ymd(dobj)))continue;
+    const f=floorForDay(ymd(dobj));
+    if(f<=3&&f<PLANNED)critDays.push(dd);
+    else if(f===4)warnDays.push(dd);
+  }
+  if(critDays.length)ab.innerHTML+=`<div class="alert alert-red">⚠ <strong>CRITICAL COVERAGE</strong> &nbsp; 3 or fewer agents on floor — <span class="alert-dates">Day(s): ${critDays.join(', ')}</span></div>`;
+  if(warnDays.length)ab.innerHTML+=`<div class="alert alert-yellow">△ <strong>REDUCED COVERAGE</strong> &nbsp; 4 agents on floor — <span class="alert-dates">Day(s): ${warnDays.join(', ')}</span></div>`;
+}
+
+/* ─── CALENDAR VIEW MODE ─────────────────── */
+let calView = 'month'; // 'month' | 'week'
+let weekCursor = null; // Date of the Sunday starting the current week
+
+function setCalView(v){
+  calView = v;
+  document.getElementById('cvt-month').classList.toggle('active', v==='month');
+  document.getElementById('cvt-week').classList.toggle('active', v==='week');
+  document.getElementById('week-nav').style.display = v==='week' ? 'flex' : 'none';
+  if(v==='week'){
+    // init weekCursor to Sunday of cursor's month start
+    if(!weekCursor){
+      const first=new Date(cursor.getFullYear(),cursor.getMonth(),1);
+      weekCursor=new Date(first); weekCursor.setDate(first.getDate()-first.getDay());
+    }
+  }
+  renderCalendar();
+}
+function prevWeek(){ weekCursor.setDate(weekCursor.getDate()-7); renderCalendar(); }
+function nextWeek(){ weekCursor.setDate(weekCursor.getDate()+7); renderCalendar(); }
+
+function renderCalendar(){
+  if(calView==='week') renderWeekCal();
+  else renderMonthCal();
+  renderShrinkPanel();
+}
+
+function renderMonthCal(){
+  const y=cursor.getFullYear(),m=cursor.getMonth();
+  document.getElementById('monthLabel').textContent=monthName(m)+' '+y;
+  const first=new Date(y,m,1),offset=first.getDay(),last=new Date(y,m+1,0).getDate();
+  const today=new Date(),todayKey=ymd(today);
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  const prevLast=new Date(y,m,0).getDate();
+  for(let i=offset-1;i>=0;i--){const d=new Date(y,m-1,prevLast-i);grid.appendChild(makeCell(d,true));}
+  for(let i=1;i<=last;i++){const d=new Date(y,m,i);grid.appendChild(makeCell(d,false,ymd(d)===todayKey));}
+  const used=offset+last,trail=(7-(used%7))%7;
+  for(let i=1;i<=trail;i++){grid.appendChild(makeCell(new Date(y,m+1,i),true));}
+  renderCalSummaryPills();
+}
+
+function renderWeekCal(){
+  if(!weekCursor){
+    const first=new Date(cursor.getFullYear(),cursor.getMonth(),1);
+    weekCursor=new Date(first); weekCursor.setDate(first.getDate()-first.getDay());
+  }
+  const today=new Date(),todayKey=ymd(today);
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  // 7 cells for Sun–Sat
+  for(let i=0;i<7;i++){
+    const d=new Date(weekCursor); d.setDate(weekCursor.getDate()+i);
+    const cell=makeCell(d,false,ymd(d)===todayKey);
+    cell.classList.add('week-cell');
+    grid.appendChild(cell);
+  }
+  // week label
+  const wEnd=new Date(weekCursor); wEnd.setDate(weekCursor.getDate()+6);
+  document.getElementById('weekLabel').textContent=
+    weekCursor.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+
+    wEnd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  renderCalSummaryPills();
+}
+
+function getCalDays(){
+  // Returns array of Date objects currently displayed
+  if(calView==='week'){
+    return Array.from({length:7},(_,i)=>{ const d=new Date(weekCursor); d.setDate(weekCursor.getDate()+i); return d; });
+  } else {
+    const y=cursor.getFullYear(),m=cursor.getMonth(),last=new Date(y,m+1,0).getDate();
+    return Array.from({length:last},(_,i)=>new Date(y,m,i+1));
+  }
+}
+
+function renderCalSummaryPills(){
+  const days=getCalDays().filter(d=>isWorkday(d));
+  let AL=0,MC=0,OIL=0,TRN=0,critCount=0,warnCount=0;
+  days.forEach(d=>{
+    const key=ymd(d),day=state[key]||{};
+    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')AL++;else if(v==='MC')MC++;else if(v==='OIL')OIL++;else if(v==='TRN')TRN++;});
+    const f=floorForDay(key);
+    if(f<=3)critCount++;else if(f===4)warnCount++;
+  });
+  const el=document.getElementById('cal-shrink-summary');
+  el.innerHTML='';
+  if(AL) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)"><span>AL</span>${AL}</div>`;
+  if(MC) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)"><span>MC</span>${MC}</div>`;
+  if(OIL) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--purple-soft);color:var(--purple)"><span>OIL</span>${OIL}</div>`;
+  if(TRN) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border)"><span>TRN</span>${TRN}</div>`;
+  if(critCount) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)">⚠ ${critCount} critical</div>`;
+  else if(warnCount) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">△ ${warnCount} reduced</div>`;
+}
+
+/* ─── SHRINKAGE PANEL ────────────────────── */
+function renderShrinkPanel(){
+  const panel=document.getElementById('shrink-panel');
+  panel.innerHTML='';
+
+  // Collect all workdays in view with absences
+  const viewDays=getCalDays().filter(d=>isWorkday(d));
+  const absentDays=[]; // {date, floor, agents:[{name,type}]}
+  viewDays.forEach(d=>{
+    const key=ymd(d),day=state[key]||{};
+    const agents=[];
+    AGENTS.forEach(a=>{const v=day[a];if(v&&v!=='W')agents.push({name:a,type:v});});
+    if(agents.length) absentDays.push({date:d,key,floor:floorForDay(key),agents});
+  });
+
+  // LEFT CARD — Shrinkage by day (days with any absence)
+  const leftCard=document.createElement('div'); leftCard.className='sp-card';
+  const shrinkPct=viewDays.length?
+    (absentDays.reduce((s,d)=>s+d.agents.length,0)/(viewDays.length*AGENTS.length)*100).toFixed(1):0;
+  leftCard.innerHTML=`<div class="sp-card-title">Shrinkage days <span style="color:${+shrinkPct>20?'var(--red)':+shrinkPct>10?'var(--yellow)':'var(--green)'}">${shrinkPct}%</span></div>`;
+  if(!absentDays.length){
+    leftCard.innerHTML+=`<div class="sp-empty">No absences in this ${calView==='week'?'week':'month'} — full strength 💪</div>`;
+  } else {
+    // Group by week for month view
+    if(calView==='month'){
+      const byWeek={};
+      absentDays.forEach(d=>{
+        const ws=new Date(d.date); ws.setDate(d.date.getDate()-d.date.getDay());
+        const wk=ymd(ws); if(!byWeek[wk]){byWeek[wk]={start:ws,days:[]};}
+        byWeek[wk].days.push(d);
+      });
+      Object.values(byWeek).sort((a,b)=>a.start-b.start).forEach(w=>{
+        const wEnd=new Date(w.start); wEnd.setDate(w.start.getDate()+6);
+        leftCard.innerHTML+=`<div class="sp-week-group">Wk ${w.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${wEnd.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>`;
+        w.days.forEach(d=>leftCard.innerHTML+=makeShrinkRow(d));
+      });
+    } else {
+      absentDays.forEach(d=>leftCard.innerHTML+=makeShrinkRow(d));
+    }
+  }
+  panel.appendChild(leftCard);
+
+  // RIGHT CARD — By agent breakdown
+  const rightCard=document.createElement('div'); rightCard.className='sp-card';
+  const agentTotals={};
+  AGENTS.forEach(a=>{agentTotals[a]={AL:0,MC:0,OIL:0,TRN:0};});
+  viewDays.forEach(d=>{
+    const day=state[ymd(d)]||{};
+    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')agentTotals[a].AL++;else if(v==='MC')agentTotals[a].MC++;else if(v==='OIL')agentTotals[a].OIL++;else if(v==='TRN')agentTotals[a].TRN++;});
+  });
+  const agentRows=AGENTS.map(a=>({name:a,...agentTotals[a],total:agentTotals[a].AL+agentTotals[a].MC+agentTotals[a].OIL+agentTotals[a].TRN}))
+    .filter(a=>a.total>0).sort((a,b)=>b.total-a.total);
+  const totalAbsent=agentRows.reduce((s,a)=>s+a.total,0);
+  rightCard.innerHTML=`<div class="sp-card-title">By agent <span style="color:var(--tx2);font-size:13px">${totalAbsent} absent day${totalAbsent!==1?'s':''}</span></div>`;
+  if(!agentRows.length){
+    rightCard.innerHTML+=`<div class="sp-empty">No absences recorded.</div>`;
+  } else {
+    agentRows.forEach(a=>{
+      const pct=viewDays.length?(a.total/viewDays.length*100).toFixed(0):0;
+      const barW=Math.min(Math.round(a.total/viewDays.length*100),100);
+      rightCard.innerHTML+=`
+        <div class="sp-day-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
+          <div style="display:flex;align-items:center;width:100%;gap:8px">
+            <span style="font-size:13px;font-weight:500;min-width:70px">${a.name}</span>
+            ${a.AL?`<span class="sp-agent-tag sp-tag-al">AL ×${a.AL}</span>`:''}
+            ${a.MC?`<span class="sp-agent-tag sp-tag-mc">MC ×${a.MC}</span>`:''}
+            ${a.OIL?`<span class="sp-agent-tag sp-tag-oil">OIL ×${a.OIL}</span>`:''}
+            ${a.TRN?`<span class="sp-agent-tag sp-tag-trn">TRN ×${a.TRN}</span>`:''}
+            <span style="margin-left:auto;font-size:11px;color:var(--tx3)">${a.total}d / ${pct}%</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+            <div style="width:${barW}%;height:100%;border-radius:2px;background:${a.AL&&!a.MC?'var(--yellow)':a.MC&&!a.AL?'var(--red)':'var(--purple)'}"></div>
+          </div>
+        </div>`;
+    });
+  }
+  panel.appendChild(rightCard);
+}
+
+function makeShrinkRow(d){
+  const dateStr=d.date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const tags=d.agents.map(({name,type})=>{
+    const cls=type==='AL'?'sp-tag-al':type==='MC'?'sp-tag-mc':type==='TRN'?'sp-tag-trn':'sp-tag-oil';
+    return `<span class="sp-agent-tag ${cls}">${name}·${type}</span>`;
+  }).join('');
+  const floorColor=fc(d.floor);
+  return `<div class="sp-day-row" onclick="openModal('${d.key}')">
+    <span class="sp-day-date">${dateStr}</span>
+    <span class="sp-day-agents">${tags}</span>
+    <span class="sp-day-floor" style="color:${floorColor}">${d.floor}/${PLANNED}</span>
+  </div>`;
+}
+
+function makeCell(d,outside,isToday){
+  const cell=document.createElement('div');
+  const key=ymd(d);
+  const floor=floorForDay(key);
+  const day=state[key]||{};
+  const isOff=isWeekend(d)||isPH(key);
+  const hasMods=!isOff&&AGENTS.some(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes(day[a]));
+  cell.className='cal-cell'+(outside?' outside':'')+(isWeekend(d)?' weekend':'')+(isToday?' today':'')+(isPH(key)?' ph-day':'');
+  // Subtle background tint on workdays with reduced coverage — avoids fighting CSS specificity
+  if(hasMods&&!outside){
+    if(floor<=3) cell.style.background='rgba(255,69,58,0.06)';
+    else if(floor===4) cell.style.background='rgba(255,214,10,0.035)';
+  }
+  const phHtml=isPH(key)?`<span class="ph-label">${phMap[key]}</span>`:'';
+  const floorHtml=!isOff?`<div class="cell-floor" style="color:${fc(floor)}">${floor}</div>`:'';
+  // Chips: cap at 3 visible, +N overflow pill for the rest
+  const absent=AGENTS.filter(a=>day[a]&&day[a]!=='W');
+  const chips=absent.slice(0,3).map(a=>{
+    const v=day[a];
+    const chipCls=v==='AL'?'chip-al':v==='MC'?'chip-mc':v==='OIL'?'chip-oil':v==='TRN'?'chip-trn':'chip-ph';
+    return `<div class="chip ${chipCls}">${a} · ${v}</div>`;
+  }).join('')+(absent.length>3?`<div class="chip" style="background:rgba(255,255,255,0.06);color:var(--tx3);border:1px solid rgba(255,255,255,0.08)">+${absent.length-3}</div>`:'');
+  cell.innerHTML=`<div class="cell-top"><div class="cell-num">${d.getDate()}</div>${floorHtml}</div>${phHtml}<div class="cell-chips">${chips}</div><div class="cell-edit">edit</div>`;
+  if(!outside)cell.addEventListener('click',()=>openModal(key));
+  return cell;
+}
+
+/* ─── DASHBOARD ──────────────────────── */
+function renderDashboard(){
+  const y=cursor.getFullYear(),m=cursor.getMonth();
+  document.getElementById('dash-month').textContent=monthName(m)+' '+y;
+  const s=statsForMonth(y,m);
+  // KPIs
+  document.getElementById('kpi-row').innerHTML=[
+    {label:'Workdays',val:s.workdays,cls:'',delta:''},
+    {label:'Turn-up rate',val:s.turnup.toFixed(1)+'%',cls:s.turnup>=90?'good':s.turnup>=80?'warn':'bad',delta:`${s.present} of ${s.capacity} man-days`},
+    {label:'Total shrinkage',val:s.shrink.toFixed(1)+'%',cls:s.shrink<=SHRINK_TARGET_TOTAL?'good':s.shrink<=SHRINK_TARGET_TOTAL*1.2?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_TOTAL}%`},
+    {label:'Unplanned shrink',val:s.shrinkUnplanned.toFixed(1)+'%',cls:s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED?'good':s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED*1.5?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_UNPLANNED}% (MC only)`}
+  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.val}</div><div class="kpi-delta">${k.delta}</div></div>`).join('');
+  // Shrink table — planned vs unplanned split with target indicator
+  const sb=document.querySelector('#shrink-table tbody');
+  const shrinkRows=[
+    {label:'Planned',sub:'AL + OIL + TRN',n:s.planned,pct:s.shrinkPlanned,c:'var(--blue)',target:null,sub2:`AL ${s.AL} · OIL ${s.OIL} · TRN ${s.TRN}`},
+    {label:'Unplanned',sub:'MC (absent)',n:s.unplanned,pct:s.shrinkUnplanned,c:'var(--red)',target:SHRINK_TARGET_UNPLANNED,sub2:`${s.MC} MC days`},
+    {label:'Total',sub:'All absence',n:s.absent,pct:s.shrink,c:'var(--tx2)',target:SHRINK_TARGET_TOTAL,sub2:`${s.workdays} workdays · ${s.capacity} man-days`}
+  ];
+  sb.innerHTML=shrinkRows.map(r=>{
+    const overTarget=r.target&&r.pct>r.target;
+    const tgt=r.target?`<span style="font-size:10px;color:${overTarget?'var(--red)':'var(--tx3)'}">tgt ≤${r.target}% ${overTarget?'⚠':''}</span>`:'';
+    return `<tr>
+      <td><div style="font-size:13px;font-weight:600;color:${overTarget?'var(--red)':'var(--tx)'}">${r.label}</div><div style="font-size:10px;color:var(--tx3);margin-top:1px">${r.sub2}</div></td>
+      <td class="num" style="color:${overTarget?'var(--red)':'inherit'}">${r.n}</td>
+      <td class="num" style="color:${overTarget?'var(--red)':'inherit'}">${r.pct.toFixed(1)}%</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="ibar" style="flex:1"><span style="width:${Math.min(r.pct*3,100)}%;background:${r.c}"></span></div>${tgt}</div></td>
+    </tr>`;
+  }).join('');
+  // Weekly
+  const wb=document.querySelector('#weekly-table tbody');
+  wb.innerHTML=weeklyStats(y,m).map(w=>{
+    const tu=w.capacity?((w.capacity-w.absent)/w.capacity)*100:0;
+    const we=new Date(w.start);we.setDate(w.start.getDate()+6);
+    return `<tr><td>${w.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${we.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td><td class="num">${w.capacity}</td><td class="num">${w.absent}</td><td class="num" style="color:${tu>=85?'var(--green)':tu>=70?'var(--yellow)':'var(--red)'}">${tu.toFixed(1)}%</td></tr>`;
+  }).join('');
+  // Year table
+  const yb=document.querySelector('#year-table tbody');
+  let rows=[],totals={workdays:0,capacity:0,AL:0,MC:0,OIL:0,TRN:0,absent:0};
+  for(let mm=0;mm<12;mm++){
+    const st=statsForMonth(2026,mm);
+    totals.workdays+=st.workdays;totals.capacity+=st.capacity;totals.AL+=st.AL;totals.MC+=st.MC;totals.OIL+=st.OIL;totals.TRN+=st.TRN;totals.absent+=st.absent;
+    const isCur=mm===m;
+    const unplPct=st.capacity?(st.unplanned/st.capacity)*100:0;
+    rows.push(`<tr class="${isCur?'highlight':''}"><td>${monthName(mm)}</td><td class="num">${st.workdays}</td><td class="num">${st.capacity}</td><td class="num" style="color:var(--yellow)">${st.AL}</td><td class="num" style="color:var(--red)">${st.MC}</td><td class="num" style="color:var(--purple)">${st.OIL}</td><td class="num" style="color:var(--orange)">${st.TRN}</td><td class="num" style="color:${unplPct>SHRINK_TARGET_UNPLANNED?'var(--red)':unplPct>SHRINK_TARGET_UNPLANNED*0.7?'var(--yellow)':'var(--green)'}">${unplPct.toFixed(1)}%</td><td class="num" style="color:${st.shrink>SHRINK_TARGET_TOTAL?'var(--red)':st.shrink>SHRINK_TARGET_TOTAL*0.7?'var(--yellow)':'var(--green)'}">${st.shrink.toFixed(1)}%</td><td class="num" style="color:${st.turnup>=85?'var(--green)':st.turnup>=70?'var(--yellow)':'var(--red)'}">${st.turnup.toFixed(1)}%</td></tr>`);
+  }
+  const ts=totals.capacity?(totals.absent/totals.capacity)*100:0,tt=totals.capacity?((totals.capacity-totals.absent)/totals.capacity)*100:0;
+  rows.push(`<tr class="total-row"><td>TOTAL / YTD</td><td class="num">${totals.workdays}</td><td class="num">${totals.capacity}</td><td class="num">${totals.AL}</td><td class="num">${totals.MC}</td><td class="num">${totals.OIL}</td><td class="num">${totals.TRN}</td><td class="num">—</td><td class="num">${ts.toFixed(1)}%</td><td class="num">${tt.toFixed(1)}%</td></tr>`);
+  yb.innerHTML=rows.join('');
+}
+
+/* ─── STRENGTH CHART ──────────────────── */
+function renderStrength(){
+  const y=cursor.getFullYear(),m=cursor.getMonth(),dim=new Date(y,m+1,0).getDate();
+  const labels=[],floors=[],bgs=[],bds=[],meta=[];
+  for(let d=1;d<=dim;d++){
+    const dobj=new Date(y,m,d);if(isWeekend(dobj)||isPH(ymd(dobj)))continue;
+    labels.push(['Mon','Tue','Wed','Thu','Fri'][dobj.getDay()-1]+' '+d);
+    const f=floorForDay(ymd(dobj));
+    const sel=selForDay(ymd(dobj));
+    floors.push(f);bgs.push(bgc(f));bds.push(bdc(f));meta.push({d,f,sel,planned:PLANNED});
+  }
+  const vs=floors;
+  const avg=vs.length?+(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(1):PLANNED;
+  const low=vs.length?Math.min(...vs):PLANNED;
+  const crit=vs.filter(f=>f<=3).length;
+  const att=vs.length?Math.round((vs.reduce((a,b)=>a+b,0)/vs.length/PLANNED)*100):100;
+  document.getElementById('sl-avg').textContent=avg;document.getElementById('sl-avg').style.color=fc(Math.round(avg));
+  document.getElementById('sl-avg-box').className='stat-box '+fcl(Math.round(avg));
+  document.getElementById('sl-low').textContent=low;
+  document.getElementById('sl-crit').textContent=crit;
+  const ae=document.getElementById('sl-att');ae.textContent=att+'%';ae.style.color=att>=85?'var(--green)':att>=70?'var(--yellow)':'var(--red)';
+  const ctx=document.getElementById('strChart');
+  if(strChart){strChart.destroy();strChart=null;}
+  strChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Floor',data:floors,backgroundColor:bgs,borderColor:bds,borderWidth:1,borderRadius:5,borderSkipped:false,order:2},
+    {label:'Planned',data:labels.map(()=>PLANNED),type:'line',borderColor:'rgba(10,132,255,0.4)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false,tension:0,order:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(14,14,26,0.92)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'-apple-system,sans-serif',size:12},bodyFont:{family:'-apple-system,sans-serif',size:11},
+      callbacks:{title:i=>{const x=meta[i[0].dataIndex];return `${i[0].label} · ${x.f}/${x.planned} on floor`;},
+        label:i=>{if(i.datasetIndex===1)return `Planned: ${i.raw}`;const x=meta[i.dataIndex];const l=[];
+          if(x.sel.mc.length)l.push(`MC: ${x.sel.mc.join(', ')}`);
+          if(x.sel.al.length)l.push(`AL: ${x.sel.al.join(', ')}`);
+          if(x.sel.oil.length)l.push(`OIL: ${x.sel.oil.join(', ')}`);
+          if(x.sel.trn.length)l.push(`TRN: ${x.sel.trn.join(', ')}`);
+          if(!l.length)l.push('Full strength');return l;}}}},
+    scales:{x:{ticks:{font:{size:9},color:'rgba(255,255,255,0.28)',maxRotation:45},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
+            y:{min:0,max:PLANNED+1,ticks:{stepSize:1,font:{size:10},color:'rgba(255,255,255,0.28)',callback:v=>Number.isInteger(v)?v:''},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}}},
+    onClick:(_,els)=>{if(els.length)showBreakdown(meta[els[0].index]);}}});
+  document.getElementById('breakdown-row').innerHTML='<span class="br-hint">Click a bar to see who is absent that day</span>';
+}
+function showBreakdown(x){
+  const pres=AGENTS.filter(a=>!x.sel.mc.includes(a)&&!x.sel.al.includes(a)&&!x.sel.oil.includes(a)&&!x.sel.trn.includes(a));
+  let h=`<div style="font-size:10px;color:var(--tx3);width:100%;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Day ${x.d} · ${x.f}/${x.planned} on floor</div>`;
+  pres.forEach(n=>h+=`<span class="br-badge brp">● ${n}</span>`);
+  x.sel.mc.forEach(n=>h+=`<span class="br-badge brm">MC · ${n}</span>`);
+  x.sel.al.forEach(n=>h+=`<span class="br-badge bra">AL · ${n}</span>`);
+  x.sel.oil.forEach(n=>h+=`<span class="br-badge broi">OIL · ${n}</span>`);
+  x.sel.trn.forEach(n=>h+=`<span class="br-badge" style="background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border)">TRN · ${n}</span>`);
+  document.getElementById('breakdown-row').innerHTML=h;
+}
+
+/* ─── PER-AGENT VIEW ──────────────────── */
+function renderAgents(){
+  const grid=document.getElementById('agent-grid');grid.innerHTML='';
+  const wdTotal=workdaysInYear(2026);
+  AGENTS.forEach(a=>{
+    const s=statsForAgent(a);
+    const tot=s.AL+s.MC+s.OIL+s.TRN;
+    const tu=wdTotal?((wdTotal-tot)/wdTotal)*100:100;
+    // Payback
+    const agentHours=hoursLog.filter(e=>e.agent===a);
+    const owed=agentHours.filter(e=>!e.settled).reduce((s,e)=>s+e.hours,0);
+    const settled=agentHours.filter(e=>e.settled).reduce((s,e)=>s+e.hours,0);
+    const pbHtml=agentHours.length?`
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Hours Payback</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          ${owed>0?`<span style="font-size:12px;font-weight:600;color:var(--red)">Owes ${owed}h</span>`:''}
+          ${settled>0?`<span style="font-size:11px;color:var(--green)">Settled ${settled}h</span>`:''}
+          ${owed===0&&settled===0?'<span style="font-size:11px;color:var(--tx3)">—</span>':''}
+          <button onclick="openPaybackModal()" style="margin-left:auto;font-size:10px;padding:2px 9px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans)">View</button>
+        </div>
+      </div>`:'<div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>';
+    const ent=getEnt(a);
+    const rr=getAgentRoster(a);
+    const typeLabel={['full-timer']:'Full-timer',intern:'Intern',contract:'Contract'}[rr.type]||rr.type;
+    const typeColor={['full-timer']:'var(--blue)',intern:'var(--purple)',contract:'var(--yellow)'}[rr.type]||'var(--tx3)';
+    const typeBg={['full-timer']:'var(--blue-soft)',intern:'var(--purple-soft)',contract:'var(--yellow-soft)'}[rr.type]||'rgba(255,255,255,0.05)';
+    // Contract end warning
+    let contractHtml='';
+    if(rr.contractEnd){
+      const ce=new Date(rr.contractEnd+'T00:00:00');
+      const diffDays=Math.ceil((ce-new Date())/86400000);
+      if(diffDays<0) contractHtml=`<div style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)">Contract ended ${Math.abs(diffDays)}d ago</div>`;
+      else if(diffDays<=60) contractHtml=`<div style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">Contract ends in ${diffDays}d</div>`;
+      else contractHtml=`<div style="font-size:10px;color:var(--tx3)">Contract ends ${ce.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>`;
+    }
+    const alPct=ent.AL?Math.min(s.AL/ent.AL,1):0;
+    const mcPct=ent.MC?Math.min(s.MC/ent.MC,1):0;
+    const alOver=s.AL>ent.AL, mcOver=s.MC>ent.MC;
+    grid.innerHTML+=`<div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">${a}</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:${typeBg};color:${typeColor}">${typeLabel}</span>
+        ${contractHtml}
+      </div>
+      <div class="agent-card-role">YTD turn-up ${tu.toFixed(1)}%</div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Used</div>
+          <div class="ab-val" style="color:${alOver?'var(--red)':'var(--yellow)'}">${s.AL}</div>
+          <div class="ab-sub">/ ${ent.AL} days</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:${alPct*100}%;height:100%;background:${alOver?'var(--red)':'var(--yellow)'};border-radius:2px"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Used</div>
+          <div class="ab-val" style="color:${mcOver?'var(--red)':'var(--red)'}">${s.MC}</div>
+          <div class="ab-sub">/ ${ent.MC} days</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:${mcPct*100}%;height:100%;background:var(--red);border-radius:2px"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">${s.OIL}</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">${s.TRN}</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span>AL remaining: <strong style="color:${alOver?'var(--red)':'var(--tx)'}">${Math.max(0,ent.AL-s.AL)} days${alOver?' ⚠':''}</strong></span>
+        <span>MC remaining: <strong style="color:${mcOver?'var(--red)':'var(--tx)'}">${Math.max(0,ent.MC-s.MC)} days${mcOver?' ⚠':''}</strong></span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Roster →</button>
+      </div>
+      ${pbHtml}
+    </div>`;
+  });
+}
+
+/* ─── YEAR VIEW ───────────────────────── */
+function renderYear(){
+  const grid=document.getElementById('year-grid');grid.innerHTML='';
+  for(let mm=0;mm<12;mm++){
+    const card=document.createElement('div');card.className='mini-month';
+    card.innerHTML=`<div class="mini-month-title">${monthName(mm)} 2026</div>`;
+    const mg=document.createElement('div');mg.className='mini-grid';
+    const first=new Date(2026,mm,1),off=first.getDay(),last2=new Date(2026,mm+1,0).getDate();
+    for(let i=0;i<off;i++){const d=document.createElement('div');d.className='mini-day outside';mg.appendChild(d);}
+    for(let i=1;i<=last2;i++){
+      const dobj=new Date(2026,mm,i),key=ymd(dobj);
+      const absent=AGENTS.filter(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes((state[key]||{})[a])).length;
+      const cell=document.createElement('div');cell.className='mini-day'+(isWeekend(dobj)?' weekend':'')+(isPH(key)?' ph-d':'');
+      if(absent>0){
+        const pct=absent/AGENTS.length;
+        const r=Math.round(255*69/255*pct+255*(1-pct)),g=Math.round(69*pct+255*(1-pct)),b=Math.round(58*pct+255*(1-pct));
+        cell.style.background=`rgb(${r},${g},${b})`;
+      }
+      mg.appendChild(cell);
+    }
+    card.appendChild(mg);
+    card.addEventListener('click',()=>{cursor=new Date(2026,mm,1);sw('calendar');renderCalendar();});
+    grid.appendChild(card);
+  }
+}
+
+/* ─── MODAL ───────────────────────────── */
+function openModal(key){
+  modalKey=key;
+  const d=new Date(key+'T00:00:00');
+  document.getElementById('modal-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('modal-sub').textContent=isPH(key)?`Public Holiday: ${phMap[key]}`:isWeekend(d)?'Weekend':'Workday';
+  document.getElementById('ph-toggle').checked=isPH(key);
+  modalDraft={...((state[key])||{})};
+  const body=document.getElementById('modal-body');body.innerHTML='';
+
+  // Duration picker — default single day; extend to apply leave across a range
+  const durRow=document.createElement('div');
+  durRow.className='duration-row';
+  durRow.innerHTML=`
+    <div class="duration-label">Apply through</div>
+    <input type="date" class="duration-input" id="duration-end" value="${key}" min="${key}" max="2026-12-31">
+    <div class="duration-hint" id="duration-hint">Single day</div>`;
+  body.appendChild(durRow);
+  durRow.querySelector('#duration-end').addEventListener('change',updateDurationHint);
+
+  AGENTS.forEach(a=>{
+    const row=document.createElement('div');row.className='agent-row';
+    row.innerHTML=`<div class="agent-row-name">${a}</div><div class="status-group" data-agent="${a}"></div>`;
+    body.appendChild(row);
+    const group=row.querySelector('.status-group');
+    STATUSES.forEach(s=>{
+      const opt=document.createElement('span');
+      opt.className='status-opt';opt.dataset.v=s.v;opt.textContent=s.label;
+      const cur=modalDraft[a]||'W';
+      if(cur===s.v)opt.classList.add('active');
+      opt.addEventListener('click',()=>{
+        modalDraft[a]=s.v;
+        group.querySelectorAll('.status-opt').forEach(x=>x.classList.remove('active'));
+        opt.classList.add('active');
+      });
+      group.appendChild(opt);
+    });
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');modalKey=null;}
+function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+function updateDurationHint(){
+  const start=modalKey;
+  const endEl=document.getElementById('duration-end');
+  const hint=document.getElementById('duration-hint');
+  if(!endEl||!hint)return;
+  const end=endEl.value;
+  if(!end||end<=start){ hint.textContent='Single day'; hint.classList.remove('range'); return; }
+  // Count workdays in range
+  let count=0;
+  const sd=new Date(start+'T00:00:00'),ed=new Date(end+'T00:00:00');
+  for(let d=new Date(sd); d<=ed; d.setDate(d.getDate()+1)){
+    if(!isWeekend(d)&&!isPH(ymd(d))) count++;
+  }
+  hint.textContent=count+' workday'+(count===1?'':'s');
+  hint.classList.add('range');
+}
+function saveModal(){
+  pushUndo();
+  const key=modalKey;
+  const phOn=document.getElementById('ph-toggle').checked;
+  if(phOn&&!phMap[key]){phMap[key]='Public Holiday';save(PK,phMap);}
+  if(!phOn&&phMap[key]){delete phMap[key];save(PK,phMap);}
+  const clean={};
+  AGENTS.forEach(a=>{if(modalDraft[a]&&modalDraft[a]!=='W')clean[a]=modalDraft[a];});
+
+  // Range handling
+  const endEl=document.getElementById('duration-end');
+  const endStr=endEl?endEl.value:key;
+  const isRange = endStr && endStr > key;
+
+  if(isRange){
+    // Propagate per-agent leave statuses across all workdays in range (skip weekends/PHs)
+    const sd=new Date(key+'T00:00:00'),ed=new Date(endStr+'T00:00:00');
+    let touched=0;
+    for(let d=new Date(sd); d<=ed; d.setDate(d.getDate()+1)){
+      const k=ymd(d);
+      if(isWeekend(d)||isPH(k)) continue;
+      const existing=state[k]||{};
+      const merged={...existing};
+      AGENTS.forEach(a=>{
+        if(modalDraft[a] && modalDraft[a]!=='W') merged[a]=modalDraft[a];
+        else if(modalDraft[a]==='W' && k===key) delete merged[a]; // only the anchor day clears
+      });
+      if(Object.keys(merged).length) state[k]=merged; else delete state[k];
+      touched++;
+    }
+    save(SK,state);
+    const now=new Date(),d=new Date(key+'T00:00:00');
+    changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+      dateStr:`${d.toLocaleDateString('en-US',{day:'numeric',month:'short'})} – ${new Date(endStr+'T00:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}`,
+      key,floor:floorForDay(key),planned:PLANNED,agents:{...clean},range:touched});
+    save(LK,changelog);
+    closeModal();showToast(`Applied to ${touched} workday${touched===1?'':'s'}`);renderAll();
+    return;
+  }
+
+  if(Object.keys(clean).length)state[key]=clean;else delete state[key];
+  save(SK,state);
+  const now=new Date(),d=new Date(key+'T00:00:00');
+  const floor=floorForDay(key);
+  changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    dateStr:d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+    key,floor,planned:PLANNED,agents:{...clean}});
+  save(LK,changelog);
+  closeModal();showToast('Saved');renderAll();
+}
+
+/* ─── LONG LEAVE ──────────────────────── */
+let llAgent = null, llType = null;
+
+function openLongLeave(){
+  llAgent=null; llType=null;
+  // Build agent buttons
+  const agentDiv=document.getElementById('ll-agents');
+  agentDiv.innerHTML='';
+  AGENTS.forEach(a=>{
+    const btn=document.createElement('button');
+    btn.className='ll-agent-btn'; btn.textContent=a; btn.dataset.a=a;
+    btn.onclick=()=>{ llAgent=a; agentDiv.querySelectorAll('.ll-agent-btn').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); llPreview(); };
+    agentDiv.appendChild(btn);
+  });
+  // Reset type
+  ['AL','MC','OIL','TRN'].forEach(t=>document.getElementById('ll-t-'+t).className='ll-type-btn');
+  // Default dates to current month
+  const y=cursor.getFullYear(),m=cursor.getMonth();
+  document.getElementById('ll-from').value=`${y}-${pad(m+1)}-01`;
+  const last=new Date(y,m+1,0).getDate();
+  document.getElementById('ll-to').value=`${y}-${pad(m+1)}-${pad(last)}`;
+  document.getElementById('ll-skip-we').checked=true;
+  document.getElementById('ll-skip-ph').checked=true;
+  document.getElementById('ll-preview').innerHTML='Select an agent, leave type and date range to preview.';
+  document.getElementById('ll-overlay').classList.add('open');
+}
+function closeLongLeave(){ document.getElementById('ll-overlay').classList.remove('open'); }
+function llOverlayClick(e){ if(e.target===document.getElementById('ll-overlay'))closeLongLeave(); }
+
+function llSelectType(t){
+  llType=t;
+  ['AL','MC','OIL','TRN'].forEach(x=>{
+    const btn=document.getElementById('ll-t-'+x);
+    btn.className='ll-type-btn'+(x===t?' sel-'+x.toLowerCase():'');
+  });
+  llPreview();
+}
+
+function llGetDays(){
+  const from=document.getElementById('ll-from').value;
+  const to=document.getElementById('ll-to').value;
+  const skipWE=document.getElementById('ll-skip-we').checked;
+  const skipPH=document.getElementById('ll-skip-ph').checked;
+  if(!from||!to)return[];
+  const days=[];
+  const cur=new Date(from+'T00:00:00');
+  const end=new Date(to+'T00:00:00');
+  while(cur<=end){
+    const k=ymd(cur);
+    const we=cur.getDay()===0||cur.getDay()===6;
+    const ph=!!phMap[k];
+    if(!(skipWE&&we)&&!(skipPH&&ph)) days.push(k);
+    cur.setDate(cur.getDate()+1);
+  }
+  return days;
+}
+
+function llPreview(){
+  const days=llGetDays();
+  const prev=document.getElementById('ll-preview');
+  if(!llAgent&&!llType){prev.innerHTML='Select an agent, leave type and date range to preview.';return;}
+  if(!llAgent){prev.innerHTML='<span style="color:var(--yellow)">Select an agent.</span>';return;}
+  if(!llType){prev.innerHTML='<span style="color:var(--yellow)">Select a leave type.</span>';return;}
+  if(!days.length){prev.innerHTML='<span style="color:var(--red)">No valid days in range (check skip options).</span>';return;}
+  const typeColor=llType==='AL'?'var(--yellow)':llType==='MC'?'var(--red)':llType==='TRN'?'var(--orange)':'var(--purple)';
+  prev.innerHTML=`Will apply <strong style="color:${typeColor}">${llType}</strong> to <strong>${llAgent}</strong> on <span class="ll-cnt" style="color:${typeColor}">${days.length}</span> day${days.length!==1?'s':''} — <span style="color:var(--tx3)">${days[0]} → ${days[days.length-1]}</span>`;
+}
+
+function applyLongLeave(){
+  if(!llAgent||!llType){showToast('Pick agent & type');return;}
+  const days=llGetDays();
+  if(!days.length){showToast('No days in range');return;}
+  pushUndo();
+  days.forEach(k=>{
+    if(!state[k])state[k]={};
+    state[k][llAgent]=llType;
+  });
+  save(SK,state);
+  // Log one bulk entry
+  const now=new Date();
+  changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    dateStr:`${days[0]} → ${days[days.length-1]}`,
+    key:days[0],floor:null,planned:PLANNED,
+    agents:{[llAgent]:llType},bulk:true,bulkDays:days.length});
+  save(LK,changelog);
+  closeLongLeave();
+  showToast(`${llType} applied — ${days.length} days`);
+  renderAll();
+}
+
+/* ─── CHANGELOG ───────────────────────── */
+function renderLog(){
+  const c=document.getElementById('cl-container');
+  if(!changelog.length){c.innerHTML='<div class="cl-empty">No entries yet — edit a day to log it</div>';return;}
+  let h=`<div class="cl-wrap"><div class="cl-head-row"><div class="cl-head-label">Time</div><div class="cl-head-label">Date</div><div class="cl-head-label">Agents</div><div class="cl-head-label" style="text-align:right">Floor</div></div><div>`;
+  changelog.forEach(e=>{
+    const badges=Object.entries(e.agents).map(([a,v])=>{
+      const cls=v==='MC'?'clb-mc':v==='AL'?'clb-al':v==='OIL'?'clb-oil':v==='TRN'?'clb-trn':'';
+      const label=e.bulk?`${v}·${a} ×${e.bulkDays}d`:`${v}·${a}`;
+      return `<span class="cl-badge ${cls}">${label}</span>`;
+    }).join('');
+    const floorVal=e.floor!=null?`${e.floor}/${e.planned}`:'bulk';
+    h+=`<div class="cl-row"><div class="cl-time">${e.timeStr}</div><div class="cl-date">${e.dateStr}</div><div class="cl-detail">${badges||'<span style="color:var(--tx3);font-size:11px">All working</span>'}</div><div class="cl-floor" style="color:${e.floor!=null?fc(e.floor):'var(--purple)'}">${floorVal}</div></div>`;
+  });
+  h+='</div></div>';c.innerHTML=h;
+}
+function clearLog(){if(!confirm('Clear changelog?'))return;changelog=[];save(LK,changelog);renderLog();}
+
+/* ─── EXPORT / RESET ──────────────────── */
+function exportCSV(){
+  const rows=[['Date','Day','Type','Agent','Status']];
+  Object.keys(state).sort().forEach(k=>{
+    const d=new Date(k+'T00:00:00');
+    const type=isPH(k)?'PH':isWeekend(d)?'Weekend':'Workday';
+    AGENTS.forEach(a=>{const v=state[k][a];if(v)rows.push([k,d.toLocaleDateString('en-US',{weekday:'short'}),type,a,v]);});
+  });
+  rows.push([]);rows.push(['Month','Workdays','Capacity','AL','MC','OIL','TRN','PlannedShrink%','UnplannedShrink%','TotalShrink%','TurnUp%']);
+  for(let mm=0;mm<12;mm++){const s=statsForMonth(2026,mm);rows.push([monthName(mm),s.workdays,s.capacity,s.AL,s.MC,s.OIL,s.TRN,s.shrinkPlanned.toFixed(1),s.shrinkUnplanned.toFixed(1),s.shrink.toFixed(1),s.turnup.toFixed(1)]);}
+  const csv=rows.map(r=>r.map(c=>{const s=String(c??'');return/[,"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='send-ops-manpower-2026.csv';a.click();
+}
+function resetAll(){
+  if(!confirm('Clear all leave entries? Public holidays reset to Singapore defaults.'))return;
+  pushUndo();
+  state={};phMap={...SG_PH};save(SK,state);save(PK,phMap);showToast('Reset');renderAll();
+}
+
+/* ─── BACKUP / RESTORE (portable data) ────
+   Lets data travel with the HTML file. Without this, localStorage stays in
+   the browser+path where you saved entries — uploading to Drive or opening
+   on another machine starts fresh. Backup downloads a .json you keep next
+   to the HTML; Restore loads it back. */
+function backupData(){
+  const payload = {
+    schema: 'send-ops-manpower',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    agents: AGENTS,
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  const stamp = ymd(new Date());
+  a.href = URL.createObjectURL(blob);
+  a.download = `send-ops-manpower-${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Backup downloaded');
+}
+function restoreData(evt){
+  const file = evt.target.files && evt.target.files[0];
+  evt.target.value=''; // allow re-selecting same file later
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.schema !== 'send-ops-manpower') throw new Error('Not a Send Ops backup file');
+      const summary = `${Object.keys(data.state||{}).length} dated entries · ${Object.keys(data.phMap||{}).length} holidays · ${(data.hoursLog||[]).length} payback entries`;
+      if(!confirm(`Restore from backup?\n\n${summary}\n\nThis will OVERWRITE your current data.`)) return;
+      pushUndo();
+      state = data.state || {};
+      phMap = data.phMap || {...SG_PH};
+      hoursLog = data.hoursLog || [];
+      changelog = data.changelog || [];
+      opsData = data.opsData || {};
+      ordersData = data.ordersData || {};
+      hcLog = data.hcLog || [];
+      roster = data.roster || {};
+      save(SK,state); save(PK,phMap); save(HK,hoursLog); save(LK,changelog);
+      save(OPS_KEY,opsData); save(ORD_KEY,ordersData); save(HCL_KEY,hcLog); save(ROSTER_KEY,roster);
+      showToast('Data restored');
+      renderAll();
+    } catch(err) {
+      alert('Could not restore: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ─── GOOGLE SHEETS SYNC ────────────────────
+   Optional cloud sync via an Apps Script Web App. Without a URL configured,
+   the tracker behaves exactly as before (localStorage only). With a URL:
+   - On boot: pulls remote data and replaces local state
+   - On every save: debounced push to remote (1.5s after last edit)
+   - Sync status pill in topbar shows current state
+   Conflict policy: last write wins. */
+const SYNC_URL_KEY = 'sops-sync-url-v1';
+const SYNC_TS_KEY  = 'sops-sync-ts-v1';
+let _syncTimer = null;
+let _syncing = false;
+
+function getSyncUrl(){ return localStorage.getItem(SYNC_URL_KEY) || ''; }
+function setSyncUrl(u){
+  if(u) localStorage.setItem(SYNC_URL_KEY, u.trim());
+  else localStorage.removeItem(SYNC_URL_KEY);
+  updateSyncStatus();
+}
+
+function scheduleSync(){
+  if(!getSyncUrl()) return;
+  if(_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(pushToRemote, 1500);
+}
+
+function syncPayload(){
+  return {
+    schema: 'send-ops-manpower',
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    agents: AGENTS,
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster
+  };
+}
+
+async function pushToRemote(){
+  const url = getSyncUrl();
+  if(!url || _syncing) return;
+  _syncing = true;
+  setSyncStatus('syncing');
+  try {
+    // text/plain avoids CORS preflight; Apps Script reads e.postData.contents
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(syncPayload())
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    localStorage.setItem(SYNC_TS_KEY, data.savedAt || new Date().toISOString());
+    setSyncStatus('synced');
+  } catch (err) {
+    setSyncStatus('failed', err.message);
+  } finally {
+    _syncing = false;
+  }
+}
+
+async function pullFromRemote(opts){
+  const url = getSyncUrl();
+  if(!url) return false;
+  setSyncStatus('syncing');
+  try {
+    const resp = await fetch(url, { method:'GET', mode:'cors', redirect:'follow' });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    if(data.schema !== 'send-ops-manpower'){
+      // Sheet is empty — first time setup. Push local state to seed it.
+      if(opts && opts.allowSeed){ await pushToRemote(); setSyncStatus('synced'); return true; }
+      throw new Error('Sheet has no Send Ops data yet');
+    }
+    state = data.state || {};
+    phMap = data.phMap || {...SG_PH};
+    hoursLog = data.hoursLog || [];
+    changelog = data.changelog || [];
+    opsData = data.opsData || {};
+    ordersData = data.ordersData || {};
+    hcLog = data.hcLog || [];
+    roster = data.roster || {};
+    saveLocal(SK,state); saveLocal(PK,phMap); saveLocal(HK,hoursLog); saveLocal(LK,changelog);
+    saveLocal(OPS_KEY,opsData); saveLocal(ORD_KEY,ordersData); saveLocal(HCL_KEY,hcLog); saveLocal(ROSTER_KEY,roster);
+    localStorage.setItem(SYNC_TS_KEY, data.updatedAt || new Date().toISOString());
+    setSyncStatus('synced');
+    renderAll();
+    return true;
+  } catch (err) {
+    setSyncStatus('failed', err.message);
+    return false;
+  }
+}
+
+function setSyncStatus(state, detail){
+  const pill = document.getElementById('sync-pill');
+  if(!pill) return;
+  pill.classList.remove('s-local','s-syncing','s-synced','s-failed');
+  const lastTs = localStorage.getItem(SYNC_TS_KEY);
+  const rel = lastTs ? relTime(new Date(lastTs)) : '';
+  if(!getSyncUrl()){
+    pill.classList.add('s-local');
+    pill.innerHTML = '● Local only';
+    pill.title = 'Click to enable Google Sheets sync';
+    return;
+  }
+  if(state==='syncing'){ pill.classList.add('s-syncing'); pill.innerHTML='● Syncing…'; pill.title='Pushing to Sheet'; }
+  else if(state==='synced'){ pill.classList.add('s-synced'); pill.innerHTML='● Synced'+(rel?' · '+rel:''); pill.title='Sheet up to date · click to manage'; }
+  else if(state==='failed'){ pill.classList.add('s-failed'); pill.innerHTML='● Sync failed'; pill.title=(detail||'Sync error')+' · click to manage'; }
+  else { pill.classList.add('s-synced'); pill.innerHTML='● Synced'+(rel?' · '+rel:''); }
+}
+function relTime(d){
+  const s = Math.max(0,(Date.now()-d.getTime())/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function updateSyncStatus(){ setSyncStatus('synced'); /* refreshes label */ }
+
+function openSyncSettings(){
+  document.getElementById('sync-url-input').value = getSyncUrl();
+  document.getElementById('sync-test-result').textContent = '';
+  document.getElementById('sync-modal').classList.add('open');
+}
+function closeSyncSettings(){ document.getElementById('sync-modal').classList.remove('open'); }
+function syncOverlayClick(e){ if(e.target.id==='sync-modal') closeSyncSettings(); }
+
+async function syncTest(){
+  const url = document.getElementById('sync-url-input').value.trim();
+  const out = document.getElementById('sync-test-result');
+  if(!url){ out.textContent='Paste a URL first.'; out.style.color='var(--red)'; return; }
+  out.textContent='Testing…'; out.style.color='var(--tx2)';
+  try {
+    const resp = await fetch(url, {method:'GET',mode:'cors',redirect:'follow'});
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    const entries = data.state ? Object.keys(data.state).length : 0;
+    out.innerHTML = `<span style="color:var(--green)">✓ Connected</span> · ${entries} dated entries in sheet`;
+  } catch(err){
+    out.innerHTML = `<span style="color:var(--red)">✗ ${err.message}</span><br><span style="font-size:10px;color:var(--tx3)">Check that the script is deployed as Web app with "Anyone" access.</span>`;
+  }
+}
+function syncSave(){
+  const url = document.getElementById('sync-url-input').value.trim();
+  setSyncUrl(url);
+  closeSyncSettings();
+  showToast(url ? 'Sync enabled' : 'Sync disabled');
+}
+async function syncPullNow(){
+  if(!getSyncUrl()){ showToast('Set a URL first'); return; }
+  if(!confirm('Pull data from the Sheet? This will OVERWRITE your current local data.')) return;
+  await pullFromRemote();
+  closeSyncSettings();
+  showToast('Pulled from Sheet');
+}
+async function syncPushNow(){
+  if(!getSyncUrl()){ showToast('Set a URL first'); return; }
+  if(!confirm('Push your current local data to the Sheet? This will OVERWRITE what is in the Sheet.')) return;
+  if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer=null; }
+  await pushToRemote();
+  closeSyncSettings();
+  showToast('Pushed to Sheet');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+/* ─── INIT ────────────────────────────── */
+/* ─── HOURS PAYBACK ───────────────────── */
+function openPaybackModal(){
+  // populate agent select
+  const sel=document.getElementById('pb-agent');
+  sel.innerHTML='<option value="">— pick agent —</option>';
+  AGENTS.forEach(a=>sel.innerHTML+=`<option value="${a}">${a}</option>`);
+  // default date to today
+  const t=new Date(); document.getElementById('pb-date').value=ymd(t);
+  document.getElementById('pb-hours').value='';
+  document.getElementById('pb-reason').value='';
+  renderPaybackLog();
+  document.getElementById('pb-overlay').classList.add('open');
+}
+function closePaybackModal(){ document.getElementById('pb-overlay').classList.remove('open'); }
+function pbOverlayClick(e){ if(e.target===document.getElementById('pb-overlay'))closePaybackModal(); }
+
+function addPaybackEntry(){
+  const agent=document.getElementById('pb-agent').value;
+  const date=document.getElementById('pb-date').value;
+  const hours=parseFloat(document.getElementById('pb-hours').value);
+  const reason=document.getElementById('pb-reason').value.trim();
+  if(!agent){showToast('Select an agent');return;}
+  if(!date){showToast('Pick a date');return;}
+  if(!hours||hours<=0){showToast('Enter valid hours');return;}
+  const entry={id:Date.now(),agent,date,hours,reason:reason||'—',settled:false,ts:new Date().toISOString()};
+  hoursLog.unshift(entry);
+  save(HK,hoursLog);
+  document.getElementById('pb-hours').value='';
+  document.getElementById('pb-reason').value='';
+  renderPaybackLog();
+  renderAgents(); // refresh per-agent cards
+  showToast(`${hours}h logged for ${agent}`);
+}
+
+function toggleSettled(id){
+  const e=hoursLog.find(x=>x.id===id);
+  if(e){ e.settled=!e.settled; save(HK,hoursLog); renderPaybackLog(); renderAgents(); }
+}
+function deletePayback(id){
+  hoursLog=hoursLog.filter(x=>x.id!==id);
+  save(HK,hoursLog);
+  renderPaybackLog();
+  renderAgents();
+}
+
+function renderPaybackLog(){
+  const body=document.getElementById('pb-log-body');
+  if(!hoursLog.length){
+    body.innerHTML='<div style="padding:24px;text-align:center;font-size:12px;color:var(--tx3)">No payback entries yet.</div>';
+    return;
+  }
+  // Group by agent
+  const byAgent={};
+  AGENTS.forEach(a=>byAgent[a]=[]);
+  hoursLog.forEach(e=>{ if(byAgent[e.agent]) byAgent[e.agent].push(e); });
+
+  let html='';
+  AGENTS.forEach(agent=>{
+    const entries=byAgent[agent]; if(!entries.length)return;
+    const totalOwed=entries.filter(e=>!e.settled).reduce((s,e)=>s+e.hours,0);
+    const totalSettled=entries.filter(e=>e.settled).reduce((s,e)=>s+e.hours,0);
+    html+=`<div style="padding:8px 16px 4px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px">
+      <span style="font-size:13px;font-weight:600">${agent}</span>
+      ${totalOwed>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)">Owes ${totalOwed}h</span>`:''}
+      ${totalSettled>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--green-soft);color:var(--green);border:1px solid var(--green-border)">Settled ${totalSettled}h</span>`:''}
+    </div>`;
+    entries.forEach(e=>{
+      const d=new Date(e.date+'T00:00:00');
+      const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.04);${e.settled?'opacity:0.45':''}">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--tx2);width:110px;flex-shrink:0">${dateStr}</span>
+        <span style="font-size:13px;font-weight:600;color:${e.settled?'var(--green)':'var(--red)'};width:38px;flex-shrink:0">${e.hours}h</span>
+        <span style="font-size:12px;color:var(--tx2);flex:1">${e.reason}</span>
+        <button onclick="toggleSettled(${e.id})" title="${e.settled?'Mark unsettled':'Mark settled'}" style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:6px;border:1px solid ${e.settled?'var(--green-border)':'rgba(255,255,255,0.12)'};background:${e.settled?'var(--green-soft)':'rgba(255,255,255,0.05)'};color:${e.settled?'var(--green)':'var(--tx2)'};cursor:pointer;font-family:var(--sans)">${e.settled?'✓ Settled':'Mark settled'}</button>
+        <button onclick="deletePayback(${e.id})" title="Delete" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--red-border);background:var(--red-soft);color:var(--red);cursor:pointer;font-family:var(--sans)">✕</button>
+      </div>`;
+    });
+  });
+  body.innerHTML=html;
+}
+
+/* ─── UNDO / REDO ─────────────────────── */
+const UNDO_MAX = 50;
+let undoStack = []; // each entry: {state, phMap}
+let redoStack = [];
+
+function snapshotCurrent(){
+  return { state: JSON.parse(JSON.stringify(state)), phMap: JSON.parse(JSON.stringify(phMap)) };
+}
+function pushUndo(){
+  undoStack.push(snapshotCurrent());
+  if(undoStack.length > UNDO_MAX) undoStack.shift();
+  redoStack = []; // new action clears redo
+  updateUndoUI();
+}
+function doUndo(){
+  if(!undoStack.length) return;
+  redoStack.push(snapshotCurrent());
+  const snap = undoStack.pop();
+  state = snap.state; phMap = snap.phMap;
+  save(SK, state); save(PK, phMap);
+  updateUndoUI();
+  showToast('Undo ↩');
+  renderAll();
+}
+function doRedo(){
+  if(!redoStack.length) return;
+  undoStack.push(snapshotCurrent());
+  const snap = redoStack.pop();
+  state = snap.state; phMap = snap.phMap;
+  save(SK, state); save(PK, phMap);
+  updateUndoUI();
+  showToast('Redo ↪');
+  renderAll();
+}
+function updateUndoUI(){
+  const ub = document.getElementById('undo-btn');
+  const rb = document.getElementById('redo-btn');
+  if(ub){ ub.style.opacity = undoStack.length ? '1' : '0.35'; ub.style.pointerEvents = undoStack.length ? '' : 'none'; }
+  if(rb){ rb.style.opacity = redoStack.length ? '1' : '0.35'; rb.style.pointerEvents = redoStack.length ? '' : 'none'; }
+}
+
+/* ─── TAB PERSISTENCE ─────────────────── */
+function saveActiveTab(t){ try{ sessionStorage.setItem('sops-tab', t); }catch{} }
+function loadActiveTab(){ try{ return sessionStorage.getItem('sops-tab')||'calendar'; }catch{ return 'calendar'; } }
+
+/* ─── PAYBACK STRIP (calendar visibility) ─ */
+function renderPaybackStrip(){
+  const strip=document.getElementById('payback-strip');
+  if(!strip)return;
+  const balances=AGENTS.map(a=>{
+    const owed=hoursLog.filter(e=>e.agent===a && !e.settled).reduce((s,e)=>s+e.hours,0);
+    return {a, owed};
+  }).filter(x=>x.owed>0);
+  if(!balances.length){ strip.innerHTML=''; return; }
+  const totalOwed=balances.reduce((s,b)=>s+b.owed,0);
+  let html=`<div class="payback-strip-label">Payback Available · ${totalOwed}h total</div>`;
+  balances.sort((a,b)=>b.owed-a.owed).forEach(b=>{
+    html+=`<button class="payback-pill" onclick="openPaybackModal()" title="Click to view / settle ${b.a}'s payback hours">${b.a} <span class="h">${b.owed}h</span></button>`;
+  });
+  html+=`<button class="payback-pill action" onclick="openPaybackModal()">Manage →</button>`;
+  strip.innerHTML=html;
+}
+
+/* ─── ROSTER ─────────────────────────────── */
+const WORK_TYPES = [
+  {v:'full-timer', label:'Full-timer', cls:'wt-full'},
+  {v:'intern',     label:'Intern',     cls:'wt-intern'},
+  {v:'contract',   label:'Contract',   cls:'wt-contract'},
+];
+
+function renderRoster(){
+  const grid = document.getElementById('roster-grid');
+  grid.innerHTML = '';
+  AGENTS.forEach(a => {
+    const r = getAgentRoster(a);
+    // Contract end date status
+    let ceDateHtml = '';
+    if(r.contractEnd){
+      const ce = new Date(r.contractEnd+'T00:00:00');
+      const diff = Math.ceil((ce - new Date()) / 86400000);
+      if(diff < 0)
+        ceDateHtml = `<div class="roster-contract-end" style="margin-top:4px">Ended ${Math.abs(diff)} day${Math.abs(diff)!==1?'s':''} ago</div>`;
+      else if(diff <= 60)
+        ceDateHtml = `<div class="roster-contract-warn" style="margin-top:4px">Ends in ${diff} day${diff!==1?'s':''}</div>`;
+    }
+
+    const typeButtons = WORK_TYPES.map(t =>
+      `<button class="wtype-btn ${t.cls}${r.type===t.v?' active':''}" onclick="rosterSetType('${a}','${t.v}')">${t.label}</button>`
+    ).join('');
+
+    const card = document.createElement('div');
+    card.className = 'roster-card';
+    card.id = `rc-${a}`;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="roster-card-name">${a}</div>
+        <div class="roster-saved-tick" id="rtick-${a}">✓ Saved</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row">${typeButtons}</div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-${a}" value="${r.AL}" min="0" max="60"
+            onchange="saveRosterAgent('${a}')" oninput="saveRosterAgent('${a}')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-${a}" value="${r.MC}" min="0" max="60"
+            onchange="saveRosterAgent('${a}')" oninput="saveRosterAgent('${a}')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Contract / Last Day (optional)</label>
+        <input type="date" id="rent-end-${a}" value="${r.contractEnd||''}" max="2027-12-31"
+          onchange="saveRosterAgent('${a}')">
+        ${ceDateHtml}
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-${a}" value="${r.note||''}" placeholder="e.g. 6-month internship, renewal pending…"
+          onchange="saveRosterAgent('${a}')">
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function rosterSetType(agent, type){
+  // Update active button state immediately
+  WORK_TYPES.forEach(t => {
+    const btn = document.querySelector(`#rc-${agent} .${t.cls}`);
+    if(btn) btn.classList.toggle('active', t.v === type);
+  });
+  saveRosterAgent(agent, type);
+}
+
+function saveRosterAgent(agent, overrideType){
+  const al = document.getElementById(`rent-al-${agent}`)?.value;
+  const mc = document.getElementById(`rent-mc-${agent}`)?.value;
+  const contractEnd = document.getElementById(`rent-end-${agent}`)?.value || '';
+  const note = document.getElementById(`rent-note-${agent}`)?.value || '';
+  const existing = getAgentRoster(agent);
+  const type = overrideType || existing.type;
+  roster[agent] = { type, AL: +al||0, MC: +mc||0, contractEnd, note };
+  save(ROSTER_KEY, roster);
+  // Flash saved tick
+  const tick = document.getElementById(`rtick-${agent}`);
+  if(tick){ tick.classList.add('show'); setTimeout(()=>tick.classList.remove('show'), 1500); }
+  // Refresh contract end warning in-place without full re-render
+  const r = roster[agent];
+  const field = document.querySelector(`#rc-${agent} .roster-field`);
+  if(field){
+    const existing = field.querySelector('.roster-contract-warn, .roster-contract-end');
+    if(existing) existing.remove();
+    if(r.contractEnd){
+      const ce = new Date(r.contractEnd+'T00:00:00');
+      const diff = Math.ceil((ce - new Date()) / 86400000);
+      let warn = null;
+      if(diff < 0){ warn = document.createElement('div'); warn.className='roster-contract-end'; warn.style.marginTop='4px'; warn.textContent=`Ended ${Math.abs(diff)} day${Math.abs(diff)!==1?'s':''} ago`; }
+      else if(diff<=60){ warn = document.createElement('div'); warn.className='roster-contract-warn'; warn.style.marginTop='4px'; warn.textContent=`Ends in ${diff} day${diff!==1?'s':''}`; }
+      if(warn) field.appendChild(warn);
+    }
+  }
+}
+
+/* ─── FORECAST ─────────────────────────── */
+function renderForecast(){
+  const grid=document.getElementById('forecast-grid');
+  grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  // Collect next 28 calendar days, grouped by week
+  const weeks=[];
+  let cur=new Date(today);
+  let wDays=null;
+  for(let i=0;i<28;i++){
+    const d=new Date(cur);
+    const dow=d.getDay();
+    if(dow===1||!wDays){ // Start new bucket on Monday or first day
+      if(wDays) weeks.push(wDays);
+      wDays={start:new Date(d),days:[]};
+    }
+    wDays.days.push(d);
+    cur.setDate(cur.getDate()+1);
+  }
+  if(wDays&&wDays.days.length) weeks.push(wDays);
+
+  if(!weeks.length){
+    grid.innerHTML='<div style="padding:24px;color:var(--tx3);font-size:13px">No upcoming workdays found.</div>';
+    return;
+  }
+
+  weeks.forEach(w=>{
+    const wEnd=w.days[w.days.length-1];
+    const wLabel=w.start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' – '+wEnd.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden';
+    let hdr=`<div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:12px;font-weight:600;color:var(--tx2)">${wLabel}</div>
+    </div>`;
+    let rows='';
+    const workdaysInWeek=w.days.filter(d=>isWorkday(d));
+    if(!workdaysInWeek.length){
+      rows='<div style="padding:12px 16px;font-size:12px;color:var(--tx3)">No workdays this period (all weekends/PHs)</div>';
+    } else {
+      rows='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;background:rgba(255,255,255,0.04)">';
+      workdaysInWeek.forEach(d=>{
+        const key=ymd(d);
+        const f=floorForDay(key);
+        const sel=selForDay(key);
+        const isToday=ymd(d)===ymd(new Date());
+        const dayLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate()+'/'+pad(d.getMonth()+1);
+        const absList=[...sel.al.map(n=>`<div style="font-size:10px;color:var(--yellow)">${n} AL</div>`),
+                       ...sel.mc.map(n=>`<div style="font-size:10px;color:var(--red)">${n} MC</div>`),
+                       ...sel.oil.map(n=>`<div style="font-size:10px;color:var(--purple)">${n} OIL</div>`),
+                       ...sel.trn.map(n=>`<div style="font-size:10px;color:var(--orange)">${n} TRN</div>`)].join('');
+        const fColor=fc(f);
+        rows+=`<div style="padding:10px 14px;background:rgba(0,0,0,0.15)${isToday?';border:1px solid rgba(10,132,255,0.3);border-radius:8px':''};position:relative">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-size:11px;font-weight:600;color:var(--tx2)${isToday?';color:var(--blue)':''}">${dayLabel}${isToday?' ·today':''}</div>
+            <div style="font-size:18px;font-weight:700;color:${fColor};line-height:1">${f}</div>
+          </div>
+          <div style="font-size:9px;color:var(--tx3);margin-bottom:4px">of ${PLANNED} on floor</div>
+          ${absList||'<div style="font-size:10px;color:var(--green)">Full strength</div>'}
+        </div>`;
+      });
+      rows+='</div>';
+    }
+    card.innerHTML=hdr+rows;
+    grid.appendChild(card);
+  });
+}
+
+/* ─── INSIGHTS ──────────────────────────── */
+function renderInsights(){
+  const body=document.getElementById('insights-body');
+  body.innerHTML='';
+
+  // Per-agent MC by day-of-week
+  const dowNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const agentMC={}; // {agent: {dow: count, total, lastMC}}
+  AGENTS.forEach(a=>{ agentMC[a]={dow:[0,0,0,0,0,0,0],total:0,dates:[]}; });
+  Object.keys(state).sort().forEach(k=>{
+    const d=new Date(k+'T00:00:00'); if(!isWorkday(d)) return;
+    AGENTS.forEach(a=>{
+      if(state[k][a]==='MC'){ agentMC[a].dow[d.getDay()]++; agentMC[a].total++; agentMC[a].dates.push(k); }
+    });
+  });
+
+  // Rolling 30-day unplanned rate (MC only)
+  const today=new Date(); today.setHours(0,0,0,0);
+  const day30ago=new Date(today); day30ago.setDate(today.getDate()-30);
+  const agentMC30={}; AGENTS.forEach(a=>{ agentMC30[a]=0; });
+  let workdays30=0;
+  for(let d=new Date(day30ago);d<=today;d.setDate(d.getDate()+1)){
+    if(!isWorkday(d)) continue; workdays30++;
+    const k=ymd(d);
+    AGENTS.forEach(a=>{ if((state[k]||{})[a]==='MC') agentMC30[a]++; });
+  }
+
+  // Team DOW pattern (are certain days worse?)
+  const teamDow=[0,0,0,0,0,0,0];
+  AGENTS.forEach(a=>{ a; agentMC[a].dow.forEach((n,i)=>teamDow[i]+=n); });
+  const totalMC=teamDow.reduce((s,n)=>s+n,0);
+
+  // ─── CARD 1: Team DOW pattern
+  const card1=document.createElement('div');
+  card1.style.cssText='background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px';
+  let dowBar='';
+  const maxDow=Math.max(...teamDow,1);
+  [1,2,3,4,5].forEach(dow=>{ // Mon–Fri only
+    const n=teamDow[dow]; const pct=Math.round(n/maxDow*100);
+    const teamPct=totalMC?((n/totalMC)*100).toFixed(0):0;
+    dowBar+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:30px;font-size:11px;font-weight:600;color:var(--tx2)">${dowNames[dow]}</div>
+      <div style="flex:1;height:14px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;opacity:0.75"></div>
+      </div>
+      <div style="width:40px;text-align:right;font-size:11px;color:${n>=2?'var(--red)':n===1?'var(--yellow)':'var(--tx3)'}">${n} (${teamPct}%)</div>
+    </div>`;
+  });
+  card1.innerHTML=`<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Team MC by Day of Week</div>
+    ${totalMC===0?'<div style="font-size:13px;color:var(--green)">No MC absences logged yet — clean record.</div>':dowBar}`;
+  body.appendChild(card1);
+
+  // ─── CARD 2: Per-agent rolling 30-day MC rate + pattern flags
+  const card2=document.createElement('div');
+  card2.style.cssText='background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px';
+  let agRows='';
+  AGENTS.forEach(a=>{
+    const mc30=agentMC30[a];
+    const rate30=workdays30?(mc30/workdays30*100).toFixed(1):0;
+    const total=agentMC[a].total;
+    // Flag: any single DOW accounts for ≥50% of absences (pattern)
+    const maxDowA=Math.max(...agentMC[a].dow);
+    const patternDow=maxDowA>=2&&total>0&&maxDowA/total>=0.5;
+    const patternDowName=patternDow?dowNames[agentMC[a].dow.indexOf(maxDowA)]:'';
+    const flag30=+rate30>SHRINK_TARGET_UNPLANNED;
+    agRows+=`<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div style="min-width:80px;font-size:13px;font-weight:600">${a}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${flag30?'var(--red-soft)':'rgba(255,255,255,0.05)'};color:${flag30?'var(--red)':'var(--tx3)'};border:1px solid ${flag30?'var(--red-border)':'transparent'}">
+          30d rate: ${rate30}%${flag30?' ⚠':''}
+        </span>
+        <span style="font-size:11px;color:var(--tx3)">YTD: ${total} MC day${total!==1?'s':''}</span>
+        ${patternDow?`<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">Pattern: often ${patternDowName}</span>`:''}
+      </div>
+    </div>`;
+  });
+  card2.innerHTML=`<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Per-Agent · Rolling 30-Day MC Rate</div>${agRows}
+    <div style="margin-top:8px;font-size:10px;color:var(--tx3)">Target: unplanned (MC) shrinkage ≤${SHRINK_TARGET_UNPLANNED}% · Pattern flag triggers when 1 day of week accounts for ≥50% of an agent's MC</div>`;
+  body.appendChild(card2);
+}
+
+/* ─── HEADCOUNT LOG ─────────────────────── */
+function renderHeadcount(){
+  // Default date to today
+  if(!document.getElementById('hc-date').value){
+    document.getElementById('hc-date').value=ymd(new Date());
+  }
+  const body=document.getElementById('hc-log-body');
+  if(!hcLog.length){
+    body.innerHTML='<div style="padding:24px;text-align:center;font-size:13px;color:var(--tx3)">No headcount events logged yet.</div>';
+    return;
+  }
+  const typeStyles={
+    hire:'background:var(--green-soft);color:var(--green);border:1px solid var(--green-border)',
+    departure:'background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)',
+    adjustment:'background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-border)'
+  };
+  let html='<div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden">';
+  html+='<div style="display:grid;grid-template-columns:110px 90px 1fr 1fr 32px;gap:0;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.06)"><div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)">Date</div><div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)">Type</div><div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)">Agent / Name</div><div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)">Note</div><div></div></div>';
+  [...hcLog].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
+    const d=new Date(e.date+'T00:00:00');
+    const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    const ts=typeStyles[e.type]||typeStyles.adjustment;
+    html+=`<div style="display:grid;grid-template-columns:110px 90px 1fr 1fr 32px;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center">
+      <div style="font-size:12px;color:var(--tx2)">${dateStr}</div>
+      <div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;${ts}">${e.type.charAt(0).toUpperCase()+e.type.slice(1)}</span></div>
+      <div style="font-size:13px;font-weight:500">${e.agent||'—'}</div>
+      <div style="font-size:12px;color:var(--tx2)">${e.note||'—'}</div>
+      <button onclick="deleteHCEvent(${e.id})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--red-border);background:var(--red-soft);color:var(--red);cursor:pointer;font-family:var(--sans)">✕</button>
+    </div>`;
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+function addHeadcountEvent(){
+  const date=document.getElementById('hc-date').value;
+  const type=document.getElementById('hc-type').value;
+  const agent=document.getElementById('hc-agent').value.trim();
+  const note=document.getElementById('hc-note').value.trim();
+  if(!date){showToast('Pick a date');return;}
+  if(!agent){showToast('Enter a name');return;}
+  const entry={id:Date.now(),date,type,agent,note,ts:new Date().toISOString()};
+  hcLog.unshift(entry);
+  save(HCL_KEY,hcLog);
+  document.getElementById('hc-agent').value='';
+  document.getElementById('hc-note').value='';
+  renderHeadcount();
+  showToast(`${type} logged for ${agent}`);
+}
+
+function deleteHCEvent(id){
+  if(!confirm('Remove this headcount event?'))return;
+  hcLog=hcLog.filter(e=>e.id!==id);
+  save(HCL_KEY,hcLog);
+  renderHeadcount();
+}
+
+/* ─── INIT ────────────────────────────── */
+function renderAll(){
+  document.getElementById('monthLabel').textContent=monthName(cursor.getMonth())+' '+cursor.getFullYear();
+  const activeSubTab = document.querySelector('#subtabbar-manpower .tab.active');
+  const tab = activeSubTab ? activeSubTab.id.replace('t-','') : 'calendar';
+  renderDaily();
+  if(tab==='calendar'){ renderCalendar(); renderPaybackStrip(); }
+  if(tab==='dashboard')renderDashboard();
+  if(tab==='strength')renderStrength();
+  if(tab==='agents')renderAgents();
+  if(tab==='year')renderYear();
+  if(tab==='log')renderLog();
+  if(tab==='forecast')renderForecast();
+  if(tab==='insights')renderInsights();
+  if(tab==='headcount')renderHeadcount();
+  if(tab==='roster')renderRoster();
+}
+
+document.addEventListener('keydown', e => {
+  // Ignore shortcuts when typing in an input/textarea
+  const tag = document.activeElement?.tagName;
+  const inInput = tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
+
+  if(e.key === 'Escape'){ closeModal(); closeLongLeave(); closePaybackModal(); return; }
+  const ctrl = e.ctrlKey || e.metaKey;
+  if(ctrl && e.key === 'z' && !e.shiftKey){ e.preventDefault(); doUndo(); return; }
+  if(ctrl && (e.key === 'y' || (e.key === 'z' && e.shiftKey))){ e.preventDefault(); doRedo(); return; }
+
+  if(!inInput && !ctrl){
+    if(e.key === 'm' || e.key === 'M'){ setCalView('month'); return; }
+    if(e.key === 'w' || e.key === 'W'){ setCalView('week'); return; }
+  }
+});
+
+// Init: restore last active tab, default to calendar
+swMain('manpower');
+sw(loadActiveTab());
+renderAll();
+updateUndoUI();
+updateSyncStatus();
+
+// Boot sync: if a sync URL is configured, pull remote state and re-render
+(async function bootSync(){
+  if(!getSyncUrl()) return;
+  await pullFromRemote();
+})();
+
+// First-load nudge: if there's no existing data AND no sync configured,
+// offer Restore (from backup) OR Sync setup
+(function nudgeRestore(){
+  const isEmpty = !load(SK) && !load(HK) && !load(LK);
+  if(!isEmpty || getSyncUrl()) return;
+  setTimeout(()=>{
+    const nudge=document.createElement('div');
+    nudge.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(18,18,28,0.95);border:1px solid var(--blue-border);backdrop-filter:blur(20px);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:10px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.5);flex-wrap:wrap;max-width:90vw'
+    nudge.innerHTML=`<div style="font-size:13px;color:var(--tx)">No data yet — how do you want to start?</div>
+      <button onclick="openSyncSettings();this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">⚙ Connect Sheet</button>
+      <button onclick="document.getElementById('restore-input').click();this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--green-border);background:var(--green-soft);color:var(--green);cursor:pointer">⇧ Restore JSON</button>
+      <button onclick="this.parentNode.remove()" style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Start fresh</button>`;
+    document.body.appendChild(nudge);
+  }, 600);
+})();
+
+// Refresh the "X minutes ago" label on the sync pill periodically
+setInterval(()=>{ if(getSyncUrl()) updateSyncStatus(); }, 30000);
+
+/* ═══════════════════════════════════════════════════════════
+   DAILY OPS SNAPSHOT
+═══════════════════════════════════════════════════════════ */
+let opsCursor = new Date(); opsCursor.setHours(0,0,0,0);
+
+function opsDayLabel(){ return opsCursor.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'}); }
+function opsPrevDay(){ opsCursor.setDate(opsCursor.getDate()-1); renderOpsSnapshot(); }
+function opsNextDay(){ opsCursor.setDate(opsCursor.getDate()+1); renderOpsSnapshot(); }
+function opsGoToday(){ opsCursor=new Date(); opsCursor.setHours(0,0,0,0); renderOpsSnapshot(); }
+
+function renderOpsSnapshot(){
+  const k=ymd(opsCursor), d=opsData[k]||{};
+  document.getElementById('ops-day-label').textContent = opsDayLabel();
+  document.getElementById('ops-buddies').value  = d.buddies  ?? '';
+  document.getElementById('ops-orders').value   = d.orders   ?? '';
+  document.getElementById('ops-completion').value = d.completion ?? '';
+  document.getElementById('ops-incidents').value = d.incidents ?? '';
+  document.getElementById('ops-avgtime').value  = d.avgtime  ?? '';
+  document.getElementById('ops-notes').value    = d.notes    || '';
+  renderOpsHistory();
+}
+
+function saveOpsDay(){
+  const k=ymd(opsCursor);
+  const buddies=document.getElementById('ops-buddies').value;
+  const orders=document.getElementById('ops-orders').value;
+  const completion=document.getElementById('ops-completion').value;
+  const incidents=document.getElementById('ops-incidents').value;
+  const avgtime=document.getElementById('ops-avgtime').value;
+  const notes=document.getElementById('ops-notes').value.trim();
+  if(!buddies&&!orders&&!completion&&!incidents&&!avgtime&&!notes){ delete opsData[k]; }
+  else {
+    opsData[k]={
+      buddies:   buddies    ? +buddies    : null,
+      orders:    orders     ? +orders     : null,
+      completion:completion ? +completion : null,
+      incidents: incidents  ? +incidents  : null,
+      avgtime:   avgtime    ? +avgtime    : null,
+      notes:     notes || null
+    };
+  }
+  save(OPS_KEY,opsData);
+  renderOpsHistory();
+  showToast('Ops saved');
+}
+
+function renderOpsHistory(){
+  const body=document.getElementById('ops-history-body');
+  const keys=Object.keys(opsData).sort().reverse().slice(0,14);
+  if(!keys.length){ body.innerHTML='<div style="padding:28px;text-align:center;font-size:12px;color:var(--tx3)">No data logged yet — enter today\'s metrics and save.</div>'; return; }
+  const todayKey=ymd(new Date());
+  let h='<table class="glass-table" style="width:100%"><thead><tr><th>Date</th><th class="num">Buddies</th><th class="num">Orders</th><th class="num">Completion</th><th class="num">Incidents</th><th class="num">Avg Time</th><th>Notes</th></tr></thead><tbody>';
+  keys.forEach(k=>{
+    const d=opsData[k], isToday=k===todayKey;
+    const date=new Date(k+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    const comp=d.completion!=null?`<span style="color:${d.completion>=90?'var(--green)':d.completion>=75?'var(--yellow)':'var(--red)'}">${d.completion}%</span>`:'—';
+    const inc=d.incidents!=null?`<span style="color:${d.incidents===0?'var(--green)':d.incidents<=3?'var(--yellow)':'var(--red)'}">${d.incidents}</span>`:'—';
+    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.buddies??'—'}</td><td class="num">${d.orders??'—'}</td><td class="num">${comp}</td><td class="num">${inc}</td><td class="num">${d.avgtime!=null?d.avgtime+'m':'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.notes||''}</td></tr>`;
+  });
+  h+='</tbody></table>';
+  body.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INCIDENT ANALYSIS
+═══════════════════════════════════════════════════════════ */
+const INC_MAP_KEY='sops-inc-map-v1';
+let incRows=[], incHeaders=[], incTypeChart_inst=null, incTrendChart_inst=null;
+
+function incDragOver(e){ e.preventDefault(); document.getElementById('inc-drop-zone').classList.add('drag-over'); }
+function incDragLeave(){ document.getElementById('inc-drop-zone').classList.remove('drag-over'); }
+function incDrop(e){ e.preventDefault(); document.getElementById('inc-drop-zone').classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f)processIncFile(f); }
+function incFileSelected(e){ const f=e.target.files[0]; if(f)processIncFile(f); e.target.value=''; }
+
+function processIncFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const parsed=parseCSVText(ev.target.result);
+    if(!parsed.headers.length){ showToast('Could not parse CSV'); return; }
+    incHeaders=parsed.headers; incRows=parsed.rows;
+    document.getElementById('inc-upload-section').style.display='none';
+    document.getElementById('inc-mapper-section').style.display='';
+    document.getElementById('inc-file-info').textContent=`${file.name} · ${incRows.length.toLocaleString()} rows · ${incHeaders.length} columns`;
+    buildIncColMapper();
+    const saved=load(INC_MAP_KEY);
+    if(saved&&incHeaders.includes(saved.date)&&incHeaders.includes(saved.type)){
+      ['date','type','status','resolution'].forEach(k=>{ const el=document.getElementById('inc-map-'+k); if(el&&saved[k])el.value=saved[k]; });
+      analyseIncidents();
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVText(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(!lines.length) return {headers:[],rows:[]};
+  const sep=lines[0].includes('\t')?'\t':',';
+  const parseRow=line=>{
+    const res=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ; }
+      else if(c===sep&&!inQ){res.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    res.push(cur.trim()); return res;
+  };
+  const headers=parseRow(lines[0]);
+  const rows=lines.slice(1).filter(l=>l.trim()).map(l=>{
+    const vals=parseRow(l); const obj={};
+    headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
+  });
+  return {headers,rows};
+}
+
+function buildIncColMapper(){
+  const saved=load(INC_MAP_KEY)||{};
+  const fields=[
+    {id:'date',    label:'Date column',                     required:true},
+    {id:'type',    label:'Incident type column',            required:true},
+    {id:'status',  label:'Status column',                   required:false},
+    {id:'resolution',label:'Resolution time column (optional)',required:false}
+  ];
+  let h='';
+  fields.forEach(f=>{
+    const selVal=saved[f.id]&&incHeaders.includes(saved[f.id])?saved[f.id]:'';
+    const opts=['— skip —',...incHeaders].map(hdr=>{
+      const v=hdr==='— skip —'?'':hdr;
+      return `<option value="${v}"${v===selVal?' selected':''}>${hdr}</option>`;
+    }).join('');
+    h+=`<div><div class="cm-label">${f.label}</div><select class="cm-select" id="inc-map-${f.id}">${opts}</select></div>`;
+  });
+  document.getElementById('inc-col-mapper').innerHTML=h;
+}
+
+function analyseIncidents(){
+  const dateCol=document.getElementById('inc-map-date').value;
+  const typeCol=document.getElementById('inc-map-type').value;
+  const statusCol=document.getElementById('inc-map-status').value;
+  if(!dateCol||!typeCol){ showToast('Map at least Date and Type'); return; }
+  localStorage.setItem(INC_MAP_KEY,JSON.stringify({date:dateCol,type:typeCol,status:statusCol,resolution:document.getElementById('inc-map-resolution').value}));
+  const rows=incRows.filter(r=>r[typeCol]);
+  const total=rows.length;
+  const isOpen=s=>{ const l=(s||'').toLowerCase(); return l.includes('open')||l.includes('pending')||l.includes('new'); };
+  const isResolved=s=>{ const l=(s||'').toLowerCase(); return l.includes('resolv')||l.includes('closed')||l.includes('done'); };
+  const openCount=statusCol?rows.filter(r=>isOpen(r[statusCol])).length:null;
+  const resolvedCount=statusCol?rows.filter(r=>isResolved(r[statusCol])).length:null;
+  // KPIs
+  let kpiH=`<div class="kpi"><div class="kpi-label">Total Incidents</div><div class="kpi-value" style="color:var(--tx)">${total.toLocaleString()}</div></div>`;
+  if(openCount!=null) kpiH+=`<div class="kpi bad"><div class="kpi-label">Open</div><div class="kpi-value">${openCount.toLocaleString()}</div><div class="kpi-delta">${((openCount/total)*100).toFixed(1)}% of total</div></div>`;
+  if(resolvedCount!=null) kpiH+=`<div class="kpi good"><div class="kpi-label">Resolved</div><div class="kpi-value">${resolvedCount.toLocaleString()}</div><div class="kpi-delta">${((resolvedCount/total)*100).toFixed(1)}% of total</div></div>`;
+  kpiH+=`<div class="kpi"><div class="kpi-label">Incident Types</div><div class="kpi-value" style="color:var(--blue)">${new Set(rows.map(r=>r[typeCol])).size}</div></div>`;
+  document.getElementById('inc-kpi-row').innerHTML=kpiH;
+  // Type breakdown
+  const typeCounts={};
+  rows.forEach(r=>{ const t=r[typeCol]||'Unknown'; typeCounts[t]=(typeCounts[t]||0)+1; });
+  const typeSorted=Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  // Type chart
+  if(incTypeChart_inst){incTypeChart_inst.destroy();incTypeChart_inst=null;}
+  incTypeChart_inst=new Chart(document.getElementById('incTypeChart').getContext('2d'),{
+    type:'bar',
+    data:{ labels:typeSorted.map(([t])=>t), datasets:[{data:typeSorted.map(([,c])=>c),backgroundColor:'rgba(10,132,255,0.55)',borderColor:'rgba(10,132,255,1)',borderWidth:1,borderRadius:4}] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'rgba(255,255,255,0.4)',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'}}, y:{ticks:{color:'rgba(255,255,255,0.7)',font:{size:11}},grid:{display:false}} } }
+  });
+  // Weekly trend
+  const weekBuckets={};
+  rows.forEach(r=>{ const d=new Date(r[dateCol]); if(isNaN(d.getTime()))return; const sun=new Date(d); sun.setDate(d.getDate()-d.getDay()); sun.setHours(0,0,0,0); const k=ymd(sun); weekBuckets[k]=(weekBuckets[k]||0)+1; });
+  const weekKeys=Object.keys(weekBuckets).sort().slice(-12);
+  if(incTrendChart_inst){incTrendChart_inst.destroy();incTrendChart_inst=null;}
+  incTrendChart_inst=new Chart(document.getElementById('incTrendChart').getContext('2d'),{
+    type:'line',
+    data:{ labels:weekKeys.map(k=>{const d=new Date(k+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}),
+      datasets:[{data:weekKeys.map(k=>weekBuckets[k]),borderColor:'rgba(10,132,255,1)',backgroundColor:'rgba(10,132,255,0.1)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'rgba(10,132,255,1)'}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'rgba(255,255,255,0.4)',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'}}, y:{ticks:{color:'rgba(255,255,255,0.4)',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},beginAtZero:true} } }
+  });
+  // Breakdown table
+  const tbody=document.querySelector('#inc-breakdown-table tbody');
+  tbody.innerHTML=typeSorted.map(([type,count])=>{
+    const tr=rows.filter(r=>r[typeCol]===type);
+    const tOpen=statusCol?tr.filter(r=>isOpen(r[statusCol])).length:'—';
+    const tResolved=statusCol?tr.filter(r=>isResolved(r[statusCol])).length:'—';
+    const pct=((count/total)*100).toFixed(1);
+    const barW=Math.round((count/typeSorted[0][1])*80);
+    return `<tr><td>${type}</td><td class="num">${count}</td><td class="num"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><span>${pct}%</span><div class="ibar"><span style="width:${barW}%;background:var(--blue);display:block;height:100%;border-radius:3px"></span></div></div></td><td class="num">${typeof tOpen==='number'?`<span style="color:var(--red)">${tOpen}</span>`:tOpen}</td><td class="num">${typeof tResolved==='number'?`<span style="color:var(--green)">${tResolved}</span>`:tResolved}</td></tr>`;
+  }).join('');
+  document.getElementById('inc-results-section').style.display='';
+}
+
+function incReset(){
+  incRows=[]; incHeaders=[];
+  document.getElementById('inc-upload-section').style.display='';
+  document.getElementById('inc-mapper-section').style.display='none';
+  document.getElementById('inc-results-section').style.display='none';
+  if(incTypeChart_inst){incTypeChart_inst.destroy();incTypeChart_inst=null;}
+  if(incTrendChart_inst){incTrendChart_inst.destroy();incTrendChart_inst=null;}
+}
+function renderIncidents(){
+  if(!incRows.length){
+    document.getElementById('inc-upload-section').style.display='';
+    document.getElementById('inc-mapper-section').style.display='none';
+    document.getElementById('inc-results-section').style.display='none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ORDER VOLUME
+═══════════════════════════════════════════════════════════ */
+let ordCursor=new Date(); ordCursor.setHours(0,0,0,0);
+let ordTrendChart_inst=null;
+
+function ordDayLabel(){ return ordCursor.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'}); }
+function ordPrevDay(){ ordCursor.setDate(ordCursor.getDate()-1); renderOrders(); }
+function ordNextDay(){ ordCursor.setDate(ordCursor.getDate()+1); renderOrders(); }
+function ordGoToday(){ ordCursor=new Date(); ordCursor.setHours(0,0,0,0); renderOrders(); }
+
+function updateOrdRate(){
+  const total=+document.getElementById('ord-total').value||0;
+  const completed=+document.getElementById('ord-completed').value||0;
+  const disp=document.getElementById('ord-rate-display');
+  const unit=document.getElementById('ord-rate-unit');
+  if(total>0&&completed>0){
+    const rate=((completed/total)*100).toFixed(1);
+    disp.textContent=rate;
+    disp.style.color=rate>=90?'var(--green)':rate>=75?'var(--yellow)':'var(--red)';
+    unit.style.display='';
+  } else { disp.textContent='—'; disp.style.color='var(--tx2)'; unit.style.display='none'; }
+}
+
+function renderOrders(){
+  const k=ymd(ordCursor), d=ordersData[k]||{};
+  document.getElementById('ord-day-label').textContent=ordDayLabel();
+  document.getElementById('ord-total').value     = d.total     ?? '';
+  document.getElementById('ord-completed').value = d.completed ?? '';
+  document.getElementById('ord-cancelled').value = d.cancelled ?? '';
+  document.getElementById('ord-peak').value      = d.peak      || '';
+  document.getElementById('ord-notes').value     = d.notes     || '';
+  updateOrdRate();
+  renderOrdTrend();
+  renderOrdHistory();
+}
+
+function saveOrderDay(){
+  const k=ymd(ordCursor);
+  const total=document.getElementById('ord-total').value;
+  const completed=document.getElementById('ord-completed').value;
+  const cancelled=document.getElementById('ord-cancelled').value;
+  const peak=document.getElementById('ord-peak').value.trim();
+  const notes=document.getElementById('ord-notes').value.trim();
+  if(!total&&!completed&&!cancelled&&!peak&&!notes){ delete ordersData[k]; }
+  else {
+    const t=total?+total:null, c=completed?+completed:null;
+    ordersData[k]={ total:t, completed:c, cancelled:cancelled?+cancelled:null, peak:peak||null, rate:(t&&c)?+((c/t)*100).toFixed(1):null, notes:notes||null };
+  }
+  save(ORD_KEY,ordersData);
+  updateOrdRate();
+  renderOrdTrend();
+  renderOrdHistory();
+  showToast('Orders saved');
+}
+
+function renderOrdTrend(){
+  if(ordTrendChart_inst){ordTrendChart_inst.destroy();ordTrendChart_inst=null;}
+  const keys=Object.keys(ordersData).sort().slice(-14);
+  if(!keys.length) return;
+  ordTrendChart_inst=new Chart(document.getElementById('ordTrendChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:keys.map(k=>{const d=new Date(k+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}),
+      datasets:[
+        {label:'Total Orders',data:keys.map(k=>ordersData[k].total??0),backgroundColor:'rgba(10,132,255,0.5)',borderColor:'rgba(10,132,255,1)',borderWidth:1,borderRadius:3,yAxisID:'y'},
+        {label:'Completion %',data:keys.map(k=>ordersData[k].rate??null),type:'line',borderColor:'rgba(48,209,88,1)',backgroundColor:'transparent',tension:0.4,pointRadius:4,pointBackgroundColor:'rgba(48,209,88,1)',yAxisID:'y1'}
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'rgba(255,255,255,0.5)',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'rgba(255,255,255,0.4)',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'rgba(255,255,255,0.4)',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true},
+        y1:{position:'right',min:0,max:100,ticks:{color:'rgba(48,209,88,0.6)',font:{size:11},callback:v=>v+'%'},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function renderOrdHistory(){
+  const body=document.getElementById('ord-history-body');
+  const keys=Object.keys(ordersData).sort().reverse().slice(0,14);
+  if(!keys.length){ body.innerHTML='<div style="padding:28px;text-align:center;font-size:12px;color:var(--tx3)">No orders logged yet.</div>'; return; }
+  const todayKey=ymd(new Date());
+  let h='<table class="glass-table" style="width:100%"><thead><tr><th>Date</th><th class="num">Total</th><th class="num">Completed</th><th class="num">Cancelled</th><th class="num">Rate</th><th>Peak</th><th>Notes</th></tr></thead><tbody>';
+  keys.forEach(k=>{
+    const d=ordersData[k], isToday=k===todayKey;
+    const date=new Date(k+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    const rate=d.rate!=null?`<span style="color:${d.rate>=90?'var(--green)':d.rate>=75?'var(--yellow)':'var(--red)'}">${d.rate}%</span>`:'—';
+    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.total??'—'}</td><td class="num">${d.completed??'—'}</td><td class="num">${d.cancelled??'—'}</td><td class="num">${rate}</td><td style="font-size:12px;color:var(--tx2)">${d.peak||'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.notes||''}</td></tr>`;
+  });
+  h+='</tbody></table>';
+  body.innerHTML=h;
+}
+
+/* ─── LOCK SCREEN AUTH ─────────────────────────────────────────────────── */
+const PASS_HASH = '6f13d39f5c4665967f7df9f2f7311187fda905292da1a5a7cef66dd8cb6e9dd8';
+const AUTH_KEY  = 'sops-auth';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function tryLogin() {
+  const input = document.getElementById('lock-input');
+  const errEl = document.getElementById('lock-error');
+  const box   = document.getElementById('lock-box');
+  const hash  = await sha256(input.value);
+  if (hash === PASS_HASH) {
+    sessionStorage.setItem(AUTH_KEY, '1');
+    const ls = document.getElementById('lock-screen');
+    ls.style.transition = 'opacity .3s';
+    ls.style.opacity = '0';
+    setTimeout(() => ls.remove(), 320);
+  } else {
+    errEl.textContent = 'Incorrect code. Try again.';
+    box.classList.remove('shake');
+    void box.offsetWidth; // reflow to restart animation
+    box.classList.add('shake');
+    input.value = '';
+    input.focus();
+    setTimeout(() => { errEl.textContent = ''; }, 2500);
+  }
+}
+
+(function checkAuth() {
+  if (sessionStorage.getItem(AUTH_KEY) === '1') {
+    const ls = document.getElementById('lock-screen');
+    if (ls) ls.remove();
+  } else {
+    // Defer focus so the element is ready
+    setTimeout(() => {
+      const inp = document.getElementById('lock-input');
+      if (inp) inp.focus();
+    }, 80);
+  }
+})();
+</script>
+</body>
+</html>
