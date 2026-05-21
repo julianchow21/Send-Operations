@@ -820,6 +820,7 @@ body::before {
     <button class="top-btn" onclick="backupData()" title="Save all data as a portable JSON file" style="color:var(--green);border-color:var(--green-border)">⇩ Backup</button>
     <button class="top-btn" onclick="document.getElementById('restore-input').click()" title="Load data from a backup JSON file" style="color:var(--green);border-color:var(--green-border)">⇧ Restore</button>
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
+    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" style="color:var(--blue);border-color:var(--blue-border)">⬆ GitHub</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
     <button class="top-btn" onclick="exportCSV()">Export CSV</button>
     <button class="top-btn" onclick="window.print()">Print</button>
     <button class="top-btn" style="color:var(--red);border-color:var(--red-border)" onclick="resetAll()">Reset</button>
@@ -1260,6 +1261,53 @@ body::before {
       <div class="modal-actions">
         <button class="mbtn mbtn-cancel" onclick="closeSyncSettings()">Cancel</button>
         <button class="mbtn mbtn-save" onclick="syncSave()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── GITHUB PUSH SETTINGS MODAL ───────────────────────────────────────── -->
+<div class="modal-overlay" id="gh-modal" onclick="ghOverlayClick(event)">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">GitHub Push Settings</div>
+        <div class="modal-sub">One-time setup — push index.html to GitHub Pages in one click</div>
+      </div>
+      <button class="modal-x" onclick="closeGhSettings()">&#10005;</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="ll-section-title" style="margin-bottom:6px">Personal Access Token</div>
+        <input id="gh-pat" type="password" class="ll-date-input" style="width:100%;font-family:var(--mono);font-size:12px" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <div style="font-size:11px;color:var(--tx3);margin-top:6px">
+          Needs <strong>Contents</strong> write permission.
+          <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:var(--blue)">Generate fine-grained token →</a>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">GitHub Username</div>
+          <input id="gh-owner" type="text" class="ll-date-input" style="width:100%" placeholder="your-username">
+        </div>
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">Repository Name</div>
+          <input id="gh-repo" type="text" class="ll-date-input" style="width:100%" placeholder="send-ops-planner">
+        </div>
+      </div>
+      <div>
+        <div class="ll-section-title" style="margin-bottom:6px">File path in repo</div>
+        <input id="gh-path-input" type="text" class="ll-date-input" style="width:100%;font-family:var(--mono);font-size:12px" placeholder="index.html" value="index.html">
+      </div>
+      <div style="font-size:11px;color:var(--tx3);padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);line-height:1.6">
+        ⚠ Chrome only — uses the File System Access API. When you push, the browser will ask you to confirm access to your local <code style="font-family:var(--mono);background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px">index.html</code> file. This reads the file off disk and uploads it directly to GitHub.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div></div>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeGhSettings()">Cancel</button>
+        <button class="mbtn mbtn-save" onclick="saveGhSettings()">Save</button>
       </div>
     </div>
   </div>
@@ -3294,6 +3342,170 @@ async function tryLogin() {
     }, 80);
   }
 })();
+
+/* ─── GITHUB PUSH ──────────────────────────────────────────────────────── */
+const GH_CFG_KEY = 'sops-gh-cfg-v1';
+const GH_IDB     = 'sops-idb-v1';
+const GH_STORE   = 'handles';
+
+function getGhCfg()       { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || '{}'); }
+function setGhCfg(o)      { localStorage.setItem(GH_CFG_KEY, JSON.stringify(o)); }
+
+/* Minimal IndexedDB helpers for persisting the FileSystemFileHandle */
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(GH_IDB, 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore(GH_STORE);
+    r.onsuccess = e => res(e.target.result);
+    r.onerror   = e => rej(e.target.error);
+  });
+}
+async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise(res => {
+    const tx = db.transaction(GH_STORE, 'readonly');
+    const r  = tx.objectStore(GH_STORE).get(key);
+    r.onsuccess = () => res(r.result ?? null);
+    r.onerror   = () => res(null);
+  });
+}
+async function idbSet(key, val) {
+  const db = await idbOpen();
+  return new Promise(res => {
+    const tx = db.transaction(GH_STORE, 'readwrite');
+    tx.objectStore(GH_STORE).put(val, key);
+    tx.oncomplete = res;
+  });
+}
+
+/* Get a readable FileSystemFileHandle — reuse stored one or prompt user to pick */
+async function getHtmlHandle(forceNew = false) {
+  if (!forceNew) {
+    const h = await idbGet('htmlFile');
+    if (h) {
+      let perm = await h.queryPermission({ mode: 'read' });
+      if (perm !== 'granted') perm = await h.requestPermission({ mode: 'read' });
+      if (perm === 'granted') return h;
+    }
+  }
+  const [h] = await window.showOpenFilePicker({
+    id: 'sops-html',
+    types: [{ description: 'Send Ops HTML file', accept: { 'text/html': ['.html'] } }],
+    multiple: false,
+  });
+  await idbSet('htmlFile', h);
+  return h;
+}
+
+/* UTF-8-safe base64 encode */
+async function fileToBase64(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+
+/* Main push function */
+async function pushToGitHub(forcePickFile = false) {
+  // Check browser support
+  if (!window.showOpenFilePicker) {
+    alert('GitHub push requires Chrome or Edge.\nSafari does not support the File System Access API.');
+    return;
+  }
+
+  const cfg = getGhCfg();
+  if (!cfg.pat || !cfg.owner || !cfg.repo || !cfg.path) {
+    openGhSettings();
+    return;
+  }
+
+  const btn = document.getElementById('gh-push-btn');
+  const origHtml  = btn.innerHTML;
+  const origColor = btn.style.color;
+  const origBorder = btn.style.borderColor;
+
+  const setBtn = (html, color, border, disabled) => {
+    btn.innerHTML = html;
+    btn.style.color = color || '';
+    btn.style.borderColor = border || '';
+    btn.disabled = !!disabled;
+  };
+
+  try {
+    setBtn('⏳ Reading…', 'var(--tx2)', '', true);
+
+    let handle;
+    try {
+      handle = await getHtmlHandle(forcePickFile);
+    } catch (e) {
+      if (e.name === 'AbortError') { setBtn(origHtml, origColor, origBorder, false); return; }
+      throw e;
+    }
+
+    const file    = await handle.getFile();
+    const encoded = await fileToBase64(file);
+
+    const headers = {
+      'Authorization': `Bearer ${cfg.pat}`,
+      'Accept':        'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type':  'application/json',
+    };
+    const apiBase = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`;
+
+    setBtn('⏳ Pushing…', 'var(--tx2)', '', true);
+
+    // Get current SHA (needed to overwrite existing file)
+    const getResp = await fetch(apiBase, { headers });
+    const getJson = await getResp.json();
+    if (getJson.message && getResp.status !== 404) throw new Error(getJson.message);
+    const sha = getJson.sha;
+
+    // Commit the file
+    const body = {
+      message: `update ${cfg.path} — ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Singapore', dateStyle: 'short', timeStyle: 'short' })}`,
+      content: encoded,
+      ...(sha ? { sha } : {}),
+    };
+    const putResp = await fetch(apiBase, { method: 'PUT', headers, body: JSON.stringify(body) });
+    const putJson = await putResp.json();
+    if (!putResp.ok) throw new Error(putJson.message || `HTTP ${putResp.status}`);
+
+    setBtn('✓ Pushed!', 'var(--green)', 'var(--green-border)', true);
+    showToast('Pushed to GitHub — live in ~30s');
+    setTimeout(() => setBtn(origHtml, origColor, origBorder, false), 3000);
+
+  } catch (err) {
+    setBtn('✗ Failed', 'var(--red)', 'var(--red-border)', true);
+    showToast('GitHub push failed: ' + err.message);
+    setTimeout(() => setBtn(origHtml, origColor, origBorder, false), 3500);
+  }
+}
+
+/* Settings modal helpers */
+function openGhSettings() {
+  const cfg = getGhCfg();
+  document.getElementById('gh-pat').value        = cfg.pat   || '';
+  document.getElementById('gh-owner').value      = cfg.owner || '';
+  document.getElementById('gh-repo').value       = cfg.repo  || '';
+  document.getElementById('gh-path-input').value = cfg.path  || 'index.html';
+  document.getElementById('gh-modal').classList.add('open');
+}
+function closeGhSettings()         { document.getElementById('gh-modal').classList.remove('open'); }
+function ghOverlayClick(e)         { if (e.target.id === 'gh-modal') closeGhSettings(); }
+function saveGhSettings() {
+  setGhCfg({
+    pat:   document.getElementById('gh-pat').value.trim(),
+    owner: document.getElementById('gh-owner').value.trim(),
+    repo:  document.getElementById('gh-repo').value.trim(),
+    path:  document.getElementById('gh-path-input').value.trim() || 'index.html',
+  });
+  closeGhSettings();
+  showToast('GitHub settings saved');
+  // Kick off push immediately after first-time config save
+  pushToGitHub();
+}
 </script>
 </body>
 </html>
