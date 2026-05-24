@@ -454,7 +454,7 @@ body::before {
 .modal-x { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--tx2); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; }
 .modal-x:hover { background: rgba(255,255,255,0.15); color: var(--tx); }
 .modal-body { padding: 20px 24px; }
-.agent-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.agent-row { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .agent-row:last-child { border-bottom: none; }
 .agent-row-name { font-size: 13px; font-weight: 500; }
 .status-group { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -469,6 +469,19 @@ body::before {
 .status-opt.active[data-v="MC"]  { background: var(--red-soft);    color: var(--red);    border-color: var(--red-border); }
 .status-opt.active[data-v="OIL"] { background: var(--purple-soft); color: var(--purple); border-color: var(--purple-soft); }
 .status-opt.active[data-v="TRN"] { background: var(--orange-soft); color: var(--orange); border-color: var(--orange-border); }
+/* Half-day portion picker — appears beside status when leave is selected */
+.portion-group {
+  display: flex; gap: 3px;
+  padding: 3px; border-radius: 99px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+}
+.portion-opt {
+  padding: 4px 10px; border-radius: 99px; cursor: pointer;
+  font-size: 10px; font-weight: 600; letter-spacing: .02em;
+  color: var(--tx3); transition: 0.15s; user-select: none; white-space: nowrap;
+}
+.portion-opt:hover { color: var(--tx); }
+.portion-opt.active { background: var(--blue); color: #fff; }
 .modal-foot { padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ph-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx2); cursor: pointer; }
 .ph-toggle input { accent-color: var(--blue); }
@@ -795,6 +808,64 @@ body::before {
 .lock-error { font-size: 12px; color: var(--red); text-align: center; min-height: 16px; }
 @keyframes lockShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
 .lock-box.shake { animation: lockShake .35s ease; }
+
+/* ─── METRIC HELP TOOLTIP (?) ─────────────
+   Hover/focus shows the formula, target, source, rationale for any metric.
+   Required for COPC: every reported number must have a documented definition. */
+.metric-help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; margin-left: 6px; vertical-align: middle;
+  font-size: 9px; font-weight: 700; line-height: 1;
+  color: var(--tx3); background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 50%;
+  cursor: help; user-select: none; transition: 0.15s;
+}
+.metric-help:hover, .metric-help:focus { color: var(--blue); border-color: var(--blue-border); background: var(--blue-soft); outline: none; }
+
+/* ─── PRINT STYLES ─────────────────────────
+   Clean, paper-friendly output. Hide chrome (top bar, sync pill, action buttons,
+   the lock screen), force dark glass UI into high-contrast black-on-white for ink. */
+@media print {
+  @page { margin: 12mm; size: A4 landscape; }
+  body { background: #fff !important; color: #000 !important; }
+  .app::before, .app::after { display: none !important; }
+  .topbar, .top-actions, .tabbar, .sync-pill, .modal-overlay,
+  #lock-screen, #remote-update-notice, #toast, .top-btn,
+  .floating-controls, .add-btn, button[onclick*="open"] { display: none !important; }
+  .pane:not(.active) { display: none !important; }
+  .pane { display: block !important; padding: 0 !important; }
+  .glass, .agent-card, .roster-card, .cl-wrap, .strength-card,
+  .ph-day, .calendar-cell, .stat-card, .mini-month {
+    background: #fff !important; border: 1px solid #ccc !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    box-shadow: none !important; color: #000 !important;
+  }
+  .slabel, .card-title, .month-label, .agent-card-name, .roster-card-name { color: #000 !important; }
+  .num, .cl-time, .cl-date { color: #333 !important; }
+  /* Force every text colour to readable dark for ink */
+  * { color: #000 !important; text-shadow: none !important; }
+  /* Page-break hints */
+  .agent-card, .roster-card, .mini-month { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3, .card-title { break-after: avoid; page-break-after: avoid; }
+}
+
+/* ─── RESPONSIVE ───────────────────────────
+   Desktop-first; collapse the top bar and tab strip on narrow screens. */
+@media (max-width: 900px) {
+  .topbar { flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+  .top-actions { flex-wrap: wrap; }
+  .tabbar { flex-wrap: wrap; gap: 4px; }
+  .tab { font-size: 11px; padding: 6px 10px; }
+  .agent-balance { grid-template-columns: 1fr 1fr; }
+  .roster-grid { grid-template-columns: 1fr; }
+  .cl-row { grid-template-columns: 100px 100px 1fr; }
+  .cl-row-actions { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .brand { font-size: 13px; }
+  .agent-balance { grid-template-columns: 1fr; }
+  .cl-row { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -816,16 +887,16 @@ body::before {
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
-  <button class="sync-pill s-syncing" id="sync-pill" onclick="openSyncSettings()" title="Pushing to Sheet">● Syncing…</button>
+  <button class="sync-pill s-synced" id="sync-pill" onclick="openSyncSettings()" title="Sheet up to date · click to manage">● Synced · 2d ago</button>
   <div class="spacer"></div>
   <div class="top-actions">
-    <button class="top-btn" id="undo-btn" onclick="doUndo()" title="Undo (Ctrl+Z)" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↩</button>
-    <button class="top-btn" id="redo-btn" onclick="doRedo()" title="Redo (Ctrl+Y)" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↪</button>
-    <button class="top-btn" onclick="openSyncSettings()" title="Configure Google Sheets sync">⚙</button>
+    <button class="top-btn" id="undo-btn" onclick="doUndo()" title="Undo (Ctrl+Z)" aria-label="Undo last change" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↩</button>
+    <button class="top-btn" id="redo-btn" onclick="doRedo()" title="Redo (Ctrl+Y)" aria-label="Redo last undone change" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↪</button>
+    <button class="top-btn" onclick="openSyncSettings()" title="Configure Google Sheets sync" aria-label="Open sync settings">⚙</button>
     <button class="top-btn" onclick="backupData()" title="Save all data as a portable JSON file" style="color:var(--green);border-color:var(--green-border)">⇩ Backup</button>
     <button class="top-btn" onclick="document.getElementById('restore-input').click()" title="Load data from a backup JSON file" style="color:var(--green);border-color:var(--green-border)">⇧ Restore</button>
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
-    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" style="color: var(--tx2);" disabled="">⏳ Pushing…</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
+    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" aria-label="Push current version to GitHub" style="color: var(--tx2);" disabled="">⏳ Pushing…</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" aria-label="Configure GitHub push token and repository" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
     <button class="top-btn" onclick="exportCSV()">Export CSV</button>
     <button class="top-btn" onclick="window.print()">Print</button>
     <button class="top-btn" style="color:var(--red);border-color:var(--red-border)" onclick="resetAll()">Reset</button>
@@ -858,6 +929,7 @@ body::before {
   <button class="tab" id="t-strength" onclick="sw('strength')">Strength</button>
   <button class="tab" id="t-forecast" onclick="sw('forecast')">Forecast</button>
   <button class="tab" id="t-insights" onclick="sw('insights')">Insights</button>
+  <button class="tab" id="t-actions" onclick="sw('actions')">Action Plans</button>
   <button class="tab" id="t-headcount" onclick="sw('headcount')">Headcount</button>
   <button class="tab" id="t-year" onclick="sw('year')">Year View</button>
   <button class="tab" id="t-log" onclick="sw('log')">Changelog</button>
@@ -874,7 +946,7 @@ body::before {
 <!-- DAILY VIEW -->
 <div class="pane" id="pane-daily">
   <div class="alert-bar" id="alert-bar"><div class="alert alert-yellow">△ <strong>REDUCED COVERAGE</strong> &nbsp; 4 agents on floor — <span class="alert-dates">Day(s): 13, 20, 25, 26, 28, 29</span></div></div>
-  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Thursday, May 21, 2026</span></div>
+  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Sunday, May 24, 2026</span></div>
   <div class="agent-status-grid" id="agent-status-grid"><div class="asc present"><div class="asc-init">JA</div><div class="asc-name">Javier</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">AI</div><div class="asc-name">Aiman</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">JU</div><div class="asc-name">Julian</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">TI</div><div class="asc-name">Tina</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">RI</div><div class="asc-name">Rina</div><div class="asc-badge present">On Floor</div></div></div>
   <div class="slabel">Month summary</div>
   <div class="stat-row">
@@ -919,7 +991,7 @@ body::before {
       <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
       <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
     </div>
-    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell today"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
+    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend today"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
   </div>
 
   <!-- Shrinkage stats panel -->
@@ -1001,7 +1073,7 @@ body::before {
   </div>
   <div class="glass-card" style="margin-top:14px">
     <div class="card-pad">
-      <div class="card-title">Monthly summary — Full year 2026</div>
+      <div class="card-title">Monthly summary — Full year <span id="dash-year">2026</span></div>
       <table class="glass-table" id="year-table">
         <thead><tr><th>Month</th><th class="num">Workdays</th><th class="num">Capacity</th><th class="num">AL</th><th class="num">MC</th><th class="num">OIL</th><th class="num">TRN</th><th class="num">Unplanned%</th><th class="num">Shrinkage</th><th class="num">Turn-up</th></tr></thead>
         <tbody></tbody>
@@ -1069,6 +1141,15 @@ body::before {
   <div class="slabel">4-Week Forward Coverage</div>
   <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Shows floor strength for the next 28 calendar days based on scheduled leave. Update leave entries in the Calendar to see this refresh.</div>
   <div id="forecast-grid" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <!-- COPC: Forecast accuracy — captured automatically each Monday -->
+  <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.07)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div class="slabel" style="margin:0">Forecast Accuracy <span style="font-size:11px;font-weight:400;color:var(--tx3)">— captured Monday, scored after the week closes</span></div>
+      <button onclick="snapshotForecastNow()" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">Snapshot now</button>
+    </div>
+    <div id="fcast-accuracy" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
 </div>
 
 <!-- INSIGHTS PANE -->
@@ -1076,6 +1157,85 @@ body::before {
   <div class="slabel">Absenteeism Insights</div>
   <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Pattern detection across all logged absence data. Flags agents with high MC frequency or day-of-week clustering.</div>
   <div id="insights-body" style="display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+<!-- ACTION PLANS PANE — COPC corrective-action register -->
+<div class="pane" id="pane-actions">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="slabel" style="margin-bottom:4px">Action Plans</div>
+      <div style="font-size:12px;color:var(--tx3);max-width:680px">Auditable corrective-action register. The system auto-suggests an action when a target is breached (unplanned shrinkage &gt;10%, total shrinkage &gt;30%, MC pattern flag). Closed actions stay in the log as evidence.</div>
+    </div>
+    <button onclick="openActionModal()" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">+ New Action</button>
+  </div>
+  <div id="action-triggers" style="margin-bottom:16px"></div>
+  <div id="action-list"></div>
+</div>
+
+<!-- ACTION MODAL -->
+<div class="modal-overlay" id="action-modal" onclick="actionOverlayClick(event)">
+  <div class="modal-box" style="width:540px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="action-modal-title">New Action Plan</div>
+        <div class="modal-sub">Corrective action — captured for COPC audit trail</div>
+      </div>
+      <button class="modal-x" onclick="closeActionModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="ll-section-title" style="margin-bottom:6px">Trigger / Issue</div>
+        <input id="act-trigger" type="text" maxlength="120" class="ll-date-input" style="width:100%" placeholder="e.g. Unplanned shrinkage 12.3% in May (target ≤10%)">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">Root Cause Category</div>
+          <select id="act-rootcause" class="ll-date-input" style="width:100%">
+            <option value="">— pick —</option>
+            <option value="attendance">Attendance / MC pattern</option>
+            <option value="forecasting">Forecasting accuracy</option>
+            <option value="scheduling">Scheduling / coverage gap</option>
+            <option value="training">Training / capability</option>
+            <option value="external">External factor</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">Owner</div>
+          <input id="act-owner" type="text" maxlength="60" class="ll-date-input" style="width:100%" placeholder="Who is accountable">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">Due Date</div>
+          <input id="act-due" type="date" class="ll-date-input" style="width:100%">
+        </div>
+        <div>
+          <div class="ll-section-title" style="margin-bottom:6px">Status</div>
+          <select id="act-status" class="ll-date-input" style="width:100%">
+            <option value="open">Open</option>
+            <option value="in-progress">In progress</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="ll-section-title" style="margin-bottom:6px">Plan / Counter-measures</div>
+        <textarea id="act-note" maxlength="800" class="notes-ta" placeholder="What will be done. Be specific."></textarea>
+      </div>
+      <div id="act-closure-wrap" style="display:none">
+        <div class="ll-section-title" style="margin-bottom:6px">Closure Evidence (for audit)</div>
+        <textarea id="act-closure" maxlength="800" class="notes-ta" placeholder="What was done, what the outcome was, link to evidence if any."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="mbtn mbtn-cancel" id="act-delete-btn" onclick="deleteCurrentAction()" style="color:var(--red);border-color:var(--red-border);display:none">Delete</button>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeActionModal()">Cancel</button>
+        <button class="mbtn mbtn-save" onclick="saveAction()">Save</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- HEADCOUNT LOG PANE -->
@@ -1086,14 +1246,14 @@ body::before {
   <!-- Add event form -->
   <div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px;margin-bottom:18px">
     <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Log Event</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;align-items:end">
       <div>
         <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Date</div>
         <input type="date" id="hc-date" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
       </div>
       <div>
         <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Type</div>
-        <select id="hc-type" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(18,18,28,0.8);color:var(--tx);box-sizing:border-box">
+        <select id="hc-type" onchange="hcTypeChanged()" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(18,18,28,0.8);color:var(--tx);box-sizing:border-box">
           <option value="hire">Hire</option>
           <option value="departure">Departure</option>
           <option value="adjustment">Adjustment</option>
@@ -1101,15 +1261,28 @@ body::before {
       </div>
       <div>
         <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Agent / Name</div>
-        <input type="text" id="hc-agent" placeholder="Name or headcount #" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+        <input type="text" id="hc-agent" maxlength="60" placeholder="Name or headcount #" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+      </div>
+      <div id="hc-reason-wrap" style="display:none">
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Reason (for COPC attrition reporting)</div>
+        <select id="hc-reason" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(18,18,28,0.8);color:var(--tx);box-sizing:border-box">
+          <option value="">—</option>
+          <option value="voluntary">Voluntary (resignation)</option>
+          <option value="end-of-contract">End of contract</option>
+          <option value="performance">Performance / dismissal</option>
+          <option value="redundancy">Redundancy</option>
+          <option value="other">Other</option>
+        </select>
       </div>
       <div>
         <div style="font-size:11px;color:var(--tx3);margin-bottom:4px">Note</div>
-        <input type="text" id="hc-note" placeholder="Optional note" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
+        <input type="text" id="hc-note" maxlength="200" placeholder="Optional note" style="width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--tx);box-sizing:border-box">
       </div>
     </div>
     <button onclick="addHeadcountEvent()" style="margin-top:12px;font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 20px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">Add Event</button>
   </div>
+  <!-- Attrition cards -->
+  <div id="attrition-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px"></div>
   <!-- Log -->
   <div id="hc-log-body"></div>
 </div>
@@ -1418,6 +1591,32 @@ body::before {
 ═══════════════════════════════════ */
 const AGENTS = ['Javier','Aiman','Julian','Tina','Rina'];
 const STATUSES = [{v:'W',label:'Working'},{v:'AL',label:'AL'},{v:'MC',label:'MC'},{v:'OIL',label:'OIL'},{v:'TRN',label:'Training'}];
+const PORTIONS = [{v:'full',label:'Full'},{v:'am',label:'½ AM'},{v:'pm',label:'½ PM'}];
+
+// ─── HALF-DAY STATUS HELPERS ─────────────────────────────────────────────
+// Status format: 'AL' = full-day AL, 'AL-AM' = half-day AL morning, 'AL-PM' = half-day PM.
+// Existing data using 'AL'/'MC'/'OIL'/'TRN' continues to work unchanged.
+function splitStatus(v){
+  if (!v || v === 'W') return { base: 'W', portion: 'full', units: 0 };
+  const m = String(v).match(/^(AL|MC|OIL|TRN)(?:-(AM|PM))?$/i);
+  if (!m) return { base: 'W', portion: 'full', units: 0 };
+  const base = m[1].toUpperCase();
+  const portion = m[2] ? m[2].toLowerCase() : 'full';
+  return { base, portion, units: portion === 'full' ? 1 : 0.5 };
+}
+function joinStatus(base, portion){
+  if (!base || base === 'W') return 'W';
+  if (!portion || portion === 'full') return base;
+  return `${base}-${portion.toUpperCase()}`;
+}
+function formatStatusShort(v){
+  const s = splitStatus(v);
+  if (s.base === 'W') return 'W';
+  if (s.portion === 'full') return s.base;
+  return `${s.base} ½${s.portion.toUpperCase()}`;
+}
+function statusUnits(v){ return splitStatus(v).units; }
+function statusBase(v){ return splitStatus(v).base; }
 const ENTITLEMENT = {AL:18, MC:14};
 const PLANNED_CATS = ['AL','OIL','TRN'];   // planned shrinkage
 const UNPLANNED_CATS = ['MC'];             // unplanned shrinkage
@@ -1452,11 +1651,141 @@ let phMap = load(PK) || {...SG_PH};
 let changelog = load(LK) || [];
 let hoursLog = load(HK) || [];
 let opsData = load(OPS_KEY) || {}, ordersData = load(ORD_KEY) || {};
-let hcLog = load(HCL_KEY) || []; // [{id, date, type:'hire'|'departure'|'adjustment', agent, note, ts}]
+let hcLog = load(HCL_KEY) || []; // [{id, date, type:'hire'|'departure'|'adjustment', agent, note, reason, ts}]
 let roster = load(ROSTER_KEY) || {}; // {agentName: {type:'full-timer'|'intern'|'contract', AL, MC, contractEnd, note}}
-let cursor = new Date(2026, new Date().getFullYear()===2026?new Date().getMonth():0, 1);
+let actions = load('sops-actions-v1') || []; // [{id, ts, trigger, rootCause, owner, dueDate, status, note, closure, closedAt, closedBy}]
+const ACT_KEY = 'sops-actions-v1';
+let _editingAction = null;
+// PLANNING_YEAR must be declared here (before `cursor` uses it) to avoid TDZ.
+// Defaults to the current calendar year, never rolls back below 2026.
+const PLANNING_YEAR = new Date().getFullYear() < 2026 ? 2026 : new Date().getFullYear();
+let cursor = new Date(PLANNING_YEAR, new Date().getFullYear()===PLANNING_YEAR?new Date().getMonth():0, 1);
 let modalKey = null, modalDraft = {};
 let strChart = null;
+
+/* ─── COPC METRIC DEFINITIONS ──────────────────────────────────────────
+   Single source of truth for every metric the app reports. Auditors ask
+   "how is X calculated, what's the target, where does it come from" — the
+   ? tooltip beside each KPI answers that without a Slack message. */
+const METRIC_DEFS = {
+  'shrink-total':     { name:'Total Shrinkage', formula:'(AL + MC + OIL + TRN units) / capacity × 100', target:'≤ 30%', source:'Calendar entries (state)', rationale:'COPC standard: total absence ceiling across planned and unplanned.' },
+  'shrink-planned':   { name:'Planned Shrinkage', formula:'(AL + OIL + TRN units) / capacity × 100', target:'No formal cap; component of total', source:'Calendar entries (state)', rationale:'Approved leave categories. Half-days count as 0.5 units.' },
+  'shrink-unplanned': { name:'Unplanned Shrinkage', formula:'MC units / capacity × 100', target:'≤ 10%', source:'Calendar entries (state)', rationale:'COPC standard: tight ceiling on unplanned absence. Half-days count as 0.5.' },
+  'turnup':           { name:'Turn-up Rate', formula:'(capacity − absent units) / capacity × 100', target:'≥ 90%', source:'Calendar entries', rationale:'Inverse of total shrinkage. Floor management metric.' },
+  'floor':            { name:'Floor Strength', formula:`${5} planned − absent units (per day)`, target:'≥ 5; ≤ 3 critical', source:'Calendar entries', rationale:'Daily on-floor headcount. Half-day absence counts as 0.5.' },
+  'al-remaining':     { name:'AL Remaining', formula:'AL entitlement − AL units used', target:'≥ 0 by year end', source:'Agent Contracts entitlement; Calendar entries', rationale:'Negative value means over-entitlement — flag for HR review.' },
+  'mc-remaining':     { name:'MC Remaining', formula:'MC entitlement − MC units used', target:'≥ 0 by year end', source:'Agent Contracts entitlement; Calendar entries', rationale:'Negative value triggers payroll deduction / unpaid leave conversation.' },
+  'forecast-cov':     { name:'4-Week Coverage Forecast', formula:'(scheduled present / planned headcount) per workday for next 4 weeks', target:'≥ 80% per day', source:'Calendar entries (forward-looking)', rationale:'Early-warning system for under-resourced days.' },
+  'attrition-90':     { name:'90-day Attrition (annualised)', formula:'(departures in 90d / avg headcount) × (365/90) × 100', target:'COPC industry varies; <30% is healthy', source:'Headcount log', rationale:'Annualised so any window is comparable. Includes voluntary + involuntary.' },
+  'attrition-365':    { name:'12-month Attrition', formula:'(departures in 365d / avg headcount) × 100', target:'COPC industry varies; <25% is healthy', source:'Headcount log', rationale:'Full-year cycle. The number COPC auditors quote.' },
+  'fcast-variance':   { name:'Forecast Accuracy', formula:'1 − |forecast − actual| / forecast × 100', target:'≥ 90% (variance within ±10%)', source:'Weekly forecast snapshot vs actual', rationale:'COPC WFM standard for forecast quality. Captured each Monday automatically.' }
+};
+
+function metricHelp(key){
+  const m = METRIC_DEFS[key];
+  if (!m) return '';
+  // Returns an HTML <span> with a ? icon and data attributes the tooltip reads
+  return `<span class="metric-help" tabindex="0" role="button" aria-label="Definition of ${escapeHtml(m.name)}"
+    onmouseenter="showMetricTooltip(this,'${key}')" onmouseleave="hideMetricTooltip()"
+    onfocus="showMetricTooltip(this,'${key}')" onblur="hideMetricTooltip()">?</span>`;
+}
+
+function showMetricTooltip(anchor, key){
+  hideMetricTooltip();
+  const m = METRIC_DEFS[key]; if (!m) return;
+  const tip = document.createElement('div');
+  tip.id = 'metric-tip';
+  tip.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px">${escapeHtml(m.name)}</div>
+    <div style="font-size:11px;color:var(--tx2);line-height:1.55">
+      <div><strong style="color:var(--tx3);font-weight:600">Formula:</strong> ${escapeHtml(m.formula)}</div>
+      <div style="margin-top:3px"><strong style="color:var(--tx3);font-weight:600">Target:</strong> ${escapeHtml(m.target)}</div>
+      <div style="margin-top:3px"><strong style="color:var(--tx3);font-weight:600">Source:</strong> ${escapeHtml(m.source)}</div>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);color:var(--tx3);font-style:italic">${escapeHtml(m.rationale)}</div>
+    </div>`;
+  document.body.appendChild(tip);
+  const r = anchor.getBoundingClientRect();
+  tip.style.cssText = `position:fixed;z-index:9500;width:280px;padding:12px 14px;background:rgba(20,20,28,0.97);border:1px solid rgba(255,255,255,0.12);border-radius:10px;backdrop-filter:blur(20px);box-shadow:0 12px 40px rgba(0,0,0,0.55);left:${Math.max(8, Math.min(window.innerWidth - 296, r.left - 10))}px;top:${r.bottom + 6}px`;
+}
+function hideMetricTooltip(){ document.getElementById('metric-tip')?.remove(); }
+
+/* ─── ENTERPRISE HARDENING UTILITIES ──────────────────────────────────── */
+const APP_VERSION       = '2026.05.21';
+// PLANNING_YEAR is declared earlier (just before `cursor`) to avoid TDZ.
+const MAX_CHANGELOG     = 500;       // hard cap; oldest entries get archived to backup history
+const PAYLOAD_WARN_AT   = 40000;     // warn at 80% of the 50K Sheets cell limit
+const USER_KEY          = 'sops-user-v1';
+const BACKUP_HIST_KEY   = 'sops-backup-snap-v1';
+const LAST_PULL_TS_KEY  = 'sops-last-pull-ts-v1';
+
+// XSS protection — wrap any user-supplied string before injecting into innerHTML
+function escapeHtml(s){
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+// User identity — honor-system attribution for the changelog (real auth would need a backend)
+function getCurrentUser(){ return localStorage.getItem(USER_KEY) || ''; }
+function setCurrentUser(name){ localStorage.setItem(USER_KEY, String(name).trim().slice(0,40)); }
+function ensureUserIdentity(){
+  if (getCurrentUser()) return getCurrentUser();
+  // Single, cancel-safe prompt. No loop — Cancel or empty input defaults to Anonymous.
+  // User can change their name later via setCurrentUser if needed.
+  const raw = prompt('Welcome to Send Operations Planner.\n\nType your name for the audit log.\nClick Cancel or leave blank to use "Anonymous".');
+  const name = (raw == null) ? 'Anonymous' : (raw.trim() || 'Anonymous');
+  setCurrentUser(name);
+  return name;
+}
+
+// Global error boundary — catch uncaught JS errors so the UI doesn't silently break
+window.addEventListener('error', e => {
+  console.error('[SOPS] uncaught error:', e.error || e.message);
+  try { showToast('Error: ' + (e.error?.message || e.message || 'see console')); } catch(_){}
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('[SOPS] unhandled rejection:', e.reason);
+  try { showToast('Async error: ' + (e.reason?.message || 'see console')); } catch(_){}
+});
+
+// Daily local snapshot — rolling 14-day history kept in localStorage as a safety net
+// Wrap every changelog write — attaches user attribution and truncates with archival.
+// Archived (overflow) entries are stashed in the daily snapshot so they're never lost.
+function logChange(entry){
+  if (!entry || typeof entry !== 'object') return;
+  entry.user = entry.user || getCurrentUser() || 'Anonymous';
+  entry.appVersion = APP_VERSION;
+  changelog.unshift(entry);
+  if (changelog.length > MAX_CHANGELOG) {
+    const archived = changelog.splice(MAX_CHANGELOG);
+    try {
+      const hist = JSON.parse(localStorage.getItem(BACKUP_HIST_KEY) || '{}');
+      const k = '_archive_changelog';
+      hist[k] = (hist[k] || []).concat(archived).slice(-2000);
+      localStorage.setItem(BACKUP_HIST_KEY, JSON.stringify(hist));
+    } catch(e) { console.warn('Changelog archival failed:', e); }
+  }
+}
+
+function takeDailySnapshot(){
+  try {
+    // Use local-timezone YYYY-MM-DD. toISOString() emits UTC, which in Singapore
+    // (UTC+8) writes "yesterday" between 12:00–07:59 local time and overwrites the
+    // previous day's snapshot.
+    const today = ymd(new Date());
+    const hist = JSON.parse(localStorage.getItem(BACKUP_HIST_KEY) || '{}');
+    if (hist[today]) return; // already snapped today
+    hist[today] = { state, phMap, hoursLog, changelog, roster, hcLog, actions, ts: new Date().toISOString() };
+    // Keep only last 14 days
+    const keep = Object.keys(hist).sort().slice(-14);
+    const trimmed = {}; keep.forEach(k => trimmed[k] = hist[k]);
+    localStorage.setItem(BACKUP_HIST_KEY, JSON.stringify(trimmed));
+  } catch(e) { console.warn('Snapshot failed:', e); }
+}
 
 function load(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
 function save(k,v){localStorage.setItem(k,JSON.stringify(v));scheduleSync();}
@@ -1480,21 +1809,32 @@ const bgc = f => f<=3?'rgba(255,69,58,0.7)':f===4?'rgba(255,214,10,0.7)':'rgba(4
 const bdc = f => f<=3?'#ff453a':f===4?'#ffd60a':'#30d158';
 
 /* ─── FLOOR CALC ─────────────────────── */
+// Floor counts half-days as 0.5 absent. Returned as a Number (may be e.g. 4.5).
+// Display helpers below render integers as-is and halves as "4.5".
 function floorForDay(key){
   const day = state[key]||{};
-  const absent = AGENTS.filter(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes(day[a])).length;
+  let absent = 0;
+  AGENTS.forEach(a => {
+    const p = splitStatus(day[a]);
+    if ([...PLANNED_CATS,...UNPLANNED_CATS].includes(p.base)) absent += p.units;
+  });
   return PLANNED - absent;
 }
+// Pretty-print a floor that may be a half value
+function fmtFloor(f){ return Number.isInteger(f) ? String(f) : f.toFixed(1); }
 function selForDay(key){
   const day = state[key]||{};
   const mc=[],al=[],oil=[],trn=[];
   AGENTS.forEach(a=>{
-    if(day[a]==='MC')mc.push(a);
-    else if(day[a]==='AL')al.push(a);
-    else if(day[a]==='OIL')oil.push(a);
-    else if(day[a]==='TRN')trn.push(a);
+    const p = splitStatus(day[a]);
+    // Decorate name with portion suffix for half-days so the panel shows context
+    const label = p.portion === 'full' ? a : `${a} (½${p.portion.toUpperCase()})`;
+    if (p.base === 'MC') mc.push(label);
+    else if (p.base === 'AL')  al.push(label);
+    else if (p.base === 'OIL') oil.push(label);
+    else if (p.base === 'TRN') trn.push(label);
   });
-  return{mc,al,oil,trn};
+  return {mc, al, oil, trn};
 }
 
 /* ─── MONTH / NAV ───────────────────── */
@@ -1509,7 +1849,7 @@ function nextMonth(){
   renderAll();
 }
 function goToday(){
-  cursor=new Date(2026,new Date().getFullYear()===2026?new Date().getMonth():0,1);
+  cursor=new Date(PLANNING_YEAR,new Date().getFullYear()===PLANNING_YEAR?new Date().getMonth():0,1);
   if(calView==='week'){ const t=new Date(); weekCursor=new Date(t); weekCursor.setDate(t.getDate()-t.getDay()); }
   renderAll();
 }
@@ -1522,7 +1862,13 @@ function statsForMonth(y,m){
     const d=new Date(y,m,i);if(!isWorkday(d))continue;
     s.workdays++;s.capacity+=AGENTS.length;
     const day=state[ymd(d)]||{};
-    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')s.AL++;else if(v==='MC')s.MC++;else if(v==='OIL')s.OIL++;else if(v==='TRN')s.TRN++;});
+    AGENTS.forEach(a=>{
+      const p=splitStatus(day[a]);
+      if (p.base==='AL') s.AL+=p.units;
+      else if (p.base==='MC') s.MC+=p.units;
+      else if (p.base==='OIL') s.OIL+=p.units;
+      else if (p.base==='TRN') s.TRN+=p.units;
+    });
   }
   s.planned=s.AL+s.OIL+s.TRN;   // planned shrinkage total
   s.unplanned=s.MC;               // unplanned shrinkage total
@@ -1537,8 +1883,12 @@ function statsForMonth(y,m){
 function statsForAgent(agent){
   const r={AL:0,MC:0,OIL:0,TRN:0};
   Object.keys(state).forEach(k=>{
-    const d=new Date(k+'T00:00:00');if(d.getFullYear()!==2026||!isWorkday(d))return;
-    const v=state[k][agent];if(v==='AL')r.AL++;else if(v==='MC')r.MC++;else if(v==='OIL')r.OIL++;else if(v==='TRN')r.TRN++;
+    const d=new Date(k+'T00:00:00');if(d.getFullYear()!==PLANNING_YEAR||!isWorkday(d))return;
+    const p=splitStatus(state[k][agent]);
+    if (p.base==='AL') r.AL+=p.units;
+    else if (p.base==='MC') r.MC+=p.units;
+    else if (p.base==='OIL') r.OIL+=p.units;
+    else if (p.base==='TRN') r.TRN+=p.units;
   });
   return r;
 }
@@ -1604,6 +1954,7 @@ function activatePane(t){
   if(t==='forecast')renderForecast();
   if(t==='insights')renderInsights();
   if(t==='headcount')renderHeadcount();
+  if(t==='actions')renderActions();
   if(t==='roster')renderRoster();
 }
 
@@ -1628,11 +1979,13 @@ function renderDaily(){
   const grid=document.getElementById('agent-status-grid');grid.innerHTML='';
   AGENTS.forEach(n=>{
     const v=day[n]||'W';
+    const p=splitStatus(v);
     let sc='present',lb='On Floor';
-    if(v==='MC'){sc='mc';lb='MC';}else if(v==='AL'){sc='al';lb='AL';}else if(v==='OIL'){sc='oil';lb='OIL';}
-    else if(v==='TRN'){sc='trn';lb='Training';}else if(isPH(key)){sc='ph';lb='PH';}
+    if(p.base==='MC'){sc='mc';lb='MC';}else if(p.base==='AL'){sc='al';lb='AL';}else if(p.base==='OIL'){sc='oil';lb='OIL';}
+    else if(p.base==='TRN'){sc='trn';lb='Training';}else if(isPH(key)){sc='ph';lb='PH';}
+    if (p.portion !== 'full') lb += ` ½${p.portion.toUpperCase()}`;
     const init=n.slice(0,2).toUpperCase();
-    grid.innerHTML+=`<div class="asc ${sc}"><div class="asc-init">${init}</div><div class="asc-name">${n}</div><div class="asc-badge ${sc}">${lb}</div></div>`;
+    grid.innerHTML+=`<div class="asc ${sc}"><div class="asc-init">${init}</div><div class="asc-name">${escapeHtml(n)}</div><div class="asc-badge ${sc}">${escapeHtml(lb)}</div></div>`;
   });
   // Stats
   const s=statsForMonth(y,m);
@@ -1741,9 +2094,15 @@ function renderCalSummaryPills(){
   let AL=0,MC=0,OIL=0,TRN=0,critCount=0,warnCount=0;
   days.forEach(d=>{
     const key=ymd(d),day=state[key]||{};
-    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')AL++;else if(v==='MC')MC++;else if(v==='OIL')OIL++;else if(v==='TRN')TRN++;});
+    AGENTS.forEach(a=>{
+      const p=splitStatus(day[a]);
+      if (p.base==='AL') AL+=p.units;
+      else if (p.base==='MC') MC+=p.units;
+      else if (p.base==='OIL') OIL+=p.units;
+      else if (p.base==='TRN') TRN+=p.units;
+    });
     const f=floorForDay(key);
-    if(f<=3)critCount++;else if(f===4)warnCount++;
+    if(f<=3)critCount++;else if(f<5)warnCount++;
   });
   const el=document.getElementById('cal-shrink-summary');
   el.innerHTML='';
@@ -1803,7 +2162,13 @@ function renderShrinkPanel(){
   AGENTS.forEach(a=>{agentTotals[a]={AL:0,MC:0,OIL:0,TRN:0};});
   viewDays.forEach(d=>{
     const day=state[ymd(d)]||{};
-    AGENTS.forEach(a=>{const v=day[a];if(v==='AL')agentTotals[a].AL++;else if(v==='MC')agentTotals[a].MC++;else if(v==='OIL')agentTotals[a].OIL++;else if(v==='TRN')agentTotals[a].TRN++;});
+    AGENTS.forEach(a=>{
+      const p=splitStatus(day[a]);
+      if (p.base==='AL')  agentTotals[a].AL+=p.units;
+      else if (p.base==='MC')  agentTotals[a].MC+=p.units;
+      else if (p.base==='OIL') agentTotals[a].OIL+=p.units;
+      else if (p.base==='TRN') agentTotals[a].TRN+=p.units;
+    });
   });
   const agentRows=AGENTS.map(a=>({name:a,...agentTotals[a],total:agentTotals[a].AL+agentTotals[a].MC+agentTotals[a].OIL+agentTotals[a].TRN}))
     .filter(a=>a.total>0).sort((a,b)=>b.total-a.total);
@@ -1837,14 +2202,17 @@ function renderShrinkPanel(){
 function makeShrinkRow(d){
   const dateStr=d.date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const tags=d.agents.map(({name,type})=>{
-    const cls=type==='AL'?'sp-tag-al':type==='MC'?'sp-tag-mc':type==='TRN'?'sp-tag-trn':'sp-tag-oil';
-    return `<span class="sp-agent-tag ${cls}">${name}·${type}</span>`;
+    const base=statusBase(type);
+    const cls=base==='AL'?'sp-tag-al':base==='MC'?'sp-tag-mc':base==='TRN'?'sp-tag-trn':'sp-tag-oil';
+    return `<span class="sp-agent-tag ${cls}">${escapeHtml(name)}·${escapeHtml(formatStatusShort(type))}</span>`;
   }).join('');
   const floorColor=fc(d.floor);
-  return `<div class="sp-day-row" onclick="openModal('${d.key}')">
-    <span class="sp-day-date">${dateStr}</span>
+  // Key is a YYYY-MM-DD string by construction, but encode anyway for defence in depth
+  const safeKey = String(d.key).replace(/[^0-9-]/g,'');
+  return `<div class="sp-day-row" onclick="openModal('${safeKey}')">
+    <span class="sp-day-date">${escapeHtml(dateStr)}</span>
     <span class="sp-day-agents">${tags}</span>
-    <span class="sp-day-floor" style="color:${floorColor}">${d.floor}/${PLANNED}</span>
+    <span class="sp-day-floor" style="color:${floorColor}">${fmtFloor(d.floor)}/${PLANNED}</span>
   </div>`;
 }
 
@@ -1854,7 +2222,7 @@ function makeCell(d,outside,isToday){
   const floor=floorForDay(key);
   const day=state[key]||{};
   const isOff=isWeekend(d)||isPH(key);
-  const hasMods=!isOff&&AGENTS.some(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes(day[a]));
+  const hasMods=!isOff&&AGENTS.some(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes(statusBase(day[a])));
   cell.className='cal-cell'+(outside?' outside':'')+(isWeekend(d)?' weekend':'')+(isToday?' today':'')+(isPH(key)?' ph-day':'');
   // Subtle background tint on workdays with reduced coverage — avoids fighting CSS specificity
   if(hasMods&&!outside){
@@ -1862,13 +2230,14 @@ function makeCell(d,outside,isToday){
     else if(floor===4) cell.style.background='rgba(255,214,10,0.035)';
   }
   const phHtml=isPH(key)?`<span class="ph-label">${phMap[key]}</span>`:'';
-  const floorHtml=!isOff?`<div class="cell-floor" style="color:${fc(floor)}">${floor}</div>`:'';
+  const floorHtml=!isOff?`<div class="cell-floor" style="color:${fc(floor)}">${fmtFloor(floor)}</div>`:'';
   // Chips: cap at 3 visible, +N overflow pill for the rest
   const absent=AGENTS.filter(a=>day[a]&&day[a]!=='W');
   const chips=absent.slice(0,3).map(a=>{
     const v=day[a];
-    const chipCls=v==='AL'?'chip-al':v==='MC'?'chip-mc':v==='OIL'?'chip-oil':v==='TRN'?'chip-trn':'chip-ph';
-    return `<div class="chip ${chipCls}">${a} · ${v}</div>`;
+    const b=statusBase(v);
+    const chipCls=b==='AL'?'chip-al':b==='MC'?'chip-mc':b==='OIL'?'chip-oil':b==='TRN'?'chip-trn':'chip-ph';
+    return `<div class="chip ${chipCls}">${escapeHtml(a)} · ${escapeHtml(formatStatusShort(v))}</div>`;
   }).join('')+(absent.length>3?`<div class="chip" style="background:rgba(255,255,255,0.06);color:var(--tx3);border:1px solid rgba(255,255,255,0.08)">+${absent.length-3}</div>`:'');
   cell.innerHTML=`<div class="cell-top"><div class="cell-num">${d.getDate()}</div>${floorHtml}</div>${phHtml}<div class="cell-chips">${chips}</div><div class="cell-edit">edit</div>`;
   if(!outside)cell.addEventListener('click',()=>openModal(key));
@@ -1882,11 +2251,11 @@ function renderDashboard(){
   const s=statsForMonth(y,m);
   // KPIs
   document.getElementById('kpi-row').innerHTML=[
-    {label:'Workdays',val:s.workdays,cls:'',delta:''},
-    {label:'Turn-up rate',val:s.turnup.toFixed(1)+'%',cls:s.turnup>=90?'good':s.turnup>=80?'warn':'bad',delta:`${s.present} of ${s.capacity} man-days`},
-    {label:'Total shrinkage',val:s.shrink.toFixed(1)+'%',cls:s.shrink<=SHRINK_TARGET_TOTAL?'good':s.shrink<=SHRINK_TARGET_TOTAL*1.2?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_TOTAL}%`},
-    {label:'Unplanned shrink',val:s.shrinkUnplanned.toFixed(1)+'%',cls:s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED?'good':s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED*1.5?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_UNPLANNED}% (MC only)`}
-  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.val}</div><div class="kpi-delta">${k.delta}</div></div>`).join('');
+    {label:'Workdays',val:s.workdays,cls:'',delta:'',help:''},
+    {label:'Turn-up rate',val:s.turnup.toFixed(1)+'%',cls:s.turnup>=90?'good':s.turnup>=80?'warn':'bad',delta:`${s.present} of ${s.capacity} man-days`,help:'turnup'},
+    {label:'Total shrinkage',val:s.shrink.toFixed(1)+'%',cls:s.shrink<=SHRINK_TARGET_TOTAL?'good':s.shrink<=SHRINK_TARGET_TOTAL*1.2?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_TOTAL}%`,help:'shrink-total'},
+    {label:'Unplanned shrink',val:s.shrinkUnplanned.toFixed(1)+'%',cls:s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED?'good':s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED*1.5?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_UNPLANNED}% (MC only)`,help:'shrink-unplanned'}
+  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-label">${k.label}${k.help?metricHelp(k.help):''}</div><div class="kpi-value">${k.val}</div><div class="kpi-delta">${k.delta}</div></div>`).join('');
   // Shrink table — planned vs unplanned split with target indicator
   const sb=document.querySelector('#shrink-table tbody');
   const shrinkRows=[
@@ -1915,7 +2284,7 @@ function renderDashboard(){
   const yb=document.querySelector('#year-table tbody');
   let rows=[],totals={workdays:0,capacity:0,AL:0,MC:0,OIL:0,TRN:0,absent:0};
   for(let mm=0;mm<12;mm++){
-    const st=statsForMonth(2026,mm);
+    const st=statsForMonth(PLANNING_YEAR,mm);
     totals.workdays+=st.workdays;totals.capacity+=st.capacity;totals.AL+=st.AL;totals.MC+=st.MC;totals.OIL+=st.OIL;totals.TRN+=st.TRN;totals.absent+=st.absent;
     const isCur=mm===m;
     const unplPct=st.capacity?(st.unplanned/st.capacity)*100:0;
@@ -1980,7 +2349,7 @@ function showBreakdown(x){
 /* ─── PER-AGENT VIEW ──────────────────── */
 function renderAgents(){
   const grid=document.getElementById('agent-grid');grid.innerHTML='';
-  const wdTotal=workdaysInYear(2026);
+  const wdTotal=workdaysInYear(PLANNING_YEAR);
   AGENTS.forEach(a=>{
     const s=statsForAgent(a);
     const tot=s.AL+s.MC+s.OIL+s.TRN;
@@ -2058,12 +2427,12 @@ function renderYear(){
   const grid=document.getElementById('year-grid');grid.innerHTML='';
   for(let mm=0;mm<12;mm++){
     const card=document.createElement('div');card.className='mini-month';
-    card.innerHTML=`<div class="mini-month-title">${monthName(mm)} 2026</div>`;
+    card.innerHTML=`<div class="mini-month-title">${monthName(mm)} ${PLANNING_YEAR}</div>`;
     const mg=document.createElement('div');mg.className='mini-grid';
-    const first=new Date(2026,mm,1),off=first.getDay(),last2=new Date(2026,mm+1,0).getDate();
+    const first=new Date(PLANNING_YEAR,mm,1),off=first.getDay(),last2=new Date(PLANNING_YEAR,mm+1,0).getDate();
     for(let i=0;i<off;i++){const d=document.createElement('div');d.className='mini-day outside';mg.appendChild(d);}
     for(let i=1;i<=last2;i++){
-      const dobj=new Date(2026,mm,i),key=ymd(dobj);
+      const dobj=new Date(PLANNING_YEAR,mm,i),key=ymd(dobj);
       const absent=AGENTS.filter(a=>[...PLANNED_CATS,...UNPLANNED_CATS].includes((state[key]||{})[a])).length;
       const cell=document.createElement('div');cell.className='mini-day'+(isWeekend(dobj)?' weekend':'')+(isPH(key)?' ph-d':'');
       if(absent>0){
@@ -2074,7 +2443,7 @@ function renderYear(){
       mg.appendChild(cell);
     }
     card.appendChild(mg);
-    card.addEventListener('click',()=>{cursor=new Date(2026,mm,1);sw('calendar');renderCalendar();});
+    card.addEventListener('click',()=>{cursor=new Date(PLANNING_YEAR,mm,1);sw('calendar');renderCalendar();});
     grid.appendChild(card);
   }
 }
@@ -2094,28 +2463,70 @@ function openModal(key){
   durRow.className='duration-row';
   durRow.innerHTML=`
     <div class="duration-label">Apply through</div>
-    <input type="date" class="duration-input" id="duration-end" value="${key}" min="${key}" max="2026-12-31">
+    <input type="date" class="duration-input" id="duration-end" value="${key}" min="${key}" max="${PLANNING_YEAR}-12-31">
     <div class="duration-hint" id="duration-hint">Single day</div>`;
   body.appendChild(durRow);
   durRow.querySelector('#duration-end').addEventListener('change',updateDurationHint);
 
   AGENTS.forEach(a=>{
     const row=document.createElement('div');row.className='agent-row';
-    row.innerHTML=`<div class="agent-row-name">${a}</div><div class="status-group" data-agent="${a}"></div>`;
+    row.innerHTML=`<div class="agent-row-name">${escapeHtml(a)}</div>
+      <div class="status-group" data-agent="${escapeHtml(a)}"></div>
+      <div class="portion-group" data-agent="${escapeHtml(a)}" style="display:none"></div>`;
     body.appendChild(row);
-    const group=row.querySelector('.status-group');
+    const group   = row.querySelector('.status-group');
+    const portion = row.querySelector('.portion-group');
+
+    const curRaw  = modalDraft[a]||'W';
+    const curSplit= splitStatus(curRaw);
+
+    // Render base status buttons (W / AL / MC / OIL / TRN)
     STATUSES.forEach(s=>{
       const opt=document.createElement('span');
       opt.className='status-opt';opt.dataset.v=s.v;opt.textContent=s.label;
-      const cur=modalDraft[a]||'W';
-      if(cur===s.v)opt.classList.add('active');
+      if (curSplit.base === s.v || (s.v==='W' && curSplit.base==='W')) opt.classList.add('active');
       opt.addEventListener('click',()=>{
-        modalDraft[a]=s.v;
+        if (s.v === 'W') {
+          modalDraft[a] = 'W';
+          portion.style.display = 'none';
+        } else {
+          // Preserve existing portion choice when switching leave types
+          const existing = splitStatus(modalDraft[a]||'W');
+          const keepPortion = existing.base !== 'W' ? existing.portion : 'full';
+          modalDraft[a] = joinStatus(s.v, keepPortion);
+          renderPortionPicker(portion, a);
+          portion.style.display = '';
+        }
         group.querySelectorAll('.status-opt').forEach(x=>x.classList.remove('active'));
         opt.classList.add('active');
       });
       group.appendChild(opt);
     });
+
+    // Show portion picker initially if currently on a leave
+    if (curSplit.base !== 'W') {
+      renderPortionPicker(portion, a);
+      portion.style.display = '';
+    }
+  });
+}
+
+// Render the Full / ½AM / ½PM toggle for one agent. Re-renders on each interaction
+// to keep the .active highlight in sync with modalDraft.
+function renderPortionPicker(container, agent){
+  container.innerHTML = '';
+  const cur = splitStatus(modalDraft[agent]||'W');
+  PORTIONS.forEach(p => {
+    const opt = document.createElement('span');
+    opt.className = 'portion-opt' + (cur.portion === p.v ? ' active' : '');
+    opt.textContent = p.label;
+    opt.addEventListener('click', () => {
+      const base = splitStatus(modalDraft[agent]||'W').base;
+      if (base === 'W') return; // shouldn't happen — picker only shown for leave
+      modalDraft[agent] = joinStatus(base, p.v);
+      renderPortionPicker(container, agent);
+    });
+    container.appendChild(opt);
   });
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -2172,7 +2583,7 @@ function saveModal(){
     }
     save(SK,state);
     const now=new Date(),d=new Date(key+'T00:00:00');
-    changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    logChange({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
       dateStr:`${d.toLocaleDateString('en-US',{day:'numeric',month:'short'})} – ${new Date(endStr+'T00:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}`,
       key,floor:floorForDay(key),planned:PLANNED,agents:{...clean},before:beforeState,range:touched,tab:'Calendar'});
     save(LK,changelog);
@@ -2191,7 +2602,7 @@ function saveModal(){
     if(after!==beforeState[a]) changedAgents[a]=after;
   });
   if(Object.keys(changedAgents).length||Object.keys(clean).length!==Object.keys(state[key]||{}).length){
-    changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    logChange({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
       dateStr:d.toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
       key,floor,planned:PLANNED,agents:changedAgents,before:beforeState,tab:'Calendar'});
     save(LK,changelog);
@@ -2279,7 +2690,7 @@ function applyLongLeave(){
   save(SK,state);
   // Log one bulk entry
   const now=new Date();
-  changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+  logChange({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
     dateStr:`${days[0]} → ${days[days.length-1]}`,
     key:days[0],floor:null,planned:PLANNED,
     agents:{[llAgent]:llType},bulk:true,bulkDays:days.length,tab:'Long Leave'});
@@ -2297,17 +2708,15 @@ function renderLog(){
   if(!changelog.length){c.innerHTML='<div class="cl-empty">No entries yet — make an edit to see it logged here</div>';return;}
   let h='<div class="cl-wrap">';
   changelog.forEach(e=>{
-    // Tab badge
     const tab=e.tab||'Calendar';
     const tabCls=tab==='Agent Contracts'?'log-tab-roster':tab==='Long Leave'?'log-tab-ll':'log-tab-cal';
 
-    // Change detail
     let detail='';
     if(tab==='Agent Contracts' && e.changes && e.changes.length){
-      detail=e.changes.map(ch=>`<span class="cl-change-chip">${ch}</span>`).join('');
+      detail=e.changes.map(ch=>`<span class="cl-change-chip">${escapeHtml(ch)}</span>`).join('');
     } else if(e.bulk){
       const [a,v]=Object.entries(e.agents)[0]||[];
-      if(a) detail=`<span class="cl-agent-diff"><span class="cl-agent-name">${a}</span><span class="cl-badge ${statusCls(v)}">${v}</span><span style="font-size:10px;color:var(--tx3)">×${e.bulkDays} days</span></span>`;
+      if(a) detail=`<span class="cl-agent-diff"><span class="cl-agent-name">${escapeHtml(a)}</span><span class="cl-badge ${statusCls(statusBase(v))}">${escapeHtml(formatStatusShort(v))}</span><span style="font-size:10px;color:var(--tx3)">×${+e.bulkDays} days</span></span>`;
     } else {
       const entries=Object.entries(e.agents);
       if(entries.length){
@@ -2315,9 +2724,9 @@ function renderLog(){
           const before=e.before?e.before[a]:'?';
           const changed=before && before!==after;
           return `<span class="cl-agent-diff">
-            <span class="cl-agent-name">${a}</span>
-            ${changed?`<span class="cl-badge ${statusCls(before)}">${before}</span><span class="cl-arrow">→</span>`:''}
-            <span class="cl-badge ${statusCls(after)}">${after||'W'}</span>
+            <span class="cl-agent-name">${escapeHtml(a)}</span>
+            ${changed?`<span class="cl-badge ${statusCls(statusBase(before))}">${escapeHtml(formatStatusShort(before))}</span><span class="cl-arrow">→</span>`:''}
+            <span class="cl-badge ${statusCls(statusBase(after))}">${escapeHtml(formatStatusShort(after||'W'))}</span>
           </span>`;
         }).join('');
       } else {
@@ -2325,23 +2734,23 @@ function renderLog(){
       }
     }
 
-    // Navigation
     let navBtn='';
     if(e.key && tab!=='Agent Contracts'){
-      navBtn=`<button class="cl-nav-btn" onclick="goToDate('${e.key}')">→ Calendar</button>`;
+      navBtn=`<button class="cl-nav-btn" onclick="goToDate('${encodeURIComponent(e.key)}')">→ Calendar</button>`;
     } else if(tab==='Agent Contracts'){
       navBtn=`<button class="cl-nav-btn" onclick="sw('roster')">→ Contracts</button>`;
     }
 
-    // Floor label
-    const floorLabel=e.floor!=null?`<span class="cl-floor" style="color:${fc(e.floor)}">${e.floor}/${e.planned}</span>`:e.bulk?`<span class="cl-floor" style="color:var(--purple)">bulk</span>`:'';
+    const floorLabel=e.floor!=null?`<span class="cl-floor" style="color:${fc(e.floor)}">${+e.floor}/${+e.planned}</span>`:e.bulk?`<span class="cl-floor" style="color:var(--purple)">bulk</span>`:'';
+    const userPill = e.user ? `<span style="font-size:9px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.12);color:var(--green)">${escapeHtml(e.user)}</span>` : '';
 
     h+=`<div class="cl-row">
       <div class="cl-row-meta">
-        <span class="cl-time">${e.timeStr}</span>
-        <span class="log-tab-badge ${tabCls}">${tab}</span>
+        <span class="cl-time">${escapeHtml(e.timeStr||'')}</span>
+        <span class="log-tab-badge ${tabCls}">${escapeHtml(tab)}</span>
+        ${userPill}
       </div>
-      <div class="cl-date">${e.dateStr}</div>
+      <div class="cl-date">${escapeHtml(e.dateStr||'')}</div>
       <div class="cl-detail">${detail}</div>
       <div class="cl-row-actions">${navBtn}${floorLabel}</div>
     </div>`;
@@ -2352,7 +2761,12 @@ function renderLog(){
 
 function goToDate(key){
   if(!key) return;
+  // Defensive: changelog renderer URL-encodes the key, so decode if it looks encoded.
+  // Also validate it's a plausible date string before constructing a Date.
+  try { key = decodeURIComponent(key); } catch(_) {}
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
   const d=new Date(key+'T00:00:00');
+  if (isNaN(d.getTime())) return;
   cursor=new Date(d.getFullYear(),d.getMonth(),1);
   sw('calendar');
 }
@@ -2361,16 +2775,21 @@ function clearLog(){if(!confirm('Clear changelog?'))return;changelog=[];save(LK,
 
 /* ─── EXPORT / RESET ──────────────────── */
 function exportCSV(){
-  const rows=[['Date','Day','Type','Agent','Status']];
+  const rows=[['Date','Day','Type','Agent','Status','Portion','Units']];
   Object.keys(state).sort().forEach(k=>{
     const d=new Date(k+'T00:00:00');
     const type=isPH(k)?'PH':isWeekend(d)?'Weekend':'Workday';
-    AGENTS.forEach(a=>{const v=state[k][a];if(v)rows.push([k,d.toLocaleDateString('en-US',{weekday:'short'}),type,a,v]);});
+    AGENTS.forEach(a=>{
+      const v=state[k][a];
+      if (!v) return;
+      const p=splitStatus(v);
+      rows.push([k,d.toLocaleDateString('en-US',{weekday:'short'}),type,a,p.base,p.portion,p.units]);
+    });
   });
   rows.push([]);rows.push(['Month','Workdays','Capacity','AL','MC','OIL','TRN','PlannedShrink%','UnplannedShrink%','TotalShrink%','TurnUp%']);
-  for(let mm=0;mm<12;mm++){const s=statsForMonth(2026,mm);rows.push([monthName(mm),s.workdays,s.capacity,s.AL,s.MC,s.OIL,s.TRN,s.shrinkPlanned.toFixed(1),s.shrinkUnplanned.toFixed(1),s.shrink.toFixed(1),s.turnup.toFixed(1)]);}
+  for(let mm=0;mm<12;mm++){const s=statsForMonth(PLANNING_YEAR,mm);rows.push([monthName(mm),s.workdays,s.capacity,s.AL,s.MC,s.OIL,s.TRN,s.shrinkPlanned.toFixed(1),s.shrinkUnplanned.toFixed(1),s.shrink.toFixed(1),s.turnup.toFixed(1)]);}
   const csv=rows.map(r=>r.map(c=>{const s=String(c??'');return/[,"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='send-ops-manpower-2026.csv';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`send-ops-manpower-${PLANNING_YEAR}.csv`;a.click();
 }
 function resetAll(){
   if(!confirm('Clear all leave entries? Public holidays reset to Singapore defaults.'))return;
@@ -2389,7 +2808,7 @@ function backupData(){
     version: 1,
     exportedAt: new Date().toISOString(),
     agents: AGENTS,
-    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
@@ -2420,6 +2839,8 @@ function restoreData(evt){
       ordersData = data.ordersData || {};
       hcLog = data.hcLog || [];
       roster = data.roster || {};
+      actions = data.actions || [];
+      saveLocal(ACT_KEY, actions);
       save(SK,state); save(PK,phMap); save(HK,hoursLog); save(LK,changelog);
       save(OPS_KEY,opsData); save(ORD_KEY,ordersData); save(HCL_KEY,hcLog); save(ROSTER_KEY,roster);
       showToast('Data restored');
@@ -2456,47 +2877,181 @@ function scheduleSync(){
   _syncTimer = setTimeout(pushToRemote, 800); // push 800ms after last edit
 }
 
-// Best-effort push on tab close / navigate away — fires even mid-debounce
+// Best-effort push on tab close / navigate away. fetch + keepalive is preferred
+// over sendBeacon because beacon has a 64KB body cap that we can blow through with
+// a year of data. fetch+keepalive has a 64KB cap per origin per page lifetime,
+// which is still tighter than ideal but better. We also size-check first and warn.
 window.addEventListener('beforeunload', () => {
-  if(_syncTimer){ clearTimeout(_syncTimer); _syncTimer = null; }
+  if(!_syncTimer) return;
+  clearTimeout(_syncTimer); _syncTimer = null;
+  const payload = JSON.stringify(syncPayload());
   try {
-    navigator.sendBeacon(getSyncUrl(), new Blob([JSON.stringify(syncPayload())], { type: 'text/plain' }));
-  } catch(e){}
+    fetch(getSyncUrl(), {
+      method: 'POST',
+      body: payload,
+      keepalive: true,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    });
+  } catch(e) {
+    // Fallback to beacon if keepalive isn't supported (very old browsers)
+    try { navigator.sendBeacon(getSyncUrl(), new Blob([payload], { type: 'text/plain' })); } catch(e2){}
+  }
 });
 
 function syncPayload(){
   return {
     schema: 'send-ops-manpower',
     version: 1,
+    appVersion: APP_VERSION,
     updatedAt: new Date().toISOString(),
+    updatedBy: getCurrentUser() || 'Anonymous',
+    // Optimistic concurrency: server can compare this against its current updatedAt
+    // and reject if the remote has moved on since we last pulled.
+    lastSeenRemoteAt: localStorage.getItem(LAST_PULL_TS_KEY) || null,
     agents: AGENTS,
-    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions
   };
 }
 
+// Track if we've already warned the user about payload bloat this session
+let _bloatWarned = false;
+// Cancellable in-flight request. When a fresh edit triggers a new push while one
+// is in flight, we abort the old one rather than skipping the new one. Each push
+// sends full state so a cancelled request never loses data.
+let _activeSyncController = null;
+
 async function pushToRemote(){
   const url = getSyncUrl();
-  if(!url || _syncing) return;
+  if(!url) return;
+  // Cancel any in-flight push — its payload is now stale anyway
+  if (_activeSyncController) {
+    try { _activeSyncController.abort(); } catch(_){}
+  }
+  const controller = new AbortController();
+  _activeSyncController = controller;
   _syncing = true;
   setSyncStatus('syncing');
   try {
-    // text/plain avoids CORS preflight; Apps Script reads e.postData.contents
+    const body = JSON.stringify(syncPayload());
+    // Payload size guard: the Google Sheets cell holding the blob has a 50,000 char
+    // hard limit. Warn well before we get there so the user can archive/export.
+    if (body.length > PAYLOAD_WARN_AT && !_bloatWarned) {
+      _bloatWarned = true;
+      const pct = Math.round((body.length / 50000) * 100);
+      showToast(`Data size at ${pct}% of sync limit — consider archiving via Backup`);
+    }
+    if (body.length > 49500) {
+      // Hard refuse — past this point Apps Script would silently truncate
+      setSyncStatus('failed', 'Payload exceeds 50KB sync limit. Backup, then trim changelog.');
+      _syncing = false;
+      return;
+    }
     const resp = await fetch(url, {
       method: 'POST',
       mode: 'cors',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(syncPayload())
+      body,
+      signal: controller.signal
     });
     const data = await resp.json();
-    if(data.error) throw new Error(data.error);
+    if (data.error) throw new Error(data.error);
+    if (data.conflict) {
+      // Don't silently destroy the user's local changes. Stash them and let
+      // the user choose: pull remote (discard local), or force-push (overwrite remote).
+      _syncing = false;
+      _activeSyncController = null;
+      const stashedBody = body;
+      showConflictModal({
+        remoteAt: data.remoteAt,
+        lastSeenRemoteAt: data.lastSeenRemoteAt,
+        stashedBody
+      });
+      return;
+    }
     localStorage.setItem(SYNC_TS_KEY, data.savedAt || new Date().toISOString());
+    if (data.savedAt) localStorage.setItem(LAST_PULL_TS_KEY, data.savedAt);
     setSyncStatus('synced');
   } catch (err) {
+    if (err.name === 'AbortError') {
+      // Superseded by a newer push — not a failure
+      return;
+    }
     setSyncStatus('failed', err.message);
   } finally {
+    if (_activeSyncController === controller) _activeSyncController = null;
     _syncing = false;
   }
+}
+
+/* Conflict resolution UI — replaces silent pull-and-discard.
+   Shows what was found on the server vs locally and lets the user pick. */
+function showConflictModal({ remoteAt, lastSeenRemoteAt, stashedBody }) {
+  // Remove any prior notice
+  document.getElementById('conflict-modal')?.remove();
+
+  // Summarise local divergence at a glance
+  const localCounts = {
+    state: Object.keys(state).length,
+    changelog: changelog.length,
+    roster: Object.keys(roster).length,
+    hcLog: hcLog.length
+  };
+
+  const remoteAgo = remoteAt ? relTime(new Date(remoteAt)) : 'just now';
+  const overlay = document.createElement('div');
+  overlay.id = 'conflict-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
+  overlay.innerHTML = `
+    <div style="width:520px;max-width:92vw;background:var(--bg2,#16161e);border:1px solid var(--yellow-border);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
+      <div style="padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin-bottom:6px">⚠ Sync conflict</div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx)">Someone else updated the sheet ${escapeHtml(remoteAgo)}.</div>
+      </div>
+      <div style="padding:18px 22px;font-size:13px;color:var(--tx2);line-height:1.6">
+        Your edit hasn't been saved to the sheet yet. Pick what to do:
+        <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-family:var(--mono);font-size:11px;color:var(--tx3)">
+          local: ${localCounts.state} attendance days · ${localCounts.changelog} log entries · ${localCounts.roster} agents · ${localCounts.hcLog} headcount events
+        </div>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button id="cf-cancel" style="font-family:var(--sans);font-size:12px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Cancel — keep editing</button>
+        <button id="cf-pull" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">Discard mine — pull latest</button>
+        <button id="cf-force" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer">Overwrite remote with mine</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  document.getElementById('cf-cancel').onclick = () => { overlay.remove(); setSyncStatus('failed', 'Conflict unresolved — your local edits are still pending'); };
+  document.getElementById('cf-pull').onclick = async () => { overlay.remove(); await pullFromRemote(); };
+  document.getElementById('cf-force').onclick = async () => {
+    overlay.remove();
+    // Re-push without the lastSeenRemoteAt token so the server skips the conflict check.
+    // We mutate the stashed body to strip that field, preserving everything else.
+    try {
+      const obj = JSON.parse(stashedBody);
+      delete obj.lastSeenRemoteAt;
+      const forcedBody = JSON.stringify(obj);
+      _syncing = true;
+      setSyncStatus('syncing');
+      const resp = await fetch(getSyncUrl(), {
+        method: 'POST', mode: 'cors', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: forcedBody
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      const stamp = data.savedAt || new Date().toISOString();
+      localStorage.setItem(SYNC_TS_KEY, stamp);
+      localStorage.setItem(LAST_PULL_TS_KEY, stamp);
+      setSyncStatus('synced');
+      showToast('Remote overwritten with your version');
+    } catch (err) {
+      setSyncStatus('failed', err.message);
+    } finally {
+      _syncing = false;
+    }
+  };
 }
 
 async function pullFromRemote(opts){
@@ -2522,7 +3077,10 @@ async function pullFromRemote(opts){
     roster = data.roster || {};
     saveLocal(SK,state); saveLocal(PK,phMap); saveLocal(HK,hoursLog); saveLocal(LK,changelog);
     saveLocal(OPS_KEY,opsData); saveLocal(ORD_KEY,ordersData); saveLocal(HCL_KEY,hcLog); saveLocal(ROSTER_KEY,roster);
-    localStorage.setItem(SYNC_TS_KEY, data.updatedAt || new Date().toISOString());
+    const stamp = data.updatedAt || new Date().toISOString();
+    localStorage.setItem(SYNC_TS_KEY, stamp);
+    // Record what we last saw on the server so the next push can detect conflicts.
+    localStorage.setItem(LAST_PULL_TS_KEY, stamp);
     setSyncStatus('synced');
     renderAll();
     return true;
@@ -2818,7 +3376,7 @@ function renderRoster(){
       </div>
       <div class="roster-field">
         <label>Notes</label>
-        <input type="text" id="rent-note-${a}" value="${r.note||''}" placeholder="e.g. 6-month internship, renewal pending…"
+        <input type="text" id="rent-note-${a}" value="${escapeHtml(r.note||'')}" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…"
           onchange="saveRosterAgent('${a}')">
       </div>`;
     grid.appendChild(card);
@@ -2834,27 +3392,46 @@ function rosterSetType(agent, type){
   saveRosterAgent(agent, type);
 }
 
+// Clamp a number into [min,max]. Returns fallback if NaN.
+function clampInt(v, min, max, fallback){
+  const n = parseInt(v, 10);
+  if (Number.isNaN(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
 function saveRosterAgent(agent, overrideType){
-  const al = document.getElementById(`rent-al-${agent}`)?.value;
-  const mc = document.getElementById(`rent-mc-${agent}`)?.value;
-  const contractStart = document.getElementById(`rent-start-${agent}`)?.value || '';
-  const contractEnd = document.getElementById(`rent-end-${agent}`)?.value || '';
-  const note = document.getElementById(`rent-note-${agent}`)?.value || '';
   const existing = getAgentRoster(agent);
   const type = overrideType || existing.type;
+  // Fall back to existing values so a concurrent oninput from another field
+  // never wipes a partially-typed date that hasn't validated yet
+  const alRaw = document.getElementById(`rent-al-${agent}`)?.value;
+  const mcRaw = document.getElementById(`rent-mc-${agent}`)?.value;
+  const al = (alRaw === '' || alRaw == null) ? existing.AL : clampInt(alRaw, 0, 60, existing.AL);
+  const mc = (mcRaw === '' || mcRaw == null) ? existing.MC : clampInt(mcRaw, 0, 60, existing.MC);
+  let contractStart = document.getElementById(`rent-start-${agent}`)?.value || existing.contractStart || '';
+  let contractEnd   = document.getElementById(`rent-end-${agent}`)?.value   || existing.contractEnd   || '';
+  // Sanity check: if both set, start must be <= end
+  if (contractStart && contractEnd && contractStart > contractEnd){
+    showToast(`${agent}: contract start cannot be after end`);
+    contractStart = existing.contractStart || '';
+    contractEnd   = existing.contractEnd   || '';
+  }
+  // Cap notes at 200 chars
+  let note = document.getElementById(`rent-note-${agent}`)?.value ?? existing.note ?? '';
+  if (note.length > 200) note = note.slice(0, 200);
   // Detect what changed for changelog
   const changes = [];
   if(type !== existing.type) changes.push(`Type: ${existing.type} → ${type}`);
-  if((+al||0) !== existing.AL) changes.push(`AL: ${existing.AL}d → ${+al||0}d`);
-  if((+mc||0) !== existing.MC) changes.push(`MC: ${existing.MC}d → ${+mc||0}d`);
+  if(al !== existing.AL) changes.push(`AL: ${existing.AL}d → ${al}d`);
+  if(mc !== existing.MC) changes.push(`MC: ${existing.MC}d → ${mc}d`);
   if(contractStart !== (existing.contractStart||'')) changes.push(`Contract start: ${existing.contractStart||'none'} → ${contractStart||'removed'}`);
   if(contractEnd !== (existing.contractEnd||'')) changes.push(`Contract end: ${existing.contractEnd||'none'} → ${contractEnd||'removed'}`);
   if(note !== (existing.note||'')) changes.push('Note updated');
-  roster[agent] = { type, AL: +al||0, MC: +mc||0, contractStart, contractEnd, note };
+  roster[agent] = { type, AL: al, MC: mc, contractStart, contractEnd, note };
   save(ROSTER_KEY, roster);
   if(changes.length){
     const now=new Date();
-    changelog.unshift({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    logChange({ts:now.toISOString(),timeStr:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
       dateStr:agent,tab:'Agent Contracts',changes,agents:{}});
     save(LK,changelog);
   }
@@ -2879,10 +3456,150 @@ function saveRosterAgent(agent, overrideType){
 }
 
 /* ─── FORECAST ─────────────────────────── */
+const FCAST_SNAP_KEY = 'sops-fcast-snap-v1';
+
+// Compute the planned attendance for a given week (Mon–Sun starting weekStartKey).
+// Returns: workdays in week, planned absences by category, expected attendance units.
+function computeWeekForecast(weekStartKey){
+  const start = new Date(weekStartKey + 'T00:00:00');
+  let workdays = 0;
+  const planned = { AL: 0, MC: 0, OIL: 0, TRN: 0, present: 0, capacity: 0 };
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    if (!isWorkday(d)) continue;
+    workdays++;
+    planned.capacity += AGENTS.length;
+    const day = state[ymd(d)] || {};
+    AGENTS.forEach(a => {
+      const p = splitStatus(day[a]);
+      if (p.base === 'AL')       planned.AL  += p.units;
+      else if (p.base === 'MC')  planned.MC  += p.units;
+      else if (p.base === 'OIL') planned.OIL += p.units;
+      else if (p.base === 'TRN') planned.TRN += p.units;
+    });
+  }
+  planned.absent = planned.AL + planned.MC + planned.OIL + planned.TRN;
+  planned.present = planned.capacity - planned.absent;
+  return { weekStartKey, workdays, ...planned };
+}
+
+// Return Monday of the week containing date d, in local time
+function mondayOf(d){
+  const x = new Date(d); x.setHours(0,0,0,0);
+  const dow = x.getDay(); // 0 Sun, 1 Mon, ... 6 Sat
+  const shift = (dow + 6) % 7; // distance back to Monday
+  x.setDate(x.getDate() - shift);
+  return x;
+}
+
+// Snapshot the upcoming week's forecast (idempotent — won't overwrite an existing snap)
+// Called automatically on boot if today is Monday and no snapshot exists for this week
+function snapshotForecastForWeek(weekStartKey){
+  try {
+    const all = JSON.parse(localStorage.getItem(FCAST_SNAP_KEY) || '{}');
+    if (all[weekStartKey]) return false; // already snapped
+    all[weekStartKey] = {
+      ...computeWeekForecast(weekStartKey),
+      snapshotAt: new Date().toISOString(),
+      snapshotBy: getCurrentUser() || 'Anonymous'
+    };
+    // Keep last 26 weeks of snapshots
+    const keep = Object.keys(all).sort().slice(-26);
+    const trimmed = {}; keep.forEach(k => trimmed[k] = all[k]);
+    localStorage.setItem(FCAST_SNAP_KEY, JSON.stringify(trimmed));
+    return true;
+  } catch(e) { console.warn('Forecast snapshot failed:', e); return false; }
+}
+
+// Manual snapshot — overwrites any existing snap for this week
+function snapshotForecastNow(){
+  try {
+    const monday = mondayOf(new Date());
+    // If we're past Monday, snap the upcoming week instead
+    const target = new Date(monday); if (new Date() > monday) target.setDate(monday.getDate() + 7);
+    const key = ymd(target);
+    const all = JSON.parse(localStorage.getItem(FCAST_SNAP_KEY) || '{}');
+    all[key] = {
+      ...computeWeekForecast(key),
+      snapshotAt: new Date().toISOString(),
+      snapshotBy: getCurrentUser() || 'Anonymous'
+    };
+    localStorage.setItem(FCAST_SNAP_KEY, JSON.stringify(all));
+    showToast(`Snapshot taken for week of ${key}`);
+    renderForecastAccuracy();
+  } catch(e) { showToast('Snapshot failed: ' + e.message); }
+}
+
+// Auto-snap on Monday — call from boot. Snaps the *current* week (Mon–Sun).
+function autoSnapForecast(){
+  const today = new Date();
+  // Only snap on Monday OR if we missed Monday and the current week has no snapshot
+  const monday = mondayOf(today);
+  const key = ymd(monday);
+  snapshotForecastForWeek(key);
+}
+
+// For each completed past-week snapshot, compute actual and score the variance.
+// Skip the current week (in flight). Skip weeks with no snapshot.
+function renderForecastAccuracy(){
+  const el = document.getElementById('fcast-accuracy');
+  if (!el) return;
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(FCAST_SNAP_KEY) || '{}'); } catch(_){}
+  const keys = Object.keys(all).sort().reverse();
+  if (!keys.length) {
+    el.innerHTML = '<div style="padding:24px;text-align:center;font-size:12px;color:var(--tx3);background:var(--glass);border:1px solid rgba(255,255,255,0.06);border-radius:10px">No forecast snapshots yet. The first one will be taken next Monday automatically, or click "Snapshot now".</div>';
+    return;
+  }
+  const currentMonday = ymd(mondayOf(new Date()));
+  el.innerHTML = keys.slice(0, 8).map(k => {
+    const snap = all[k];
+    const actual = computeWeekForecast(k);
+    const isCurrent = (k === currentMonday);
+    const weekLabel = new Date(k+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    if (isCurrent) {
+      return `<div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px">
+        <div style="font-size:12px;color:var(--tx2)">Week of ${escapeHtml(weekLabel)} <span style="color:var(--blue);font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--blue-soft);margin-left:4px">IN PROGRESS</span></div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px">Snapshot taken. Variance will be scored after the week closes on Sunday.</div>
+      </div>`;
+    }
+    // Variance per category
+    const cats = [
+      { name: 'Attendance (present units)', f: snap.present,  a: actual.present  },
+      { name: 'AL',                          f: snap.AL,       a: actual.AL       },
+      { name: 'MC',                          f: snap.MC,       a: actual.MC       },
+      { name: 'OIL',                         f: snap.OIL,      a: actual.OIL      },
+      { name: 'TRN',                         f: snap.TRN,      a: actual.TRN      }
+    ];
+    // Headline accuracy: 1 - |f - a| / max(f, 1)
+    const main = cats[0];
+    const accuracy = main.f > 0 ? Math.max(0, 100 - (Math.abs(main.f - main.a) / main.f) * 100) : 100;
+    const tone = accuracy >= 90 ? 'var(--green)' : accuracy >= 80 ? 'var(--yellow)' : 'var(--red)';
+    return `<div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px">
+        <div style="font-size:12px;color:var(--tx2)">Week of ${escapeHtml(weekLabel)}</div>
+        <div style="font-size:18px;font-weight:600;color:${tone}">${accuracy.toFixed(1)}%${metricHelp('fcast-variance')}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;font-size:11px;color:var(--tx3)">
+        ${cats.map(c => {
+          const dev = c.f - c.a;
+          const devCol = Math.abs(dev) < 0.5 ? 'var(--green)' : Math.abs(dev) < 2 ? 'var(--yellow)' : 'var(--red)';
+          return `<div style="padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px">
+            <div>${escapeHtml(c.name)}</div>
+            <div style="margin-top:2px;color:var(--tx2)">F: ${c.f} · A: ${c.a} · <strong style="color:${devCol}">${dev>0?'+':''}${dev.toFixed(1)}</strong></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderForecast(){
   const grid=document.getElementById('forecast-grid');
   grid.innerHTML='';
   const today=new Date(); today.setHours(0,0,0,0);
+  // Render the variance section alongside the coverage forecast
+  renderForecastAccuracy();
   // Collect next 28 calendar days, grouped by week
   const weeks=[];
   let cur=new Date(today);
@@ -2957,7 +3674,10 @@ function renderInsights(){
   Object.keys(state).sort().forEach(k=>{
     const d=new Date(k+'T00:00:00'); if(!isWorkday(d)) return;
     AGENTS.forEach(a=>{
-      if(state[k][a]==='MC'){ agentMC[a].dow[d.getDay()]++; agentMC[a].total++; agentMC[a].dates.push(k); }
+      // Half-day MC still counts as an MC absence event for pattern detection
+      // (Mondays-off attendance fraud doesn't get less suspicious just because they
+      // came in for half the day)
+      if(statusBase(state[k][a])==='MC'){ agentMC[a].dow[d.getDay()]++; agentMC[a].total++; agentMC[a].dates.push(k); }
     });
   });
 
@@ -3032,6 +3752,11 @@ function renderHeadcount(){
   if(!document.getElementById('hc-date').value){
     document.getElementById('hc-date').value=ymd(new Date());
   }
+  hcTypeChanged(); // sync reason field visibility
+
+  // Render attrition KPI cards (30/90/365 day annualised)
+  renderAttritionCards();
+
   const body=document.getElementById('hc-log-body');
   if(!hcLog.length){
     body.innerHTML='<div style="padding:24px;text-align:center;font-size:13px;color:var(--tx3)">No headcount events logged yet.</div>';
@@ -3051,8 +3776,8 @@ function renderHeadcount(){
     html+=`<div style="display:grid;grid-template-columns:110px 90px 1fr 1fr 32px;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center">
       <div style="font-size:12px;color:var(--tx2)">${dateStr}</div>
       <div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;${ts}">${e.type.charAt(0).toUpperCase()+e.type.slice(1)}</span></div>
-      <div style="font-size:13px;font-weight:500">${e.agent||'—'}</div>
-      <div style="font-size:12px;color:var(--tx2)">${e.note||'—'}</div>
+      <div style="font-size:13px;font-weight:500">${escapeHtml(e.agent)||'—'}</div>
+      <div style="font-size:12px;color:var(--tx2)">${e.reason?`<span style="font-size:9px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,0.06);color:var(--tx3);margin-right:6px">${escapeHtml(e.reason.replace(/-/g,' '))}</span>`:''}${escapeHtml(e.note)||'—'}</div>
       <button onclick="deleteHCEvent(${e.id})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--red-border);background:var(--red-soft);color:var(--red);cursor:pointer;font-family:var(--sans)">✕</button>
     </div>`;
   });
@@ -3060,14 +3785,67 @@ function renderHeadcount(){
   body.innerHTML=html;
 }
 
+// Show/hide the reason field based on event type
+function hcTypeChanged(){
+  const t = document.getElementById('hc-type').value;
+  document.getElementById('hc-reason-wrap').style.display = (t === 'departure') ? '' : 'none';
+}
+
+// Annualised attrition: (departures in window / avg HC) × (365 / window) × 100
+// COPC requires this annualisation so any window is comparable to the 12-month figure.
+function computeAttrition(days){
+  const now = new Date(); now.setHours(0,0,0,0);
+  const cutoff = new Date(now); cutoff.setDate(now.getDate() - days);
+  const cutoffKey = ymd(cutoff);
+  const departures = hcLog.filter(e => e.type === 'departure' && e.date >= cutoffKey);
+  // Average headcount over the window: current AGENTS count is the simplest proxy.
+  // For better accuracy track HC over time; this is good enough for an internal tool.
+  const baseHC = AGENTS.length;
+  if (baseHC === 0) return { departures: departures.length, rate: 0, count: departures.length };
+  const periodRate = departures.length / baseHC;
+  const annualised = periodRate * (365 / days) * 100;
+  // Reason breakdown
+  const byReason = {};
+  departures.forEach(d => {
+    const r = d.reason || 'unspecified';
+    byReason[r] = (byReason[r] || 0) + 1;
+  });
+  return { count: departures.length, rate: annualised, byReason };
+}
+
+function renderAttritionCards(){
+  const c = document.getElementById('attrition-cards');
+  if (!c) return;
+  const ranges = [
+    { days: 30,  label: '30-day',  key: 'attrition-90' },   // shares definition
+    { days: 90,  label: '90-day',  key: 'attrition-90' },
+    { days: 365, label: '12-month', key: 'attrition-365' }
+  ];
+  c.innerHTML = ranges.map(r => {
+    const a = computeAttrition(r.days);
+    const tone = a.rate <= 15 ? 'var(--green)' : a.rate <= 30 ? 'var(--yellow)' : 'var(--red)';
+    const reasonHtml = Object.keys(a.byReason||{}).length
+      ? Object.entries(a.byReason).map(([k,v]) => `<span style="font-size:9px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,0.06);color:var(--tx3);margin-right:3px">${escapeHtml(k.replace(/-/g,' '))}: ${v}</span>`).join('')
+      : '<span style="font-size:10px;color:var(--tx3)">No departures</span>';
+    return `<div style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">${r.label} annualised attrition${metricHelp(r.key)}</div>
+      <div style="font-size:26px;font-weight:600;color:${tone};line-height:1.1">${a.rate.toFixed(1)}%</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px">${a.count} departure${a.count===1?'':'s'} · base HC ${AGENTS.length}</div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px">${reasonHtml}</div>
+    </div>`;
+  }).join('');
+}
+
 function addHeadcountEvent(){
   const date=document.getElementById('hc-date').value;
   const type=document.getElementById('hc-type').value;
   const agent=document.getElementById('hc-agent').value.trim();
   const note=document.getElementById('hc-note').value.trim();
+  const reason=document.getElementById('hc-reason')?.value || '';
   if(!date){showToast('Pick a date');return;}
   if(!agent){showToast('Enter a name');return;}
-  const entry={id:Date.now(),date,type,agent,note,ts:new Date().toISOString()};
+  if(type==='departure' && !reason){showToast('Pick a departure reason for attrition reporting');return;}
+  const entry={id:Date.now(),date,type,agent,note,reason,ts:new Date().toISOString()};
   hcLog.unshift(entry);
   save(HCL_KEY,hcLog);
   document.getElementById('hc-agent').value='';
@@ -3084,21 +3862,36 @@ function deleteHCEvent(id){
 }
 
 /* ─── INIT ────────────────────────────── */
+// Each render gets isolated try/catch — one broken pane should not blank the others
+function safeRender(name, fn){
+  try { fn(); }
+  catch(err){
+    console.error(`[renderAll] ${name} failed:`, err);
+    showToast(`Render error in ${name} — check console`);
+  }
+}
+
 function renderAll(){
-  document.getElementById('monthLabel').textContent=monthName(cursor.getMonth())+' '+cursor.getFullYear();
+  try {
+    const ml = document.getElementById('monthLabel');
+    if (ml) ml.textContent = monthName(cursor.getMonth())+' '+cursor.getFullYear();
+    const dy = document.getElementById('dash-year'); if(dy) dy.textContent = PLANNING_YEAR;
+  } catch(e){ console.error('[renderAll] header failed:', e); }
+
   const activeSubTab = document.querySelector('#subtabbar-manpower .tab.active');
   const tab = activeSubTab ? activeSubTab.id.replace('t-','') : 'calendar';
-  renderDaily();
-  if(tab==='calendar'){ renderCalendar(); renderPaybackStrip(); }
-  if(tab==='dashboard')renderDashboard();
-  if(tab==='strength')renderStrength();
-  if(tab==='agents')renderAgents();
-  if(tab==='year')renderYear();
-  if(tab==='log')renderLog();
-  if(tab==='forecast')renderForecast();
-  if(tab==='insights')renderInsights();
-  if(tab==='headcount')renderHeadcount();
-  if(tab==='roster')renderRoster();
+  safeRender('daily', renderDaily);
+  if(tab==='calendar'){ safeRender('calendar', renderCalendar); safeRender('paybackStrip', renderPaybackStrip); }
+  if(tab==='dashboard') safeRender('dashboard', renderDashboard);
+  if(tab==='strength')  safeRender('strength', renderStrength);
+  if(tab==='agents')    safeRender('agents', renderAgents);
+  if(tab==='year')      safeRender('year', renderYear);
+  if(tab==='log')       safeRender('log', renderLog);
+  if(tab==='forecast')  safeRender('forecast', renderForecast);
+  if(tab==='insights')  safeRender('insights', renderInsights);
+  if(tab==='headcount') safeRender('headcount', renderHeadcount);
+  if(tab==='actions')   safeRender('actions', renderActions);
+  if(tab==='roster')    safeRender('roster', renderRoster);
 }
 
 document.addEventListener('keydown', e => {
@@ -3124,19 +3917,66 @@ renderAll();
 updateUndoUI();
 updateSyncStatus();
 
-// Boot sync: always pull from Google Sheet on load so every user starts with latest data
-(async function bootSync(){
-  // Seed URL into localStorage on first visit so the sync pill shows green
+// Boot sequence: ask for identity (once per device), pull latest data, take a snapshot
+(async function boot(){
+  // 1) Establish honor-system user identity for the audit log
+  //    Wait a moment so the lock screen has time to render — auth happens AFTER unlock,
+  //    not before, so the password gate still applies first.
+  setTimeout(() => {
+    if (sessionStorage.getItem('sops-auth') === '1') ensureUserIdentity();
+  }, 400);
+
+  // 2) Seed sync URL on first visit
   if(!localStorage.getItem(SYNC_URL_KEY)){
     localStorage.setItem(SYNC_URL_KEY, DEFAULT_SYNC_URL);
   }
-  await pullFromRemote({ allowSeed: true });
-})();
 
-// Nudge removed — sync URL is now hard-coded so all users auto-connect on load.
+  // 3) Pull latest remote data
+  await pullFromRemote({ allowSeed: true });
+
+  // 4) Take a daily safety snapshot (rolling 14-day history in localStorage)
+  takeDailySnapshot();
+
+  // 5) COPC: auto-snapshot this week's forecast (idempotent — won't overwrite)
+  autoSnapForecast();
+})();
 
 // Refresh the "X minutes ago" label on the sync pill periodically
 setInterval(()=>{ if(getSyncUrl()) updateSyncStatus(); }, 30000);
+
+// Concurrent-edit detection: poll the sheet every 45s. If someone else wrote
+// since our last pull, surface a soft notice so the user can refresh before they
+// overwrite the newer data. Skipped while we're actively syncing or editing a modal.
+setInterval(async () => {
+  if (_syncing || _syncTimer) return;
+  if (document.querySelector('.modal-overlay.open')) return;
+  if (!getSyncUrl()) return;
+  try {
+    const resp = await fetch(getSyncUrl(), { method: 'GET', mode: 'cors' });
+    const data = await resp.json();
+    if (data.schema !== 'send-ops-manpower') return;
+    const remoteStamp = data.updatedAt || '';
+    const ourStamp = localStorage.getItem(LAST_PULL_TS_KEY) || '';
+    if (remoteStamp && ourStamp && remoteStamp !== ourStamp) {
+      showRemoteUpdateNotice(data.updatedBy);
+    }
+  } catch (e) { /* network hiccup; ignore */ }
+}, 45000);
+
+// Soft, dismissible notice that someone else updated the sheet
+function showRemoteUpdateNotice(who) {
+  if (document.getElementById('remote-update-notice')) return; // already showing
+  const n = document.createElement('div');
+  n.id = 'remote-update-notice';
+  n.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(18,18,28,0.96);border:1px solid var(--yellow-border);backdrop-filter:blur(20px);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.5)';
+  n.innerHTML = `<div style="font-size:13px;color:var(--tx)"><strong style="color:var(--yellow)">${escapeHtml(who || 'Someone')}</strong> just updated the sheet.</div>
+    <button style="font-family:var(--sans);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">Pull latest</button>
+    <button style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Dismiss</button>`;
+  const [pull, dismiss] = n.querySelectorAll('button');
+  pull.onclick = async () => { n.remove(); await pullFromRemote(); };
+  dismiss.onclick = () => n.remove();
+  document.body.appendChild(n);
+}
 
 /* ═══════════════════════════════════════════════════════════
    DAILY OPS SNAPSHOT
@@ -3195,7 +4035,7 @@ function renderOpsHistory(){
     const date=new Date(k+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const comp=d.completion!=null?`<span style="color:${d.completion>=90?'var(--green)':d.completion>=75?'var(--yellow)':'var(--red)'}">${d.completion}%</span>`:'—';
     const inc=d.incidents!=null?`<span style="color:${d.incidents===0?'var(--green)':d.incidents<=3?'var(--yellow)':'var(--red)'}">${d.incidents}</span>`:'—';
-    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.buddies??'—'}</td><td class="num">${d.orders??'—'}</td><td class="num">${comp}</td><td class="num">${inc}</td><td class="num">${d.avgtime!=null?d.avgtime+'m':'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.notes||''}</td></tr>`;
+    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.buddies??'—'}</td><td class="num">${d.orders??'—'}</td><td class="num">${comp}</td><td class="num">${inc}</td><td class="num">${d.avgtime!=null?d.avgtime+'m':'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(d.notes||'')}</td></tr>`;
   });
   h+='</tbody></table>';
   body.innerHTML=h;
@@ -3231,26 +4071,57 @@ function processIncFile(file){
   reader.readAsText(file);
 }
 
+// Single-pass character state machine. Crucially handles newlines that appear
+// inside quoted fields (common in HR exports that include multiline notes like
+//   "Agent absent;\napproved by supervisor"
+// which the previous line-then-parse approach would corrupt by splitting on the
+// embedded \n before the quote state was tracked.
 function parseCSVText(text){
-  const lines=text.trim().split(/\r?\n/);
-  if(!lines.length) return {headers:[],rows:[]};
-  const sep=lines[0].includes('\t')?'\t':',';
-  const parseRow=line=>{
-    const res=[]; let cur=''; let inQ=false;
-    for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ; }
-      else if(c===sep&&!inQ){res.push(cur.trim());cur='';}
-      else cur+=c;
+  text = String(text || '').replace(/^﻿/, ''); // strip BOM
+  if (!text.trim()) return { headers: [], rows: [] };
+
+  // Detect separator from the first unquoted run (tab vs comma)
+  let probeI = 0, probeQ = false, sep = ',';
+  for (; probeI < text.length; probeI++) {
+    const c = text[probeI];
+    if (c === '"') probeQ = !probeQ;
+    else if (!probeQ && c === '\n') break;
+    else if (!probeQ && c === '\t') { sep = '\t'; break; }
+  }
+
+  const allRows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i+1] === '"') { cur += '"'; i++; }   // escaped quote
+        else { inQ = false; }                         // closing quote
+      } else {
+        cur += c;                                     // newlines etc preserved
+      }
+    } else {
+      if (c === '"' && cur === '') { inQ = true; }    // opening quote
+      else if (c === sep) { row.push(cur.trim()); cur = ''; }
+      else if (c === '\r') { /* swallow; handled by following \n */ }
+      else if (c === '\n') { row.push(cur.trim()); allRows.push(row); row = []; cur = ''; }
+      else { cur += c; }
     }
-    res.push(cur.trim()); return res;
-  };
-  const headers=parseRow(lines[0]);
-  const rows=lines.slice(1).filter(l=>l.trim()).map(l=>{
-    const vals=parseRow(l); const obj={};
-    headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
+  }
+  // Flush trailing cell + row
+  if (cur.length || row.length) { row.push(cur.trim()); allRows.push(row); }
+
+  // Drop blank trailing rows (just empty cells)
+  const filtered = allRows.filter(r => r.some(v => v !== ''));
+  if (!filtered.length) return { headers: [], rows: [] };
+
+  const headers = filtered[0];
+  const rows = filtered.slice(1).map(vals => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
   });
-  return {headers,rows};
+  return { headers, rows };
 }
 
 function buildIncColMapper(){
@@ -3434,7 +4305,7 @@ function renderOrdHistory(){
     const d=ordersData[k], isToday=k===todayKey;
     const date=new Date(k+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const rate=d.rate!=null?`<span style="color:${d.rate>=90?'var(--green)':d.rate>=75?'var(--yellow)':'var(--red)'}">${d.rate}%</span>`:'—';
-    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.total??'—'}</td><td class="num">${d.completed??'—'}</td><td class="num">${d.cancelled??'—'}</td><td class="num">${rate}</td><td style="font-size:12px;color:var(--tx2)">${d.peak||'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.notes||''}</td></tr>`;
+    h+=`<tr ${isToday?'class="highlight"':''}><td><span style="font-family:var(--mono);font-size:11px">${date}</span>${isToday?' <span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--blue-soft);color:var(--blue)">today</span>':''}</td><td class="num">${d.total??'—'}</td><td class="num">${d.completed??'—'}</td><td class="num">${d.cancelled??'—'}</td><td class="num">${rate}</td><td style="font-size:12px;color:var(--tx2)">${escapeHtml(d.peak||'')||'—'}</td><td style="font-size:11px;color:var(--tx2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(d.notes||'')}</td></tr>`;
   });
   h+='</tbody></table>';
   body.innerHTML=h;
@@ -3459,7 +4330,11 @@ async function tryLogin() {
     const ls = document.getElementById('lock-screen');
     ls.style.transition = 'opacity .3s';
     ls.style.opacity = '0';
-    setTimeout(() => { ls.style.display = 'none'; ls.style.opacity = ''; }, 320);
+    setTimeout(() => {
+      ls.style.display = 'none'; ls.style.opacity = '';
+      // First-time-on-device identity prompt (only once)
+      setTimeout(() => ensureUserIdentity(), 200);
+    }, 320);
   } else {
     errEl.textContent = 'Incorrect code. Try again.';
     box.classList.remove('shake');
@@ -3484,6 +4359,184 @@ async function tryLogin() {
   }
 })();
 
+/* ─── ACTION PLANS (COPC corrective-action register) ────────────────────
+   Closed actions are kept forever as audit evidence — never deleted from
+   the system unless explicitly removed via the trash icon. */
+
+// Auto-detect breaches and surface suggested actions at the top of the pane.
+// User can dismiss or convert each suggestion into a real Action.
+function detectActionTriggers(){
+  const triggers = [];
+  // Current month shrinkage
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const s = statsForMonth(y, m);
+  if (s.shrinkUnplanned > SHRINK_TARGET_UNPLANNED) {
+    triggers.push({
+      key: `unplanned-${y}-${m}`,
+      level: 'critical',
+      summary: `Unplanned shrinkage ${s.shrinkUnplanned.toFixed(1)}% in ${monthName(m)} ${y} (target ≤${SHRINK_TARGET_UNPLANNED}%)`,
+      suggestedRootCause: 'attendance'
+    });
+  }
+  if (s.shrink > SHRINK_TARGET_TOTAL) {
+    triggers.push({
+      key: `total-${y}-${m}`,
+      level: 'critical',
+      summary: `Total shrinkage ${s.shrink.toFixed(1)}% in ${monthName(m)} ${y} (target ≤${SHRINK_TARGET_TOTAL}%)`,
+      suggestedRootCause: 'scheduling'
+    });
+  }
+  // Filter out triggers already addressed by an open or recently-closed action
+  return triggers.filter(t => !actions.some(a => a.trigger && a.trigger.includes(t.summary.slice(0, 30))));
+}
+
+function renderActions(){
+  // Triggers
+  const trigEl = document.getElementById('action-triggers');
+  const triggers = detectActionTriggers();
+  if (triggers.length) {
+    trigEl.innerHTML = triggers.map(t =>
+      `<div style="background:var(--red-soft);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:12px;color:var(--tx);flex:1"><strong style="color:var(--red)">⚠ Trigger:</strong> ${escapeHtml(t.summary)}</div>
+        <button onclick='openActionModal({trigger:${JSON.stringify(t.summary)},rootCause:"${t.suggestedRootCause}"})' style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#fff;cursor:pointer">Log action →</button>
+      </div>`
+    ).join('');
+  } else {
+    trigEl.innerHTML = '';
+  }
+
+  // List
+  const listEl = document.getElementById('action-list');
+  if (!actions.length) {
+    listEl.innerHTML = '<div style="padding:48px 0;text-align:center;font-size:13px;color:var(--tx3)">No action plans yet. Triggers will appear above when a metric breaches target.</div>';
+    return;
+  }
+  // Sort: open first (by due date asc), then closed (by closedAt desc)
+  const sorted = [...actions].sort((a, b) => {
+    if (a.status !== 'closed' && b.status === 'closed') return -1;
+    if (a.status === 'closed' && b.status !== 'closed') return 1;
+    if (a.status === 'closed' && b.status === 'closed') return (b.closedAt || '').localeCompare(a.closedAt || '');
+    return (a.dueDate || '9999').localeCompare(b.dueDate || '9999');
+  });
+  const today = ymd(new Date());
+  let h = '<div style="display:flex;flex-direction:column;gap:10px">';
+  sorted.forEach(a => {
+    const overdue = a.status !== 'closed' && a.dueDate && a.dueDate < today;
+    const statusCol = a.status === 'closed' ? 'var(--green)' : overdue ? 'var(--red)' : a.status === 'in-progress' ? 'var(--yellow)' : 'var(--blue)';
+    const statusBg  = a.status === 'closed' ? 'var(--green-soft)' : overdue ? 'var(--red-soft)' : a.status === 'in-progress' ? 'var(--yellow-soft)' : 'var(--blue-soft)';
+    const statusLabel = overdue ? 'OVERDUE' : a.status.replace('-',' ');
+    const dueStr = a.dueDate ? new Date(a.dueDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const createdStr = a.ts ? new Date(a.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    h += `<div onclick='editAction(${a.id})' style="background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px;cursor:pointer;transition:0.15s" onmouseover="this.style.borderColor='rgba(255,255,255,0.14)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px">${escapeHtml(a.trigger||'(no trigger)')}</div>
+          <div style="font-size:11px;color:var(--tx3)">Logged ${escapeHtml(createdStr)} · Owner ${escapeHtml(a.owner||'unassigned')} · Root cause ${escapeHtml((a.rootCause||'—').replace(/-/g,' '))}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:${statusBg};color:${statusCol};white-space:nowrap">${escapeHtml(statusLabel)}</span>
+      </div>
+      ${a.note?`<div style="font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:6px">${escapeHtml(a.note)}</div>`:''}
+      <div style="font-size:11px;color:var(--tx3);display:flex;gap:14px;flex-wrap:wrap">
+        <span>Due: <strong style="color:${overdue?'var(--red)':'var(--tx2)'}">${escapeHtml(dueStr)}</strong></span>
+        ${a.status==='closed'&&a.closedAt?`<span>Closed: <strong style="color:var(--green)">${escapeHtml(new Date(a.closedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))}</strong></span>`:''}
+      </div>
+    </div>`;
+  });
+  h += '</div>';
+  listEl.innerHTML = h;
+}
+
+function openActionModal(prefill){
+  _editingAction = null;
+  document.getElementById('action-modal-title').textContent = 'New Action Plan';
+  document.getElementById('act-trigger').value   = prefill?.trigger || '';
+  document.getElementById('act-rootcause').value = prefill?.rootCause || '';
+  document.getElementById('act-owner').value     = getCurrentUser() || '';
+  // Default due date: 14 days from today
+  const due = new Date(); due.setDate(due.getDate() + 14);
+  document.getElementById('act-due').value = ymd(due);
+  document.getElementById('act-status').value = 'open';
+  document.getElementById('act-note').value = '';
+  document.getElementById('act-closure').value = '';
+  document.getElementById('act-closure-wrap').style.display = 'none';
+  document.getElementById('act-delete-btn').style.display = 'none';
+  document.getElementById('action-modal').classList.add('open');
+}
+
+function editAction(id){
+  const a = actions.find(x => x.id === id);
+  if (!a) return;
+  _editingAction = id;
+  document.getElementById('action-modal-title').textContent = 'Edit Action Plan';
+  document.getElementById('act-trigger').value   = a.trigger || '';
+  document.getElementById('act-rootcause').value = a.rootCause || '';
+  document.getElementById('act-owner').value     = a.owner || '';
+  document.getElementById('act-due').value       = a.dueDate || '';
+  document.getElementById('act-status').value    = a.status || 'open';
+  document.getElementById('act-note').value      = a.note || '';
+  document.getElementById('act-closure').value   = a.closure || '';
+  document.getElementById('act-closure-wrap').style.display = (a.status === 'closed') ? '' : 'none';
+  document.getElementById('act-delete-btn').style.display = '';
+  document.getElementById('action-modal').classList.add('open');
+}
+
+function closeActionModal(){ document.getElementById('action-modal').classList.remove('open'); _editingAction = null; }
+function actionOverlayClick(e){ if (e.target.id === 'action-modal') closeActionModal(); }
+
+// Toggle closure field when status changes to 'closed'
+document.addEventListener('change', e => {
+  if (e.target?.id === 'act-status') {
+    document.getElementById('act-closure-wrap').style.display = (e.target.value === 'closed') ? '' : 'none';
+  }
+});
+
+function saveAction(){
+  const trigger   = document.getElementById('act-trigger').value.trim();
+  const rootCause = document.getElementById('act-rootcause').value;
+  const owner     = document.getElementById('act-owner').value.trim();
+  const dueDate   = document.getElementById('act-due').value;
+  const status    = document.getElementById('act-status').value;
+  const note      = document.getElementById('act-note').value.trim();
+  const closure   = document.getElementById('act-closure').value.trim();
+
+  if (!trigger)   { showToast('Trigger / issue is required'); return; }
+  if (!rootCause) { showToast('Pick a root cause category'); return; }
+  if (!owner)     { showToast('Owner is required'); return; }
+  if (status === 'closed' && !closure) { showToast('Closure evidence required when marking as Closed'); return; }
+
+  if (_editingAction) {
+    const a = actions.find(x => x.id === _editingAction);
+    if (!a) return;
+    const wasClosed = a.status === 'closed';
+    Object.assign(a, { trigger, rootCause, owner, dueDate, status, note, closure });
+    if (status === 'closed' && !wasClosed) { a.closedAt = new Date().toISOString(); a.closedBy = getCurrentUser() || 'Anonymous'; }
+    if (status !== 'closed') { a.closedAt = null; a.closedBy = null; }
+  } else {
+    actions.unshift({
+      id: Date.now(),
+      ts: new Date().toISOString(),
+      createdBy: getCurrentUser() || 'Anonymous',
+      trigger, rootCause, owner, dueDate, status, note, closure,
+      closedAt: status === 'closed' ? new Date().toISOString() : null,
+      closedBy: status === 'closed' ? (getCurrentUser() || 'Anonymous') : null
+    });
+  }
+  save(ACT_KEY, actions);
+  closeActionModal();
+  renderActions();
+  showToast('Action saved');
+}
+
+function deleteCurrentAction(){
+  if (!_editingAction) return;
+  if (!confirm('Delete this action plan? This removes it from the audit trail permanently.')) return;
+  actions = actions.filter(a => a.id !== _editingAction);
+  save(ACT_KEY, actions);
+  closeActionModal();
+  renderActions();
+  showToast('Action deleted');
+}
+
 /* ─── GITHUB PUSH ──────────────────────────────────────────────────────── */
 const GH_CFG_KEY = 'sops-gh-cfg-v1';
 
@@ -3491,13 +4544,28 @@ function getGhCfg() { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || '{}'
 function setGhCfg(o){ localStorage.setItem(GH_CFG_KEY, JSON.stringify(o)); }
 
 /* Capture the current page source as UTF-8 base64.
-   Temporarily shows the lock screen so it is included in the snapshot. */
+   Resets transient runtime state so committed HTML is identical between pushes,
+   regardless of which tab was open, which modal showed, etc. */
 function captureSourceBase64() {
+  // Save state we're about to mutate so we can restore after capturing
   const ls = document.getElementById('lock-screen');
-  const prev = ls ? ls.style.display : '';
+  const lsPrev = ls ? ls.style.display : '';
+  const openModals = Array.from(document.querySelectorAll('.modal-overlay.open'));
+  const openModalIds = openModals.map(m => m.id);
+  const activeTabs = Array.from(document.querySelectorAll('.tab.active'));
+  const activePanes = Array.from(document.querySelectorAll('.pane.active'));
+
+  // Reset to a canonical view: lock screen visible, no modal open,
+  // calendar tab as default — matches a fresh page load
   if (ls) ls.style.display = 'flex';
+  openModals.forEach(m => m.classList.remove('open'));
+
   const source = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  if (ls) ls.style.display = prev;
+
+  // Restore everything we touched
+  if (ls) ls.style.display = lsPrev;
+  openModalIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('open'); });
+
   const bytes = new TextEncoder().encode(source);
   let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
   return btoa(bin);
