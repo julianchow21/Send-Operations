@@ -871,7 +871,7 @@ body::before {
 <body>
 
 <!-- ─── LOCK SCREEN ─────────────────────────────────────────────────────── -->
-<div id="lock-screen" style="display: flex;">
+<div id="lock-screen" style="display: flex; transition: opacity 0.3s;">
   <div class="lock-box" id="lock-box">
     <div class="lock-logo">Send Operations · Planner</div>
     <div class="lock-title">Restricted Access</div>
@@ -1050,7 +1050,22 @@ body::before {
 
 <!-- DASHBOARD VIEW -->
 <div class="pane" id="pane-dashboard">
+  <!-- COPC review pack export -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:11px;color:var(--tx3)">Click any metric's <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;font-size:9px;font-weight:700;color:var(--tx3);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:50%">?</span> for COPC definition.</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="openReviewPack('weekly')" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">📄 Weekly Review</button>
+      <button onclick="openReviewPack('monthly')" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">📄 Monthly Review</button>
+    </div>
+  </div>
+  <div id="data-quality-bar"></div>
   <div class="kpi-row" id="kpi-row"></div>
+  <div class="glass-card" style="margin-bottom:14px">
+    <div class="card-pad">
+      <div class="card-title">Rolling 13-week shrinkage trend</div>
+      <canvas id="trend13-chart" height="80" style="max-height:200px"></canvas>
+    </div>
+  </div>
   <div class="grid-2">
     <div class="glass-card">
       <div class="card-pad">
@@ -1108,7 +1123,161 @@ body::before {
 
 <!-- PER-AGENT VIEW -->
 <div class="pane" id="pane-agents">
-  <div class="agent-grid" id="agent-grid"></div>
+  <div class="agent-grid" id="agent-grid"><div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">Javier</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--purple-soft);color:var(--purple)">Intern</span>
+        <div style="font-size:10px;color:var(--tx3)">Contract ends 3 Aug 2026</div>
+      </div>
+      <div class="agent-card-role">YTD turn-up 98.0% · <span style="color:var(--green)">94.4% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">1.5</div>
+          <div class="ab-sub">of 2.5 days · used 1</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:60%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Remaining</div>
+          <div class="ab-val" style="color:var(--red)">-0.5 ⚠</div>
+          <div class="ab-sub">of 2.5 days · used 3</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:0%;height:100%;background:var(--red);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">1</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span style="color:var(--tx3);font-size:11px">AL: 1 used · 1.5 left</span>
+        <span style="color:var(--tx3);font-size:11px">MC: 3 used · <span style="color:var(--red)">over by 0.5d ⚠</span></span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
+      </div>
+      
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Hours Payback</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:12px;font-weight:600;color:var(--red)">Owes 2h</span>
+          
+          
+          <button onclick="openPaybackModal()" style="margin-left:auto;font-size:10px;padding:2px 9px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans)">View</button>
+        </div>
+      </div>
+    </div><div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">Aiman</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--purple-soft);color:var(--purple)">Intern</span>
+        <div style="font-size:10px;color:var(--tx3)">Contract ends 27 Aug 2026</div>
+      </div>
+      <div class="agent-card-role">YTD turn-up 99.2% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">2.5</div>
+          <div class="ab-sub">of 2.5 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">2.5</div>
+          <div class="ab-sub">of 2.5 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">2</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span style="color:var(--tx3);font-size:11px">AL: 0 used · 2.5 left</span>
+        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 2.5 left</span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
+    </div><div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">Julian</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
+        
+      </div>
+      <div class="agent-card-role">YTD turn-up 100.0% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">18</div>
+          <div class="ab-sub">of 18 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">14</div>
+          <div class="ab-sub">of 14 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span style="color:var(--tx3);font-size:11px">AL: 0 used · 18 left</span>
+        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
+    </div><div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">Tina</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
+        
+      </div>
+      <div class="agent-card-role">YTD turn-up 98.0% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">13</div>
+          <div class="ab-sub">of 18 days · used 5</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:72.22222222222221%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">14</div>
+          <div class="ab-sub">of 14 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span style="color:var(--tx3);font-size:11px">AL: 5 used · 13 left</span>
+        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
+    </div><div class="agent-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="agent-card-name" style="flex:1">Rina</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
+        
+      </div>
+      <div class="agent-card-role">YTD turn-up 97.2% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
+      <div class="agent-balance">
+        <div class="ab">
+          <div class="ab-label">AL Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">11</div>
+          <div class="ab-sub">of 18 days · used 7</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:61.111111111111114%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab">
+          <div class="ab-label">MC Remaining</div>
+          <div class="ab-val" style="color:var(--tx)">14</div>
+          <div class="ab-sub">of 14 days · used 0</div>
+          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
+        </div>
+        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
+        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
+      </div>
+      <div class="agent-card-footer">
+        <span style="color:var(--tx3);font-size:11px">AL: 7 used · 11 left</span>
+        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
+        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
+    </div></div>
 </div>
 
 <!-- YEAR VIEW -->
@@ -1132,8 +1301,237 @@ body::before {
       <div class="slabel" style="margin-bottom:4px">Agent Contracts</div>
       <div style="font-size:12px;color:var(--tx3)">Set each agent's work type, leave entitlements, and contract end date. Changes auto-save and update the Agent Entitlement tab.</div>
     </div>
+    <div style="display:flex;gap:6px">
+      <button onclick="openAddAgentModal()" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer">+ Add Agent</button>
+      <button onclick="toggleArchivedView()" id="show-arch-btn" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">View archived (0)</button>
+    </div>
   </div>
-  <div class="roster-grid" id="roster-grid"></div>
+  <div class="roster-grid" id="roster-grid"><div class="roster-card" id="rc-Javier">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('Javier')" title="Double-click to rename">Javier</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-Javier">✓ Saved</div>
+          <button onclick="archiveAgent('Javier')" title="Archive this agent (preserves history)" aria-label="Archive Javier" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row"><button class="wtype-btn wt-full" onclick="rosterSetType('Javier','full-timer')">Full-timer</button><button class="wtype-btn wt-intern active" onclick="rosterSetType('Javier','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Javier','contract')">Contract</button></div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-Javier" value="2.5" min="0" max="60" onchange="saveRosterAgent('Javier')" oninput="saveRosterAgent('Javier')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-Javier" value="2.5" min="0" max="60" onchange="saveRosterAgent('Javier')" oninput="saveRosterAgent('Javier')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label>Contract Start</label>
+          <input type="date" id="rent-start-Javier" value="2026-03-16" max="2027-12-31" onchange="saveRosterAgent('Javier')">
+        </div>
+        <div class="roster-field">
+          <label>Contract End</label>
+          <input type="date" id="rent-end-Javier" value="2026-08-03" max="2027-12-31" onchange="saveRosterAgent('Javier')">
+          
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-Javier" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Javier')">
+      </div></div><div class="roster-card" id="rc-Aiman">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('Aiman')" title="Double-click to rename">Aiman</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-Aiman">✓ Saved</div>
+          <button onclick="archiveAgent('Aiman')" title="Archive this agent (preserves history)" aria-label="Archive Aiman" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row"><button class="wtype-btn wt-full" onclick="rosterSetType('Aiman','full-timer')">Full-timer</button><button class="wtype-btn wt-intern active" onclick="rosterSetType('Aiman','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Aiman','contract')">Contract</button></div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-Aiman" value="2.5" min="0" max="60" onchange="saveRosterAgent('Aiman')" oninput="saveRosterAgent('Aiman')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-Aiman" value="2.5" min="0" max="60" onchange="saveRosterAgent('Aiman')" oninput="saveRosterAgent('Aiman')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label>Contract Start</label>
+          <input type="date" id="rent-start-Aiman" value="2026-03-16" max="2027-12-31" onchange="saveRosterAgent('Aiman')">
+        </div>
+        <div class="roster-field">
+          <label>Contract End</label>
+          <input type="date" id="rent-end-Aiman" value="2026-08-27" max="2027-12-31" onchange="saveRosterAgent('Aiman')">
+          
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-Aiman" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Aiman')">
+      </div></div><div class="roster-card" id="rc-Julian">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('Julian')" title="Double-click to rename">Julian</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-Julian">✓ Saved</div>
+          <button onclick="archiveAgent('Julian')" title="Archive this agent (preserves history)" aria-label="Archive Julian" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Julian','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Julian','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Julian','contract')">Contract</button></div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-Julian" value="18" min="0" max="60" onchange="saveRosterAgent('Julian')" oninput="saveRosterAgent('Julian')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-Julian" value="14" min="0" max="60" onchange="saveRosterAgent('Julian')" oninput="saveRosterAgent('Julian')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label>Contract Start</label>
+          <input type="date" id="rent-start-Julian" value="" max="2027-12-31" onchange="saveRosterAgent('Julian')">
+        </div>
+        <div class="roster-field">
+          <label>Contract End</label>
+          <input type="date" id="rent-end-Julian" value="" max="2027-12-31" onchange="saveRosterAgent('Julian')">
+          
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-Julian" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Julian')">
+      </div></div><div class="roster-card" id="rc-Tina">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('Tina')" title="Double-click to rename">Tina</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-Tina">✓ Saved</div>
+          <button onclick="archiveAgent('Tina')" title="Archive this agent (preserves history)" aria-label="Archive Tina" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Tina','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Tina','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Tina','contract')">Contract</button></div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-Tina" value="18" min="0" max="60" onchange="saveRosterAgent('Tina')" oninput="saveRosterAgent('Tina')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-Tina" value="14" min="0" max="60" onchange="saveRosterAgent('Tina')" oninput="saveRosterAgent('Tina')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label>Contract Start</label>
+          <input type="date" id="rent-start-Tina" value="" max="2027-12-31" onchange="saveRosterAgent('Tina')">
+        </div>
+        <div class="roster-field">
+          <label>Contract End</label>
+          <input type="date" id="rent-end-Tina" value="" max="2027-12-31" onchange="saveRosterAgent('Tina')">
+          
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-Tina" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Tina')">
+      </div></div><div class="roster-card" id="rc-Rina">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('Rina')" title="Double-click to rename">Rina</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-Rina">✓ Saved</div>
+          <button onclick="archiveAgent('Rina')" title="Archive this agent (preserves history)" aria-label="Archive Rina" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
+        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Rina','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Rina','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Rina','contract')">Contract</button></div>
+      </div>
+      <div class="roster-ent-row">
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-al-Rina" value="18" min="0" max="60" onchange="saveRosterAgent('Rina')" oninput="saveRosterAgent('Rina')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">MC Entitlement</div>
+          <input class="roster-ent-input" type="number" id="rent-mc-Rina" value="14" min="0" max="60" onchange="saveRosterAgent('Rina')" oninput="saveRosterAgent('Rina')">
+          <div class="roster-ent-sub">days / year</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label>Contract Start</label>
+          <input type="date" id="rent-start-Rina" value="" max="2027-12-31" onchange="saveRosterAgent('Rina')">
+        </div>
+        <div class="roster-field">
+          <label>Contract End</label>
+          <input type="date" id="rent-end-Rina" value="" max="2027-12-31" onchange="saveRosterAgent('Rina')">
+          
+        </div>
+      </div>
+      <div class="roster-field">
+        <label>Notes</label>
+        <input type="text" id="rent-note-Rina" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Rina')">
+      </div></div></div>
+  <div id="archived-section" style="display:none;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.07)">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:10px">Archived Agents</div>
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;max-width:640px">Archived agents are excluded from all current calculations and reports. Their historical attendance, MC patterns, and contract data are preserved for audit. Restore one to bring them back into the active roster.</div>
+    <div id="archived-list" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+</div>
+
+<!-- ADD AGENT MODAL -->
+<div class="modal-overlay" id="add-agent-modal" onclick="if(event.target.id==='add-agent-modal')closeAddAgentModal()">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Add New Agent</div>
+        <div class="modal-sub">Adds to the active roster with default entitlements</div>
+      </div>
+      <button class="modal-x" onclick="closeAddAgentModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div class="ll-section-title" style="margin-bottom:6px">Agent name</div>
+        <input id="new-agent-name" type="text" maxlength="40" class="ll-date-input" style="width:100%" placeholder="e.g. Mei Lin" onkeydown="if(event.key==='Enter')confirmAddAgent()">
+        <div style="font-size:11px;color:var(--tx3);margin-top:6px">Must be unique. Used as the primary key for all attendance entries — choose carefully.</div>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);line-height:1.6">
+        Default entitlements (14 AL, 14 MC, full-timer) will be set. Adjust on the Agent Contracts card after creation.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div></div>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeAddAgentModal()">Cancel</button>
+        <button class="mbtn mbtn-save" onclick="confirmAddAgent()">Add</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- FORECAST PANE -->
@@ -1485,7 +1883,10 @@ body::before {
       </div>
     </div>
     <div class="modal-foot">
-      <button class="mbtn mbtn-cancel" onclick="setSyncUrl('');closeSyncSettings();showToast('Sync disabled')" style="color:var(--red);border-color:var(--red-border)">Disable Sync</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="mbtn mbtn-cancel" onclick="setSyncUrl('');closeSyncSettings();showToast('Sync disabled')" style="color:var(--red);border-color:var(--red-border)">Disable Sync</button>
+        <button class="mbtn mbtn-cancel" onclick="closeSyncSettings();openDiagnosticsModal()" style="color:var(--blue);border-color:var(--blue-border)" title="Run data integrity and function checks">🧪 Diagnostics</button>
+      </div>
       <div class="modal-actions">
         <button class="mbtn mbtn-cancel" onclick="closeSyncSettings()">Cancel</button>
         <button class="mbtn mbtn-save" onclick="syncSave()">Save</button>
@@ -1589,7 +1990,13 @@ body::before {
 /* ═══════════════════════════════════
    CONFIG
 ═══════════════════════════════════ */
-const AGENTS = ['Javier','Aiman','Julian','Tina','Rina'];
+// AGENTS is the live roster — mutable so the admin UI can add/archive/rename.
+// Archived agents stay in the system so historical attendance keyed by name is preserved.
+const AGENTS_KEY     = 'sops-agents-v1';
+const AGENTS_ARCH_KEY= 'sops-agents-arch-v1';
+const _AGENTS_DEFAULT = ['Javier','Aiman','Julian','Tina','Rina'];
+let AGENTS          = load(AGENTS_KEY) || [..._AGENTS_DEFAULT];
+let archivedAgents  = load(AGENTS_ARCH_KEY) || [];
 const STATUSES = [{v:'W',label:'Working'},{v:'AL',label:'AL'},{v:'MC',label:'MC'},{v:'OIL',label:'OIL'},{v:'TRN',label:'Training'}];
 const PORTIONS = [{v:'full',label:'Full'},{v:'am',label:'½ AM'},{v:'pm',label:'½ PM'}];
 
@@ -1678,7 +2085,8 @@ const METRIC_DEFS = {
   'forecast-cov':     { name:'4-Week Coverage Forecast', formula:'(scheduled present / planned headcount) per workday for next 4 weeks', target:'≥ 80% per day', source:'Calendar entries (forward-looking)', rationale:'Early-warning system for under-resourced days.' },
   'attrition-90':     { name:'90-day Attrition (annualised)', formula:'(departures in 90d / avg headcount) × (365/90) × 100', target:'COPC industry varies; <30% is healthy', source:'Headcount log', rationale:'Annualised so any window is comparable. Includes voluntary + involuntary.' },
   'attrition-365':    { name:'12-month Attrition', formula:'(departures in 365d / avg headcount) × 100', target:'COPC industry varies; <25% is healthy', source:'Headcount log', rationale:'Full-year cycle. The number COPC auditors quote.' },
-  'fcast-variance':   { name:'Forecast Accuracy', formula:'1 − |forecast − actual| / forecast × 100', target:'≥ 90% (variance within ±10%)', source:'Weekly forecast snapshot vs actual', rationale:'COPC WFM standard for forecast quality. Captured each Monday automatically.' }
+  'fcast-variance':   { name:'Forecast Accuracy', formula:'1 − |forecast − actual| / forecast × 100', target:'≥ 90% (variance within ±10%)', source:'Weekly forecast snapshot vs actual', rationale:'COPC WFM standard for forecast quality. Captured each Monday automatically.' },
+  'adherence':        { name:'Schedule Adherence', formula:'actual present days / expected present days × 100  (expected = workdays − planned leave)', target:'≥ 85% (COPC industry benchmark)', source:'Calendar entries (state)', rationale:'Proxy for adherence at day-level. MC unplanned absence drops the number; approved leave does not.' }
 };
 
 function metricHelp(key){
@@ -1779,7 +2187,7 @@ function takeDailySnapshot(){
     const today = ymd(new Date());
     const hist = JSON.parse(localStorage.getItem(BACKUP_HIST_KEY) || '{}');
     if (hist[today]) return; // already snapped today
-    hist[today] = { state, phMap, hoursLog, changelog, roster, hcLog, actions, ts: new Date().toISOString() };
+    hist[today] = { state, phMap, hoursLog, changelog, roster, hcLog, actions, AGENTS, archivedAgents, ts: new Date().toISOString() };
     // Keep only last 14 days
     const keep = Object.keys(hist).sort().slice(-14);
     const trimmed = {}; keep.forEach(k => trimmed[k] = hist[k]);
@@ -1880,6 +2288,26 @@ function statsForMonth(y,m){
   s.shrinkUnplanned=s.capacity?(s.unplanned/s.capacity)*100:0;
   return s;
 }
+// Schedule adherence (COPC proxy) for the current planning month.
+// Expected = workdays - planned leave (AL+OIL+TRN); Actual = workdays - all absent units.
+// Adherence = actual / expected × 100. MC reduces adherence; approved leave does not.
+function adherenceForAgent(agent, year, month){
+  let workdays = 0, plannedAbsent = 0, allAbsent = 0;
+  const last = new Date(year, month+1, 0).getDate();
+  for (let i=1; i<=last; i++){
+    const d = new Date(year, month, i);
+    if (!isWorkday(d)) continue;
+    workdays++;
+    const p = splitStatus((state[ymd(d)]||{})[agent]);
+    if (['AL','OIL','TRN'].includes(p.base)) plannedAbsent += p.units;
+    if (['AL','MC','OIL','TRN'].includes(p.base)) allAbsent += p.units;
+  }
+  const expected = workdays - plannedAbsent;
+  const actual   = workdays - allAbsent;
+  const pct = expected > 0 ? (actual / expected) * 100 : 100;
+  return { expected, actual, pct, workdays, plannedAbsent, unplannedAbsent: allAbsent - plannedAbsent };
+}
+
 function statsForAgent(agent){
   const r={AL:0,MC:0,OIL:0,TRN:0};
   Object.keys(state).forEach(k=>{
@@ -2256,6 +2684,9 @@ function renderDashboard(){
     {label:'Total shrinkage',val:s.shrink.toFixed(1)+'%',cls:s.shrink<=SHRINK_TARGET_TOTAL?'good':s.shrink<=SHRINK_TARGET_TOTAL*1.2?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_TOTAL}%`,help:'shrink-total'},
     {label:'Unplanned shrink',val:s.shrinkUnplanned.toFixed(1)+'%',cls:s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED?'good':s.shrinkUnplanned<=SHRINK_TARGET_UNPLANNED*1.5?'warn':'bad',delta:`Target ≤${SHRINK_TARGET_UNPLANNED}% (MC only)`,help:'shrink-unplanned'}
   ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-label">${k.label}${k.help?metricHelp(k.help):''}</div><div class="kpi-value">${k.val}</div><div class="kpi-delta">${k.delta}</div></div>`).join('');
+  // COPC: data quality bar + rolling 13-week trend
+  renderDataQualityBar();
+  renderTrend13Chart();
   // Shrink table — planned vs unplanned split with target indicator
   const sb=document.querySelector('#shrink-table tbody');
   const shrinkRows=[
@@ -2395,7 +2826,7 @@ function renderAgents(){
         <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:${typeBg};color:${typeColor}">${typeLabel}</span>
         ${contractHtml}
       </div>
-      <div class="agent-card-role">YTD turn-up ${tu.toFixed(1)}%</div>
+      <div class="agent-card-role">YTD turn-up ${tu.toFixed(1)}% · ${(()=>{ const ad=adherenceForAgent(a, cursor.getFullYear(), cursor.getMonth()); const c = ad.pct>=85?'var(--green)':ad.pct>=70?'var(--yellow)':'var(--red)'; return `<span style="color:${c}">${ad.pct.toFixed(1)}% adherence${metricHelp('adherence')}</span>`; })()}</div>
       <div class="agent-balance">
         <div class="ab">
           <div class="ab-label">AL Remaining</div>
@@ -2808,7 +3239,7 @@ function backupData(){
     version: 1,
     exportedAt: new Date().toISOString(),
     agents: AGENTS,
-    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions, archivedAgents
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
@@ -2840,7 +3271,12 @@ function restoreData(evt){
       hcLog = data.hcLog || [];
       roster = data.roster || {};
       actions = data.actions || [];
+      // Sync the live roster too — but never let it become empty, fall back to default
+      if (Array.isArray(data.agents) && data.agents.length) AGENTS = [...data.agents];
+      if (Array.isArray(data.archivedAgents)) archivedAgents = [...data.archivedAgents];
       saveLocal(ACT_KEY, actions);
+      saveLocal(AGENTS_KEY, AGENTS);
+      saveLocal(AGENTS_ARCH_KEY, archivedAgents);
       save(SK,state); save(PK,phMap); save(HK,hoursLog); save(LK,changelog);
       save(OPS_KEY,opsData); save(ORD_KEY,ordersData); save(HCL_KEY,hcLog); save(ROSTER_KEY,roster);
       showToast('Data restored');
@@ -2909,7 +3345,7 @@ function syncPayload(){
     // and reject if the remote has moved on since we last pulled.
     lastSeenRemoteAt: localStorage.getItem(LAST_PULL_TS_KEY) || null,
     agents: AGENTS,
-    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions
+    state, phMap, hoursLog, changelog, opsData, ordersData, hcLog, roster, actions, archivedAgents
   };
 }
 
@@ -3316,8 +3752,18 @@ const WORK_TYPES = [
 ];
 
 function renderRoster(){
+  // Update archive count badge
+  const archBtn = document.getElementById('show-arch-btn');
+  if (archBtn) archBtn.textContent = `View archived (${archivedAgents.length})`;
+  // Render archived section if visible
+  const archSection = document.getElementById('archived-section');
+  if (archSection && archSection.style.display !== 'none') renderArchivedList();
   const grid = document.getElementById('roster-grid');
   grid.innerHTML = '';
+  if (!AGENTS.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:48px 0;text-align:center;font-size:13px;color:var(--tx3)">No active agents. Click <strong style="color:var(--blue)">+ Add Agent</strong> to start.</div>';
+    return;
+  }
   AGENTS.forEach(a => {
     const r = getAgentRoster(a);
     // Contract end date status
@@ -3339,9 +3785,12 @@ function renderRoster(){
     card.className = 'roster-card';
     card.id = `rc-${a}`;
     card.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="roster-card-name">${a}</div>
-        <div class="roster-saved-tick" id="rtick-${a}">✓ Saved</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="roster-card-name" ondblclick="renameAgentPrompt('${escapeHtml(a).replace(/'/g,"\\'")}')" title="Double-click to rename">${escapeHtml(a)}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="roster-saved-tick" id="rtick-${a}">✓ Saved</div>
+          <button onclick="archiveAgent('${escapeHtml(a).replace(/'/g,"\\'")}')" title="Archive this agent (preserves history)" aria-label="Archive ${escapeHtml(a)}" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
+        </div>
       </div>
       <div>
         <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
@@ -4358,6 +4807,588 @@ async function tryLogin() {
     }, 80);
   }
 })();
+
+/* ─── DIAGNOSTICS (in-place smoke test suite) ────────────────────────────
+   No test runner in a single HTML file, so we ship a callable diagnostic that:
+   1. Validates data integrity (shapes, ranges, foreign-key consistency)
+   2. Asserts critical pure functions still produce expected outputs
+   Results are surfaced in a modal so users can show auditors the pass/fail. */
+function runDiagnostics(){
+  const results = [];
+  const ok = (name, detail) => results.push({ name, status: 'pass', detail });
+  const fail = (name, detail) => results.push({ name, status: 'fail', detail });
+  const warn = (name, detail) => results.push({ name, status: 'warn', detail });
+  const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  // ─── Pure function assertions ─────────────────────────────────────
+  try {
+    eq(splitStatus('AL'), { base: 'AL', portion: 'full', units: 1 }) ? ok('splitStatus("AL")', 'full-day parse') : fail('splitStatus("AL")', 'unexpected output');
+    eq(splitStatus('AL-AM'), { base: 'AL', portion: 'am', units: 0.5 }) ? ok('splitStatus("AL-AM")', 'half-day AM parse') : fail('splitStatus("AL-AM")', 'unexpected output');
+    eq(splitStatus(undefined), { base: 'W', portion: 'full', units: 0 }) ? ok('splitStatus(undefined)', 'defaults to W') : fail('splitStatus(undefined)', 'should default');
+    eq(splitStatus('garbage'), { base: 'W', portion: 'full', units: 0 }) ? ok('splitStatus("garbage")', 'invalid → W') : fail('splitStatus("garbage")', 'should fail-safe');
+    joinStatus('AL', 'full') === 'AL' ? ok('joinStatus("AL","full")', '→ "AL"') : fail('joinStatus("AL","full")', 'wrong join');
+    joinStatus('AL', 'am') === 'AL-AM' ? ok('joinStatus("AL","am")', '→ "AL-AM"') : fail('joinStatus("AL","am")', 'wrong join');
+    joinStatus('W', 'am') === 'W' ? ok('joinStatus("W","am")', 'W ignores portion') : fail('joinStatus("W","am")', 'should be W');
+    clampInt('5', 0, 10, 99) === 5 ? ok('clampInt in range', '5→5') : fail('clampInt in range', 'bad clamp');
+    clampInt('-5', 0, 10, 99) === 0 ? ok('clampInt below min', '-5→0') : fail('clampInt below min', 'bad clamp');
+    clampInt('15', 0, 10, 99) === 10 ? ok('clampInt above max', '15→10') : fail('clampInt above max', 'bad clamp');
+    clampInt('abc', 0, 10, 7) === 7 ? ok('clampInt NaN→fallback', 'NaN→7') : fail('clampInt NaN→fallback', 'bad fallback');
+    escapeHtml('<img src=x>') === '&lt;img src=x&gt;' ? ok('escapeHtml(<img>)', 'tags escaped') : fail('escapeHtml(<img>)', 'XSS hole open');
+    escapeHtml('a"b\'c&d') === 'a&quot;b&#39;c&amp;d' ? ok('escapeHtml(special chars)', 'all entity-escaped') : fail('escapeHtml(special chars)', 'entity escape broken');
+  } catch (e) { fail('Function assertions', 'threw: ' + e.message); }
+
+  // ─── Data integrity ────────────────────────────────────────────────
+  // Valid status pattern in state[]
+  const validStatus = /^(W|(AL|MC|OIL|TRN)(-AM|-PM)?)$/;
+  let badStatusCount = 0;
+  Object.keys(state).forEach(k => {
+    if (!state[k]) return;
+    Object.entries(state[k]).forEach(([a, v]) => {
+      if (v && !validStatus.test(v)) badStatusCount++;
+    });
+  });
+  badStatusCount === 0 ? ok('Status code integrity', `${Object.keys(state).length} days scanned, all status codes valid`) : fail('Status code integrity', `${badStatusCount} invalid status codes found`);
+
+  // Date key format
+  let badKeys = 0;
+  Object.keys(state).forEach(k => { if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) badKeys++; });
+  badKeys === 0 ? ok('State key format', 'all YYYY-MM-DD') : fail('State key format', `${badKeys} malformed keys`);
+
+  // Agent foreign-key integrity (any name in state[] must be in AGENTS or archivedAgents)
+  const known = new Set([...AGENTS, ...archivedAgents]);
+  let orphanNames = new Set();
+  Object.values(state).forEach(day => {
+    if (!day) return;
+    Object.keys(day).forEach(name => { if (!known.has(name)) orphanNames.add(name); });
+  });
+  orphanNames.size === 0 ? ok('Agent foreign-key integrity', `${known.size} known agents`) : warn('Agent foreign-key integrity', `Orphan names in state: ${[...orphanNames].join(', ')}`);
+
+  // Roster ranges
+  let rosterIssues = 0;
+  Object.entries(roster).forEach(([a, r]) => {
+    if (r.AL < 0 || r.AL > 60) rosterIssues++;
+    if (r.MC < 0 || r.MC > 60) rosterIssues++;
+    if (r.contractStart && r.contractEnd && r.contractStart > r.contractEnd) rosterIssues++;
+  });
+  rosterIssues === 0 ? ok('Roster ranges', 'all entitlements 0-60, dates sane') : fail('Roster ranges', `${rosterIssues} out-of-range or invalid`);
+
+  // Action plans — closed entries should have closure evidence
+  let badActions = 0;
+  actions.forEach(a => { if (a.status === 'closed' && !a.closure) badActions++; });
+  badActions === 0 ? ok('Action plan closure evidence', `${actions.length} actions checked`) : warn('Action plan closure evidence', `${badActions} closed without closure note`);
+
+  // hcLog — departures should have reasons
+  let badDepartures = 0;
+  hcLog.forEach(e => { if (e.type === 'departure' && !e.reason) badDepartures++; });
+  badDepartures === 0 ? ok('Headcount departure reasons', `${hcLog.length} headcount events checked`) : warn('Headcount departure reasons', `${badDepartures} departures missing reason`);
+
+  // Sync URL configured
+  getSyncUrl() ? ok('Sync URL configured', 'Google Sheets endpoint set') : fail('Sync URL configured', 'no URL — data is local-only');
+
+  // User identity present
+  getCurrentUser() ? ok('User identity', `Logged as "${getCurrentUser()}"`) : warn('User identity', 'Anonymous — audit trail will lack attribution');
+
+  // Storage health
+  try {
+    localStorage.setItem('__sops_probe__', 'x');
+    localStorage.removeItem('__sops_probe__');
+    ok('localStorage writable', 'browser storage ok');
+  } catch (e) { fail('localStorage writable', e.message); }
+
+  // Browser feature support
+  typeof crypto?.subtle?.digest === 'function' ? ok('Web Crypto API', 'SHA-256 available') : fail('Web Crypto API', 'lock screen will break');
+  typeof navigator?.sendBeacon === 'function' ? ok('sendBeacon fallback', 'available') : warn('sendBeacon fallback', 'unavailable — using fetch+keepalive only');
+
+  return results;
+}
+
+function openDiagnosticsModal(){
+  const results = runDiagnostics();
+  const pass = results.filter(r => r.status === 'pass').length;
+  const failC = results.filter(r => r.status === 'fail').length;
+  const warnC = results.filter(r => r.status === 'warn').length;
+
+  document.getElementById('diag-modal')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'diag-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  const rowsHtml = results.map(r => {
+    const col = r.status === 'pass' ? 'var(--green)' : r.status === 'fail' ? 'var(--red)' : 'var(--yellow)';
+    const bg = r.status === 'pass' ? 'var(--green-soft)' : r.status === 'fail' ? 'var(--red-soft)' : 'var(--yellow-soft)';
+    const icon = r.status === 'pass' ? '✓' : r.status === 'fail' ? '✗' : '⚠';
+    return `<div style="display:grid;grid-template-columns:24px 1fr 2fr;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center">
+      <div style="font-weight:700;color:${col};background:${bg};border-radius:4px;text-align:center;font-size:12px">${icon}</div>
+      <div style="font-size:12px;color:var(--tx)">${escapeHtml(r.name)}</div>
+      <div style="font-size:11px;color:var(--tx3)">${escapeHtml(r.detail)}</div>
+    </div>`;
+  }).join('');
+  overlay.innerHTML = `<div style="width:680px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;background:var(--bg2,#16161e);border:1px solid rgba(255,255,255,0.1);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px">System Diagnostics</div>
+        <div style="font-size:16px;font-weight:600;color:var(--tx)">${results.length} checks · <span style="color:var(--green)">${pass} pass</span>${warnC?' · <span style="color:var(--yellow)">'+warnC+' warn</span>':''}${failC?' · <span style="color:var(--red)">'+failC+' fail</span>':''}</div>
+      </div>
+      <button onclick="document.getElementById('diag-modal').remove()" style="background:transparent;border:none;color:var(--tx3);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:4px 0">${rowsHtml}</div>
+    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:var(--tx3);display:flex;justify-content:space-between;align-items:center">
+      <span>Run any time. Results are computed live — no data is altered.</span>
+      <button onclick="copyDiagResults()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">Copy results</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  // Stash for copy
+  window._lastDiagResults = results;
+}
+
+function copyDiagResults(){
+  const r = window._lastDiagResults || [];
+  const text = `Send Ops Diagnostics · ${new Date().toLocaleString('en-GB')}\n${'-'.repeat(60)}\n` +
+    r.map(x => `[${x.status.toUpperCase().padEnd(4)}] ${x.name} — ${x.detail}`).join('\n');
+  navigator.clipboard?.writeText(text).then(
+    () => showToast('Diagnostics copied to clipboard'),
+    () => showToast('Could not copy — select text manually')
+  );
+}
+
+/* ─── AGENT ADMIN (add / archive / rename / restore) ────────────────────
+   AGENTS is the live roster. Archived agents stay in archivedAgents so their
+   historical attendance data — keyed by name in state[] — is never orphaned.
+   Renames migrate every keyed reference across state, roster, hcLog, actions,
+   and changelog so audit trails stay continuous. */
+
+function openAddAgentModal(){
+  document.getElementById('new-agent-name').value = '';
+  document.getElementById('add-agent-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-agent-name').focus(), 50);
+}
+function closeAddAgentModal(){
+  document.getElementById('add-agent-modal').classList.remove('open');
+}
+function confirmAddAgent(){
+  const raw = document.getElementById('new-agent-name').value.trim();
+  if (!raw) { showToast('Enter a name'); return; }
+  if (raw.length > 40) { showToast('Name too long (40 char max)'); return; }
+  // Block dupes against active AND archived to avoid name collisions
+  if (AGENTS.includes(raw) || archivedAgents.includes(raw)) {
+    showToast('That name already exists (active or archived)');
+    return;
+  }
+  AGENTS.push(raw);
+  // Initialise default roster entry
+  roster[raw] = { type: 'full-timer', AL: ENTITLEMENT.AL, MC: ENTITLEMENT.MC, contractStart: '', contractEnd: '', note: '' };
+  save(AGENTS_KEY, AGENTS);
+  save(ROSTER_KEY, roster);
+  logChange({
+    ts: new Date().toISOString(),
+    timeStr: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    dateStr: raw, tab: 'Agent Contracts',
+    changes: [`Agent added`], agents: {}
+  });
+  save(LK, changelog);
+  closeAddAgentModal();
+  renderAll();
+  showToast(`${raw} added to roster`);
+}
+
+function archiveAgent(name){
+  if (!AGENTS.includes(name)) return;
+  if (!confirm(`Archive ${name}?\n\nThey will be removed from current calculations and reports. Their historical attendance, roster data, and audit trail are preserved. You can restore them later.`)) return;
+  AGENTS = AGENTS.filter(a => a !== name);
+  if (!archivedAgents.includes(name)) archivedAgents.push(name);
+  save(AGENTS_KEY, AGENTS);
+  save(AGENTS_ARCH_KEY, archivedAgents);
+  logChange({
+    ts: new Date().toISOString(),
+    timeStr: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    dateStr: name, tab: 'Agent Contracts',
+    changes: [`Agent archived`], agents: {}
+  });
+  save(LK, changelog);
+  renderAll();
+  showToast(`${name} archived`);
+}
+
+function restoreAgent(name){
+  if (archivedAgents.includes(name)) {
+    archivedAgents = archivedAgents.filter(a => a !== name);
+    if (!AGENTS.includes(name)) AGENTS.push(name);
+    save(AGENTS_KEY, AGENTS);
+    save(AGENTS_ARCH_KEY, archivedAgents);
+    logChange({
+      ts: new Date().toISOString(),
+      timeStr: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+      dateStr: name, tab: 'Agent Contracts',
+      changes: [`Agent restored from archive`], agents: {}
+    });
+    save(LK, changelog);
+    renderAll();
+    showToast(`${name} restored`);
+  }
+}
+
+function toggleArchivedView(){
+  const sec = document.getElementById('archived-section');
+  if (!sec) return;
+  if (sec.style.display === 'none') {
+    sec.style.display = '';
+    renderArchivedList();
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function renderArchivedList(){
+  const el = document.getElementById('archived-list');
+  if (!el) return;
+  if (!archivedAgents.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--tx3);font-style:italic">No archived agents.</div>';
+    return;
+  }
+  el.innerHTML = archivedAgents.map(name => {
+    // Count their preserved history
+    let attendanceDays = 0;
+    Object.keys(state).forEach(k => { if (state[k] && state[k][name]) attendanceDays++; });
+    const safeName = escapeHtml(name).replace(/'/g, "\\'");
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px">
+      <div>
+        <div style="font-size:13px;color:var(--tx)">${escapeHtml(name)}</div>
+        <div style="font-size:11px;color:var(--tx3)">${attendanceDays} historical attendance day${attendanceDays===1?'':'s'} preserved</div>
+      </div>
+      <button onclick="restoreAgent('${safeName}')" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--green-border);background:var(--green-soft);color:var(--green);cursor:pointer">Restore</button>
+    </div>`;
+  }).join('');
+}
+
+function renameAgentPrompt(oldName){
+  const newName = prompt(`Rename "${oldName}" to:\n\nThis migrates every reference across attendance, roster, headcount, action plans, and changelog. Cannot be undone (without manual edit).`, oldName);
+  if (newName === null) return; // cancelled
+  const trimmed = newName.trim();
+  if (!trimmed) { showToast('Name cannot be empty'); return; }
+  if (trimmed === oldName) return; // no change
+  if (trimmed.length > 40) { showToast('Name too long (40 char max)'); return; }
+  if (AGENTS.includes(trimmed) || archivedAgents.includes(trimmed)) {
+    showToast('That name already exists');
+    return;
+  }
+  renameAgent(oldName, trimmed);
+}
+
+function renameAgent(oldName, newName){
+  // 1. AGENTS array
+  const idx = AGENTS.indexOf(oldName);
+  if (idx >= 0) AGENTS[idx] = newName;
+  const aIdx = archivedAgents.indexOf(oldName);
+  if (aIdx >= 0) archivedAgents[aIdx] = newName;
+  // 2. state[date][agent]
+  Object.keys(state).forEach(k => {
+    if (state[k] && state[k][oldName] !== undefined) {
+      state[k][newName] = state[k][oldName];
+      delete state[k][oldName];
+    }
+  });
+  // 3. roster
+  if (roster[oldName]) { roster[newName] = roster[oldName]; delete roster[oldName]; }
+  // 4. hcLog entries
+  hcLog.forEach(e => { if (e.agent === oldName) e.agent = newName; });
+  // 5. hoursLog (payback) entries
+  hoursLog.forEach(e => { if (e.agent === oldName) e.agent = newName; });
+  // 6. action plan owners (best-effort)
+  actions.forEach(a => { if (a.owner === oldName) a.owner = newName; });
+  // 7. changelog — agent appears in entry.agents{} keys, dateStr (for Roster), and before{}
+  changelog.forEach(e => {
+    if (e.agents && e.agents[oldName] !== undefined) {
+      e.agents[newName] = e.agents[oldName]; delete e.agents[oldName];
+    }
+    if (e.before && e.before[oldName] !== undefined) {
+      e.before[newName] = e.before[oldName]; delete e.before[oldName];
+    }
+    if (e.tab === 'Agent Contracts' && e.dateStr === oldName) e.dateStr = newName;
+  });
+  // Persist everything
+  save(AGENTS_KEY, AGENTS);
+  save(AGENTS_ARCH_KEY, archivedAgents);
+  save(SK, state); save(PK, phMap); save(HK, hoursLog); save(LK, changelog);
+  save(HCL_KEY, hcLog); save(ROSTER_KEY, roster); save(ACT_KEY, actions);
+  // Log the rename itself
+  logChange({
+    ts: new Date().toISOString(),
+    timeStr: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    dateStr: newName, tab: 'Agent Contracts',
+    changes: [`Renamed from "${oldName}"`], agents: {}
+  });
+  save(LK, changelog);
+  renderAll();
+  showToast(`Renamed ${oldName} → ${newName}`);
+}
+
+/* ─── COPC: DATA QUALITY FLAGS ───────────────────────────────────────────
+   Auditors care about data completeness. This bar surfaces gaps the user
+   should know about before reporting numbers up. */
+function renderDataQualityBar(){
+  const el = document.getElementById('data-quality-bar');
+  if (!el) return;
+  const issues = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayKey = ymd(today);
+  // 1. Past workdays in current month with no entries at all
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const last = new Date(y, m+1, 0).getDate();
+  let unloggedDays = 0;
+  for (let i = 1; i <= last; i++) {
+    const d = new Date(y, m, i);
+    if (!isWorkday(d)) continue;
+    if (ymd(d) > todayKey) continue; // skip future
+    const day = state[ymd(d)];
+    if (!day || Object.keys(day).length === 0) unloggedDays++;
+  }
+  // 2. Days where absences exceed headcount (data integrity)
+  let overcountedDays = 0;
+  Object.keys(state).forEach(k => {
+    const d = new Date(k+'T00:00:00');
+    if (d.getFullYear() !== y || d.getMonth() !== m) return;
+    if (!isWorkday(d)) return;
+    let absent = 0;
+    AGENTS.forEach(a => { absent += splitStatus(state[k][a]).units; });
+    if (absent > AGENTS.length) overcountedDays++;
+  });
+  // 3. Stale data — no edits in 7+ days
+  const lastEntry = changelog[0];
+  let stale = false;
+  if (lastEntry && lastEntry.ts) {
+    const ageDays = Math.floor((Date.now() - new Date(lastEntry.ts).getTime()) / 86400000);
+    if (ageDays >= 7) stale = true;
+  }
+  // 4. Agents with no entries for 30+ days
+  const cutoff = new Date(today); cutoff.setDate(today.getDate() - 30);
+  const cutoffKey = ymd(cutoff);
+  const silentAgents = AGENTS.filter(a => {
+    return !Object.keys(state).some(k => k >= cutoffKey && state[k][a] && state[k][a] !== 'W');
+  });
+
+  if (unloggedDays > 0) issues.push({ type: 'warn',  msg: `${unloggedDays} past workday${unloggedDays===1?'':'s'} this month with no entries logged` });
+  if (overcountedDays > 0) issues.push({ type: 'error', msg: `${overcountedDays} day${overcountedDays===1?'':'s'} where absences exceed headcount — data error` });
+  if (stale) issues.push({ type: 'warn', msg: 'No edits in the last 7+ days — tool may be out of use' });
+  if (silentAgents.length > 0 && silentAgents.length < AGENTS.length) issues.push({ type: 'info', msg: `${silentAgents.length} agent${silentAgents.length===1?'':'s'} with no logged absence in 30+ days (possibly clean attendance, or unlogged)` });
+
+  if (!issues.length) {
+    el.innerHTML = `<div style="background:var(--green-soft);border:1px solid var(--green-border);border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px"><span>✓</span> Data quality clean — no gaps detected.</div>`;
+    return;
+  }
+  el.innerHTML = issues.map(iss => {
+    const col = iss.type === 'error' ? 'red' : iss.type === 'warn' ? 'yellow' : 'blue';
+    return `<div style="background:var(--${col}-soft);border:1px solid var(--${col}-border);border-radius:8px;padding:8px 14px;margin-bottom:6px;font-size:12px;color:var(--${col});display:flex;align-items:center;gap:8px"><span>${iss.type==='error'?'⚠':iss.type==='warn'?'⚠':'ℹ'}</span> ${escapeHtml(iss.msg)}</div>`;
+  }).join('');
+}
+
+/* ─── COPC: ROLLING 13-WEEK SHRINKAGE TREND ──────────────────────────── */
+let _trend13Chart = null;
+function renderTrend13Chart(){
+  const canvas = document.getElementById('trend13-chart');
+  if (!canvas) return;
+  if (_trend13Chart) { _trend13Chart.destroy(); _trend13Chart = null; }
+
+  // Build 13 weeks ending current week (Mon-based)
+  const labels = [];
+  const totals = [];
+  const unplanneds = [];
+  const targetTotal = [];
+  const targetUnplan = [];
+  const today = new Date();
+  const thisMonday = mondayOf(today);
+  for (let i = 12; i >= 0; i--) {
+    const weekStart = new Date(thisMonday); weekStart.setDate(thisMonday.getDate() - i*7);
+    let capacity = 0, planned = 0, unplanned = 0;
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(weekStart); day.setDate(weekStart.getDate() + d);
+      if (!isWorkday(day)) continue;
+      capacity += AGENTS.length;
+      const st = state[ymd(day)] || {};
+      AGENTS.forEach(a => {
+        const p = splitStatus(st[a]);
+        if (['AL','OIL','TRN'].includes(p.base)) planned += p.units;
+        if (p.base === 'MC') unplanned += p.units;
+      });
+    }
+    labels.push(weekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+    totals.push(capacity > 0 ? +(((planned+unplanned)/capacity)*100).toFixed(1) : 0);
+    unplanneds.push(capacity > 0 ? +((unplanned/capacity)*100).toFixed(1) : 0);
+    targetTotal.push(SHRINK_TARGET_TOTAL);
+    targetUnplan.push(SHRINK_TARGET_UNPLANNED);
+  }
+  _trend13Chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Total shrinkage %', data: totals, borderColor: 'rgba(10,132,255,1)', backgroundColor: 'rgba(10,132,255,0.12)', tension: 0.3, fill: true, pointRadius: 3 },
+      { label: 'Unplanned %', data: unplanneds, borderColor: 'rgba(255,69,58,1)', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3 },
+      { label: `Total target (${SHRINK_TARGET_TOTAL}%)`, data: targetTotal, borderColor: 'rgba(10,132,255,0.4)', borderDash: [4,4], pointRadius: 0, fill: false },
+      { label: `Unplanned target (${SHRINK_TARGET_UNPLANNED}%)`, data: targetUnplan, borderColor: 'rgba(255,69,58,0.4)', borderDash: [4,4], pointRadius: 0, fill: false }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, callback: v => v+'%' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+/* ─── COPC: REVIEW PACK (WEEKLY / MONTHLY) ───────────────────────────────
+   One-click print-friendly review document with the structure auditors expect:
+   header → metric performance vs target → root causes → action plan status
+   → attrition → headcount changes → forecast accuracy. */
+function openReviewPack(scope){
+  // Build the data window
+  const today = new Date();
+  let windowLabel, windowStart, windowEnd;
+  if (scope === 'weekly') {
+    windowStart = mondayOf(today);
+    windowEnd = new Date(windowStart); windowEnd.setDate(windowStart.getDate() + 6);
+    windowLabel = `Week of ${windowStart.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
+  } else {
+    windowStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    windowEnd   = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    windowLabel = today.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  }
+
+  // Aggregate metrics over the window
+  let workdays = 0, capacity = 0, AL = 0, MC = 0, OIL = 0, TRN = 0;
+  for (let d = new Date(windowStart); d <= windowEnd; d.setDate(d.getDate()+1)) {
+    if (!isWorkday(d)) continue;
+    workdays++; capacity += AGENTS.length;
+    const st = state[ymd(d)] || {};
+    AGENTS.forEach(a => {
+      const p = splitStatus(st[a]);
+      if (p.base==='AL') AL += p.units;
+      else if (p.base==='MC') MC += p.units;
+      else if (p.base==='OIL') OIL += p.units;
+      else if (p.base==='TRN') TRN += p.units;
+    });
+  }
+  const planned = AL + OIL + TRN;
+  const unplanned = MC;
+  const absent = planned + unplanned;
+  const shrinkTotal = capacity > 0 ? (absent / capacity * 100) : 0;
+  const shrinkUnpl  = capacity > 0 ? (unplanned / capacity * 100) : 0;
+  const turnup      = capacity > 0 ? ((capacity-absent) / capacity * 100) : 100;
+
+  // Action plans relevant to this window
+  const startKey = ymd(windowStart), endKey = ymd(windowEnd);
+  const relevantActions = actions.filter(a => {
+    const t = a.ts || '';
+    return t >= startKey || a.status !== 'closed';
+  });
+
+  // Headcount changes in window
+  const hcInWindow = hcLog.filter(e => e.date >= startKey && e.date <= endKey);
+
+  // Attrition (window-scoped windows for context)
+  const attr90 = computeAttrition(90);
+  const attr365 = computeAttrition(365);
+
+  // Build the HTML for a new window
+  const html = `<!DOCTYPE html><html><head><title>${escapeHtml(scope==='weekly'?'Weekly':'Monthly')} Review — ${escapeHtml(windowLabel)}</title>
+<style>
+  @page { margin: 14mm; size: A4; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; padding: 24px; max-width: 900px; margin: 0 auto; line-height: 1.5; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin: 24px 0 10px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #777; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #2a8a3e; font-weight: 600; }
+  .bad { color: #c0392b; font-weight: 600; }
+  .pill { display: inline-block; font-size: 9px; padding: 2px 7px; border-radius: 99px; background: #eee; color: #555; }
+  .pill.ok { background: #d8f5dc; color: #1a5a25; }
+  .pill.bad { background: #fbe2dd; color: #8a1c0c; }
+  .empty { color: #999; font-style: italic; font-size: 12px; }
+  button { font-family: inherit; font-size: 12px; padding: 6px 14px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; }
+  @media print { button { display: none; } }
+</style></head><body>
+  <button onclick="window.print()" style="position:fixed;top:12px;right:12px">🖨 Print / Save as PDF</button>
+
+  <h1>${escapeHtml(scope==='weekly'?'Weekly':'Monthly')} Operations Review</h1>
+  <div class="meta">${escapeHtml(windowLabel)} · Generated ${escapeHtml(new Date().toLocaleString('en-GB',{timeZone:'Asia/Singapore'}))} by ${escapeHtml(getCurrentUser()||'Anonymous')}</div>
+
+  <h2>1. Performance vs Target</h2>
+  <table>
+    <thead><tr><th>Metric</th><th class="num">Actual</th><th class="num">Target</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Turn-up rate</td><td class="num">${turnup.toFixed(1)}%</td><td class="num">≥ 90%</td><td><span class="pill ${turnup>=90?'ok':'bad'}">${turnup>=90?'PASS':'MISS'}</span></td></tr>
+      <tr><td>Total shrinkage</td><td class="num">${shrinkTotal.toFixed(1)}%</td><td class="num">≤ ${SHRINK_TARGET_TOTAL}%</td><td><span class="pill ${shrinkTotal<=SHRINK_TARGET_TOTAL?'ok':'bad'}">${shrinkTotal<=SHRINK_TARGET_TOTAL?'PASS':'MISS'}</span></td></tr>
+      <tr><td>Unplanned shrinkage (MC)</td><td class="num">${shrinkUnpl.toFixed(1)}%</td><td class="num">≤ ${SHRINK_TARGET_UNPLANNED}%</td><td><span class="pill ${shrinkUnpl<=SHRINK_TARGET_UNPLANNED?'ok':'bad'}">${shrinkUnpl<=SHRINK_TARGET_UNPLANNED?'PASS':'MISS'}</span></td></tr>
+      <tr><td>Workdays in window</td><td class="num">${workdays}</td><td class="num">—</td><td>—</td></tr>
+      <tr><td>Capacity (man-days)</td><td class="num">${capacity}</td><td class="num">—</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. Absence breakdown</h2>
+  <table>
+    <thead><tr><th>Category</th><th class="num">Units</th><th class="num">% capacity</th></tr></thead>
+    <tbody>
+      <tr><td>AL (Annual Leave)</td><td class="num">${AL}</td><td class="num">${capacity?(AL/capacity*100).toFixed(1):'0'}%</td></tr>
+      <tr><td>MC (Medical Cert)</td><td class="num">${MC}</td><td class="num">${capacity?(MC/capacity*100).toFixed(1):'0'}%</td></tr>
+      <tr><td>OIL (Off-in-Lieu)</td><td class="num">${OIL}</td><td class="num">${capacity?(OIL/capacity*100).toFixed(1):'0'}%</td></tr>
+      <tr><td>TRN (Training)</td><td class="num">${TRN}</td><td class="num">${capacity?(TRN/capacity*100).toFixed(1):'0'}%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Action Plans (open + recently closed)</h2>
+  ${relevantActions.length ? `<table>
+    <thead><tr><th>Status</th><th>Trigger</th><th>Owner</th><th>Root Cause</th><th>Due</th></tr></thead>
+    <tbody>${relevantActions.map(a => `<tr>
+      <td><span class="pill ${a.status==='closed'?'ok':'bad'}">${escapeHtml(a.status)}</span></td>
+      <td>${escapeHtml(a.trigger||'—')}</td>
+      <td>${escapeHtml(a.owner||'—')}</td>
+      <td>${escapeHtml((a.rootCause||'—').replace(/-/g,' '))}</td>
+      <td>${a.dueDate?escapeHtml(new Date(a.dueDate+'T00:00:00').toLocaleDateString('en-GB')):'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>` : '<div class="empty">No action plans on file.</div>'}
+
+  <h2>4. Headcount changes in window</h2>
+  ${hcInWindow.length ? `<table>
+    <thead><tr><th>Date</th><th>Type</th><th>Agent</th><th>Reason</th><th>Note</th></tr></thead>
+    <tbody>${hcInWindow.map(e => `<tr>
+      <td>${escapeHtml(e.date)}</td>
+      <td>${escapeHtml(e.type)}</td>
+      <td>${escapeHtml(e.agent)}</td>
+      <td>${escapeHtml((e.reason||'—').replace(/-/g,' '))}</td>
+      <td>${escapeHtml(e.note||'—')}</td>
+    </tr>`).join('')}</tbody>
+  </table>` : '<div class="empty">No headcount changes recorded in this window.</div>'}
+
+  <h2>5. Attrition (annualised)</h2>
+  <table>
+    <thead><tr><th>Window</th><th class="num">Annualised rate</th><th class="num">Departures</th></tr></thead>
+    <tbody>
+      <tr><td>90-day</td><td class="num">${attr90.rate.toFixed(1)}%</td><td class="num">${attr90.count}</td></tr>
+      <tr><td>12-month</td><td class="num">${attr365.rate.toFixed(1)}%</td><td class="num">${attr365.count}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Sign-off</h2>
+  <table>
+    <tbody>
+      <tr><td style="width:50%">Prepared by</td><td>${escapeHtml(getCurrentUser()||'Anonymous')}</td></tr>
+      <tr><td>Reviewed by</td><td style="border-bottom:1px solid #999">&nbsp;</td></tr>
+      <tr><td>Date reviewed</td><td style="border-bottom:1px solid #999">&nbsp;</td></tr>
+      <tr><td>Comments</td><td style="border-bottom:1px solid #999;height:60px">&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:40px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px">Send Operations Planner · ${escapeHtml(APP_VERSION)} · This document is an automatically generated review snapshot. Source data lives in the planner.</div>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { showToast('Pop-up blocked — allow pop-ups for review pack'); return; }
+  w.document.write(html);
+  w.document.close();
+}
 
 /* ─── ACTION PLANS (COPC corrective-action register) ────────────────────
    Closed actions are kept forever as audit evidence — never deleted from
