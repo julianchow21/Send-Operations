@@ -973,7 +973,7 @@ body::before {
 <body>
 
 <!-- ─── LOCK SCREEN ─────────────────────────────────────────────────────── -->
-<div id="lock-screen" style="display: flex; transition: opacity 0.3s;">
+<div id="lock-screen" style="display: flex;">
   <div class="lock-box" id="lock-box">
     <div class="lock-logo">Send Operations · Planner</div>
     <div class="lock-title">Restricted Access</div>
@@ -3315,10 +3315,13 @@ async function pullFromRemote(opts){
     roster = data.roster || {};
     saveLocal(SK,state); saveLocal(PK,phMap); saveLocal(HK,hoursLog); saveLocal(LK,changelog);
     saveLocal(OPS_KEY,opsData); saveLocal(ORD_KEY,ordersData); saveLocal(HCL_KEY,hcLog); saveLocal(ROSTER_KEY,roster);
-    const stamp = data.updatedAt || new Date().toISOString();
-    localStorage.setItem(SYNC_TS_KEY, stamp);
+    // The server's authoritative C1 stamp (added in the .gs response as _remoteAt).
+    // Falls back to data.updatedAt for backwards compat with old script versions,
+    // but only the _remoteAt path avoids the client-time/server-time conflict loop.
+    const serverStamp = data._remoteAt || data.updatedAt || new Date().toISOString();
+    localStorage.setItem(SYNC_TS_KEY, serverStamp);
     // Record what we last saw on the server so the next push can detect conflicts.
-    localStorage.setItem(LAST_PULL_TS_KEY, stamp);
+    localStorage.setItem(LAST_PULL_TS_KEY, serverStamp);
     setSyncStatus('synced');
     renderAll();
     return true;
