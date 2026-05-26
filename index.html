@@ -316,8 +316,6 @@ body::before {
 .chip-trn { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
 .chip-ph  { background: rgba(255,255,255,0.06); color: var(--tx2); }
 /* str-bar removed — floor strength shown via cell tint + number colour */
-.cell-edit { position: absolute; bottom: 5px; right: 8px; font-size: 8px; color: var(--tx3); opacity: 0; transition: 0.15s; }
-.cal-cell:hover .cell-edit { opacity: 1; }
 
 /* ─── CALENDAR LAYOUT ────────────────────────────────────── */
 /* Body scrolls naturally — no fixed-height grid rows that clip content */
@@ -991,7 +989,7 @@ body::before {
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
-  <button class="sync-pill s-synced" id="sync-pill" onclick="openSyncSettings()" title="Sheet up to date · click to manage">● Synced · 1m ago</button>
+  <button class="sync-pill s-local" id="sync-pill" onclick="openSyncSettings()" title="Running on localhost — sync disabled so test edits do not reach the production Sheet">● Preview · sync off</button>
   <div class="spacer"></div>
   <div class="top-actions">
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
@@ -1022,7 +1020,7 @@ body::before {
   <button class="main-tab" id="mt-orders" onclick="swMain('orders')">Orders</button>
   <button class="main-tab" id="mt-bmor" onclick="swMain('bmor')">BMOR</button>
   <div class="spacer"></div>
-  <div class="month-nav" id="month-nav-bar" style="">
+  <div class="month-nav" id="month-nav-bar">
     <button class="mnav-btn" onclick="prevMonth()">‹</button>
     <div class="month-label" id="monthLabel">May 2026</div>
     <button class="mnav-btn" onclick="nextMonth()">›</button>
@@ -1031,7 +1029,7 @@ body::before {
 </div>
 
 <!-- SUB TAB BAR — Manpower -->
-<div class="tabbar" id="subtabbar-manpower" style="">
+<div class="tabbar" id="subtabbar-manpower">
   <button class="tab active" id="t-calendar" onclick="sw('calendar')">Calendar</button>
   <button class="tab" id="t-agents" onclick="sw('agents')">Agent Entitlement</button>
   <button class="tab" id="t-roster" onclick="sw('roster')">Agent Contracts</button>
@@ -1088,12 +1086,7 @@ body::before {
         <input type="text" id="qe-input" class="qe-input" placeholder="Quick entry e.g. Aiman MC 26/05 to 02/06" autocomplete="off" spellcheck="false" oninput="qeOnInput()" onkeydown="qeOnKey(event)" onfocus="qeOnInput()" onblur="setTimeout(qeBlur,150)">
         <button type="button" class="qe-help-btn" onclick="qeToggleHelp(event)" title="Show syntax help" aria-label="Quick entry syntax">?</button>
       </div>
-      <div class="qe-preview" id="qe-preview"><div class="qe-pv-line">
-      <span class="qe-pv-chip">Javier</span>
-      <span class="qe-pv-chip mc">MC</span>
-      <span style="color:var(--tx2)">28 May</span>
-      <span style="color:var(--tx3)">· 1 workday</span>
-    </div><div style="font-size:10.5px;color:var(--tx3);margin-top:4px">Press Enter to apply · weekends and PH skipped</div></div>
+      <div class="qe-preview" id="qe-preview"></div>
       <div class="qe-help-popover" id="qe-help-popover">
         <h4>Leaves</h4>
         <div class="qe-h-row"><code>Aiman MC 26/05</code> — single day</div>
@@ -1107,8 +1100,6 @@ body::before {
     </div>
   </div>
 
-  <!-- Hours payback availability strip — shows agents with unsettled hours -->
-  <div class="payback-strip" id="payback-strip"><div class="payback-strip-label">Payback Available · 2h total</div><button class="payback-pill" onclick="openPaybackModal()" title="Click to view / settle Javier's payback hours">Javier <span class="h">2h</span></button><button class="payback-pill action" onclick="openPaybackModal()">Manage →</button></div>
 
   <!-- Calendar grid -->
   <div class="cal-wrap" id="cal-wrap">
@@ -1116,7 +1107,7 @@ body::before {
       <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
       <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
     </div>
-    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell today" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
+    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell today" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div></div></div>
   </div>
 
   <!-- Shrinkage stats panel -->
@@ -1262,228 +1253,7 @@ body::before {
     <div class="slabel" style="margin:0;flex:1">Persistent activity log</div>
     <button onclick="clearLog()" style="font-family:var(--sans);font-size:11px;background:var(--red-soft);border:1px solid var(--red-border);color:var(--red);padding:5px 12px;border-radius:8px;cursor:pointer">Clear log</button>
   </div>
-  <div id="cl-container"><div class="cl-wrap"><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:49 AM</span>
-        <span class="log-tab-badge log-tab-cal">Quick Entry</span>
-        <span style="font-size:9px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.12);color:var(--green)">Anonymous</span>
-      </div>
-      <div class="cl-date">2026-05-28</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-mc">MC</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-28')">→ Calendar</button></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">04:59 PM</span>
-        <span class="log-tab-badge log-tab-roster">Agent Contracts</span>
-        
-      </div>
-      <div class="cl-date">Aiman</div>
-      <div class="cl-detail"><span class="cl-change-chip">Contract start: none → 2026-03-16</span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="sw('roster')">→ Contracts</button></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">04:57 PM</span>
-        <span class="log-tab-badge log-tab-roster">Agent Contracts</span>
-        
-      </div>
-      <div class="cl-date">Javier</div>
-      <div class="cl-detail"><span class="cl-change-chip">Contract start: none → 2026-03-16</span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="sw('roster')">→ Contracts</button></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">02:53 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Wed, Jun 24, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-trn">TRN</span>
-          </span><span class="cl-agent-diff">
-            <span class="cl-agent-name">Aiman</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-trn">TRN</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-06-24')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">02:51 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Mon, Aug 24, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Aiman</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-trn">TRN</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-24')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">02:51 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Wed, Jun 24, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Aiman</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-trn">TRN</span>
-          </span><span class="cl-agent-diff">
-            <span class="cl-agent-name">Julian</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-trn">TRN</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-06-24')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:55 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Fri, Aug 7, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Tina</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span><span class="cl-agent-diff">
-            <span class="cl-agent-name">Rina</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-07')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:54 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">May 25 – May 29, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Tina</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-25')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:53 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Aug 6 – Aug 17, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Rina</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-06')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:52 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Wed, May 13, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-13')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:52 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Wed, May 20, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-mc">MC</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:38 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Thu, Apr 30, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-mc">MC</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-04-30')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">10:38 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">Mon, Apr 13, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-mc">MC</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-04-13')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">05:04 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">May 20 – Jun 4, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Aiman</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">03:56 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">May 20 – Jun 5, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Javier</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">03:50 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">May 20 – May 28, 2026</div>
-      <div class="cl-detail"><span class="cl-agent-diff">
-            <span class="cl-agent-name">Julian</span>
-            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
-            <span class="cl-badge clb-al">AL</span>
-          </span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
-    </div><div class="cl-row">
-      <div class="cl-row-meta">
-        <span class="cl-time">04:27 PM</span>
-        <span class="log-tab-badge log-tab-cal">Calendar</span>
-        
-      </div>
-      <div class="cl-date">2026-05-04 → 2026-05-29</div>
-      <div class="cl-detail"><span class="cl-agent-diff"><span class="cl-agent-name">Javier</span><span class="cl-badge clb-mc">MC</span><span style="font-size:10px;color:var(--tx3)">×18 days</span></span></div>
-      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-04')">→ Calendar</button><span class="cl-floor" style="color:var(--purple)">bulk</span></div>
-    </div></div></div>
+  <div id="cl-container"></div>
 </div>
 
 <!-- ROSTER PANE -->
@@ -1700,7 +1470,7 @@ body::before {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
       <button class="mnav-btn" onclick="opsPrevDay()">‹</button>
-      <div class="day-nav-label" id="ops-day-label">Tuesday, 26 May 2026</div>
+      <div class="day-nav-label" id="ops-day-label"></div>
       <button class="mnav-btn" onclick="opsNextDay()">›</button>
       <button class="top-btn" onclick="opsGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
@@ -1716,7 +1486,7 @@ body::before {
   </div>
   <div class="glass-card" style="margin-bottom:16px"><div class="card-pad"><div class="card-title">Notes</div><textarea class="notes-ta" id="ops-notes" placeholder="Notable events, issues or context for today…"></textarea></div></div>
   <div class="slabel">Recent history</div>
-  <div class="glass-card"><div id="ops-history-body"><div style="padding:28px;text-align:center;font-size:12px;color:var(--tx3)">No data logged yet — enter today's metrics and save.</div></div></div>
+  <div class="glass-card"><div id="ops-history-body"></div></div>
 </div>
 
 <!-- INCIDENT ANALYSIS -->
@@ -1844,23 +1614,10 @@ body::before {
 <div class="modal-overlay" id="modal-overlay" onclick="overlayClick(event)">
   <div class="modal-box">
     <div class="modal-hdr">
-      <div><div class="modal-title" id="modal-title">Tuesday, May 19, 2026</div><div class="modal-sub" id="modal-sub">Workday</div></div>
+      <div><div class="modal-title" id="modal-title">-</div><div class="modal-sub" id="modal-sub">-</div></div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body" id="modal-body"><div class="duration-row">
-    <div class="duration-label">Apply through</div>
-    <input type="date" class="duration-input" id="duration-end" value="2026-05-19" min="2026-05-19" max="2026-12-31">
-    <div class="duration-hint" id="duration-hint">Single day</div></div><div class="agent-row"><div class="agent-row-name">Javier</div>
-      <div class="status-group" data-agent="Javier"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
-      <div class="portion-group" data-agent="Javier" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Aiman</div>
-      <div class="status-group" data-agent="Aiman"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
-      <div class="portion-group" data-agent="Aiman" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Julian</div>
-      <div class="status-group" data-agent="Julian"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
-      <div class="portion-group" data-agent="Julian" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Tina</div>
-      <div class="status-group" data-agent="Tina"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
-      <div class="portion-group" data-agent="Tina" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Rina</div>
-      <div class="status-group" data-agent="Rina"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
-      <div class="portion-group" data-agent="Rina" style="display:none"></div></div></div>
+    <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot">
       <label class="ph-toggle"><input type="checkbox" id="ph-toggle"> Mark as Public Holiday</label>
       <div class="modal-actions">
@@ -1957,7 +1714,7 @@ body::before {
   </div>
 </div>
 
-<div class="toast" id="toast">Remote overwritten with your version</div>
+<div class="toast" id="toast">Saved</div>
 
 <!-- PAYBACK HOURS MODAL -->
 <div class="modal-overlay" id="pb-overlay" onclick="pbOverlayClick(event)">
@@ -2703,8 +2460,8 @@ function makeCell(d,outside,isToday){
     const chipCls=b==='AL'?'chip-al':b==='MC'?'chip-mc':b==='OIL'?'chip-oil':b==='TRN'?'chip-trn':'chip-ph';
     return `<div class="chip ${chipCls}">${escapeHtml(a)} · ${escapeHtml(formatStatusShort(v))}</div>`;
   }).join('')+(absent.length>3?`<div class="chip" style="background:rgba(255,255,255,0.06);color:var(--tx3);border:1px solid rgba(255,255,255,0.08)">+${absent.length-3}</div>`:'');
-  cell.innerHTML=`<div class="cell-top"><div class="cell-num">${d.getDate()}</div>${floorHtml}</div>${phHtml}<div class="cell-chips">${chips}</div><div class="cell-edit">edit</div>`;
-  if(!outside)cell.addEventListener('click',()=>openModal(key));
+  cell.innerHTML=`<div class="cell-top"><div class="cell-num">${d.getDate()}</div>${floorHtml}</div>${phHtml}<div class="cell-chips">${chips}</div>`;
+  cell.addEventListener('click',()=>openModal(key));
   return cell;
 }
 
@@ -2976,6 +2733,7 @@ function openModal(key){
       portion.style.display = '';
     }
   });
+  document.getElementById('modal-overlay').classList.add('open');
 }
 
 // Render the Full / ½AM / ½PM toggle for one agent. Re-renders on each interaction
@@ -2995,7 +2753,6 @@ function renderPortionPicker(container, agent){
     });
     container.appendChild(opt);
   });
-  document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');modalKey=null;}
 function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
@@ -3337,7 +3094,16 @@ const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxqilBJzdGEvRY
 let _syncTimer = null;
 let _syncing   = false;
 
-function getSyncUrl(){ return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL; }
+// True when the app runs from a local dev preview (Claude Code, python -m http.server, file://).
+// Sync is hard-disabled here so test edits never reach the production Google Sheet.
+function isLocalhostPreview(){
+  const h = (typeof location !== 'undefined' ? location.hostname : '') || '';
+  return location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h.endsWith('.local');
+}
+function getSyncUrl(){
+  if (isLocalhostPreview()) return '';
+  return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL;
+}
 function setSyncUrl(u){
   if(u) localStorage.setItem(SYNC_URL_KEY, u.trim());
   else  localStorage.removeItem(SYNC_URL_KEY); // falls back to DEFAULT_SYNC_URL
@@ -3570,8 +3336,13 @@ function setSyncStatus(state, detail){
   const rel = lastTs ? relTime(new Date(lastTs)) : '';
   if(!getSyncUrl()){
     pill.classList.add('s-local');
-    pill.innerHTML = '● Local only';
-    pill.title = 'Click to enable Google Sheets sync';
+    if (isLocalhostPreview()) {
+      pill.innerHTML = '● Preview · sync off';
+      pill.title = 'Running on localhost — sync disabled so test edits do not reach the production Sheet';
+    } else {
+      pill.innerHTML = '● Local only';
+      pill.title = 'Click to enable Google Sheets sync';
+    }
     return;
   }
   if(state==='syncing'){ pill.classList.add('s-syncing'); pill.innerHTML='● Syncing…'; pill.title='Pushing to Sheet'; }
