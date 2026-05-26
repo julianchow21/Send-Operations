@@ -90,6 +90,7 @@ body::before {
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   gap: 16px;
+  position: relative; z-index: 100;
 }
 .brand {
   font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
@@ -106,6 +107,43 @@ body::before {
   color: var(--tx2); transition: 0.2s; backdrop-filter: var(--blur-sm);
 }
 .top-btn:hover { background: var(--glass-hover); color: var(--tx); }
+
+/* Settings dropdown menu (toolbar) */
+.gear-wrap { position: relative; }
+.gear-btn { font-size: 14px; padding: 5px 11px; line-height: 1; }
+.gear-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 230px; padding: 6px;
+  background: rgba(14,14,20,0.985);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);
+  display: none; flex-direction: column; gap: 0;
+  z-index: 1000;
+  animation: gearFade .12s ease;
+}
+.gear-wrap.open .gear-menu { display: flex; }
+@keyframes gearFade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+.gear-item {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  padding: 8px 12px; border-radius: 8px; border: none;
+  background: transparent; color: var(--tx2); cursor: pointer;
+  text-align: left; width: 100%; transition: background .12s, color .12s;
+}
+.gear-item:hover { background: rgba(255,255,255,0.06); color: var(--tx); }
+.gear-item[disabled] { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.gear-item .gear-icon { width: 16px; text-align: center; font-size: 13px; opacity: 0.85; flex-shrink: 0; }
+.gear-item .gear-shortcut { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--tx3); }
+.gear-item.danger { color: var(--red); }
+.gear-item.danger:hover { background: var(--red-soft); color: var(--red); }
+.gear-item.accent-green { color: var(--green); }
+.gear-item.accent-green:hover { background: var(--green-soft); }
+.gear-item.accent-blue { color: var(--blue); }
+.gear-item.accent-blue:hover { background: var(--blue-soft); }
+.gear-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 4px 2px; }
 
 /* ─── TABS ───────────────────────────────────────────────── */
 .tabbar {
@@ -625,6 +663,72 @@ body::before {
 .cal-qa-btn:nth-child(1):hover { color: var(--purple); border-color: rgba(191,90,242,0.35); }
 .cal-qa-btn:nth-child(2):hover { color: var(--blue); border-color: var(--blue-border); }
 .cal-qa-icon { font-size: 13px; opacity: 0.85; line-height: 1; }
+
+/* Quick Entry bar (replaces Long Leave + Hours Payback buttons) */
+.qe-wrap {
+  position: relative; flex: 1 1 320px; min-width: 240px; max-width: 520px;
+  margin-left: auto; padding-right: 12px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.qe-row { display: flex; align-items: center; gap: 6px; }
+.qe-input {
+  flex: 1; font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  padding: 7px 12px 7px 30px; border-radius: 8px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--tx); transition: border-color .15s, background .15s;
+  outline: none; width: 100%;
+}
+.qe-input::placeholder { color: var(--tx3); font-weight: 400; }
+.qe-input:focus { border-color: var(--blue-border); background: rgba(10,132,255,0.06); }
+.qe-input.invalid { border-color: var(--red-border); background: rgba(255,69,58,0.06); }
+.qe-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--tx3); pointer-events: none; line-height: 1;
+}
+.qe-help-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+  color: var(--tx3); font-size: 11px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: .15s;
+}
+.qe-help-btn:hover { color: var(--tx); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.08); }
+.qe-preview {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 12px;
+  background: rgba(20,20,28,0.94); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 10px;
+  padding: 10px 12px; font-size: 11.5px; color: var(--tx2);
+  display: none; z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.qe-preview.show { display: block; }
+.qe-preview .qe-pv-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.qe-preview .qe-pv-chip {
+  font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 99px;
+  background: rgba(255,255,255,0.06); color: var(--tx2); border: 1px solid rgba(255,255,255,0.08);
+}
+.qe-preview .qe-pv-chip.al  { color: var(--yellow); background: var(--yellow-soft); border-color: var(--yellow-border); }
+.qe-preview .qe-pv-chip.mc  { color: var(--red);    background: var(--red-soft);    border-color: var(--red-border); }
+.qe-preview .qe-pv-chip.oil { color: var(--purple); background: var(--purple-soft); }
+.qe-preview .qe-pv-chip.trn { color: var(--orange); background: var(--orange-soft); border-color: var(--orange-border); }
+.qe-preview .qe-pv-chip.pay { color: var(--blue);   background: var(--blue-soft);   border-color: var(--blue-border); }
+.qe-preview .qe-pv-err { color: var(--red); }
+.qe-help-popover {
+  position: absolute; top: calc(100% + 4px); right: 12px;
+  width: 360px; padding: 14px 16px;
+  background: rgba(20,20,28,0.96); backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+  display: none; z-index: 60;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.qe-help-popover.show { display: block; }
+.qe-help-popover h4 { font-size: 12px; font-weight: 600; color: var(--tx); margin: 0 0 8px; letter-spacing: -.2px; }
+.qe-help-popover code {
+  font-family: var(--mono); font-size: 11px; color: var(--tx);
+  background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;
+}
+.qe-help-popover .qe-h-row { font-size: 11.5px; color: var(--tx2); margin: 5px 0; line-height: 1.45; }
+.qe-help-popover .qe-h-row + h4 { margin-top: 12px; }
 .cal-summary-pill {
   font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 99px;
   display: flex; align-items: center; gap: 5px;
@@ -887,19 +991,26 @@ body::before {
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
-  <button class="sync-pill s-synced" id="sync-pill" onclick="openSyncSettings()" title="Sheet up to date · click to manage">● Synced · 2d ago</button>
+  <button class="sync-pill s-synced" id="sync-pill" onclick="openSyncSettings()" title="Sheet up to date · click to manage">● Synced · 1m ago</button>
   <div class="spacer"></div>
   <div class="top-actions">
-    <button class="top-btn" id="undo-btn" onclick="doUndo()" title="Undo (Ctrl+Z)" aria-label="Undo last change" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↩</button>
-    <button class="top-btn" id="redo-btn" onclick="doRedo()" title="Redo (Ctrl+Y)" aria-label="Redo last undone change" style="opacity:0.35;pointer-events:none;font-size:14px;padding:4px 10px">↪</button>
-    <button class="top-btn" onclick="openSyncSettings()" title="Configure Google Sheets sync" aria-label="Open sync settings">⚙</button>
-    <button class="top-btn" onclick="backupData()" title="Save all data as a portable JSON file" style="color:var(--green);border-color:var(--green-border)">⇩ Backup</button>
-    <button class="top-btn" onclick="document.getElementById('restore-input').click()" title="Load data from a backup JSON file" style="color:var(--green);border-color:var(--green-border)">⇧ Restore</button>
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
-    <button class="top-btn" id="gh-push-btn" onclick="pushToGitHub()" title="Push index.html to GitHub Pages" aria-label="Push current version to GitHub" style="color: var(--tx2);" disabled="">⏳ Pushing…</button><button class="top-btn" onclick="openGhSettings()" title="GitHub push settings" aria-label="Configure GitHub push token and repository" style="padding:4px 7px;margin-left:-4px;border-left:none;border-radius:0 8px 8px 0;color:var(--tx3)">⚙</button>
-    <button class="top-btn" onclick="exportCSV()">Export CSV</button>
-    <button class="top-btn" onclick="window.print()">Print</button>
-    <button class="top-btn" style="color:var(--red);border-color:var(--red-border)" onclick="resetAll()">Reset</button>
+    <div class="gear-wrap" id="gear-wrap">
+      <button class="top-btn gear-btn" onclick="toggleGearMenu(event)" title="Settings, sync, backup, export" aria-label="Open settings menu" aria-haspopup="true">⚙</button>
+      <div class="gear-menu" role="menu">
+        <button class="gear-item accent-green" onclick="closeGearMenu();backupData()"><span class="gear-icon">⇩</span> Backup data</button>
+        <button class="gear-item accent-green" onclick="closeGearMenu();document.getElementById('restore-input').click()"><span class="gear-icon">⇧</span> Restore from file…</button>
+        <div class="gear-divider"></div>
+        <button class="gear-item accent-blue" id="gh-push-btn" onclick="closeGearMenu();pushToGitHub()"><span class="gear-icon">⬆</span> Push to GitHub Pages</button>
+        <button class="gear-item" onclick="closeGearMenu();openGhSettings()"><span class="gear-icon">⚙</span> GitHub push settings…</button>
+        <button class="gear-item" onclick="closeGearMenu();openSyncSettings()"><span class="gear-icon">⚙</span> Google Sheets sync…</button>
+        <div class="gear-divider"></div>
+        <button class="gear-item" onclick="closeGearMenu();exportCSV()"><span class="gear-icon">⇲</span> Export CSV</button>
+        <button class="gear-item" onclick="closeGearMenu();window.print()"><span class="gear-icon">⎙</span> Print</button>
+        <div class="gear-divider"></div>
+        <button class="gear-item danger" onclick="closeGearMenu();resetAll()"><span class="gear-icon">⚠</span> Reset all data…</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -911,7 +1022,7 @@ body::before {
   <button class="main-tab" id="mt-orders" onclick="swMain('orders')">Orders</button>
   <button class="main-tab" id="mt-bmor" onclick="swMain('bmor')">BMOR</button>
   <div class="spacer"></div>
-  <div class="month-nav" id="month-nav-bar">
+  <div class="month-nav" id="month-nav-bar" style="">
     <button class="mnav-btn" onclick="prevMonth()">‹</button>
     <div class="month-label" id="monthLabel">May 2026</div>
     <button class="mnav-btn" onclick="nextMonth()">›</button>
@@ -920,7 +1031,7 @@ body::before {
 </div>
 
 <!-- SUB TAB BAR — Manpower -->
-<div class="tabbar" id="subtabbar-manpower">
+<div class="tabbar" id="subtabbar-manpower" style="">
   <button class="tab active" id="t-calendar" onclick="sw('calendar')">Calendar</button>
   <button class="tab" id="t-agents" onclick="sw('agents')">Agent Entitlement</button>
   <button class="tab" id="t-roster" onclick="sw('roster')">Agent Contracts</button>
@@ -946,8 +1057,8 @@ body::before {
 <!-- DAILY VIEW -->
 <div class="pane" id="pane-daily">
   <div class="alert-bar" id="alert-bar"><div class="alert alert-yellow">△ <strong>REDUCED COVERAGE</strong> &nbsp; 4 agents on floor — <span class="alert-dates">Day(s): 13, 20, 25, 26, 28, 29</span></div></div>
-  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Sunday, May 24, 2026</span></div>
-  <div class="agent-status-grid" id="agent-status-grid"><div class="asc present"><div class="asc-init">JA</div><div class="asc-name">Javier</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">AI</div><div class="asc-name">Aiman</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">JU</div><div class="asc-name">Julian</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">TI</div><div class="asc-name">Tina</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">RI</div><div class="asc-name">Rina</div><div class="asc-badge present">On Floor</div></div></div>
+  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Tuesday, May 26, 2026</span></div>
+  <div class="agent-status-grid" id="agent-status-grid"><div class="asc present"><div class="asc-init">JA</div><div class="asc-name">Javier</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">AI</div><div class="asc-name">Aiman</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">JU</div><div class="asc-name">Julian</div><div class="asc-badge present">On Floor</div></div><div class="asc al"><div class="asc-init">TI</div><div class="asc-name">Tina</div><div class="asc-badge al">AL</div></div><div class="asc present"><div class="asc-init">RI</div><div class="asc-name">Rina</div><div class="asc-badge present">On Floor</div></div></div>
   <div class="slabel">Month summary</div>
   <div class="stat-row">
     <div class="stat-box g" id="sb-avg"><div class="stat-label">Avg floor</div><div class="stat-val" id="sv-avg" style="color: var(--green);">4.7</div><div class="stat-sub">agents on floor avg</div></div>
@@ -971,15 +1082,29 @@ body::before {
       <div class="week-label" id="weekLabel"></div>
       <button class="mnav-btn" onclick="nextWeek()">›</button>
     </div>
-    <div class="cal-quick-actions">
-      <button class="cal-qa-btn" onclick="openLongLeave()" title="Log a multi-day leave block">
-        <span class="cal-qa-icon">＋</span> Long Leave
-      </button>
-      <button class="cal-qa-btn" onclick="openPaybackModal()" title="Log hours an agent owes back">
-        <span class="cal-qa-icon">⏱</span> Hours Payback
-      </button>
+    <div class="qe-wrap" id="qe-wrap">
+      <div class="qe-row">
+        <span class="qe-icon">＋</span>
+        <input type="text" id="qe-input" class="qe-input" placeholder="Quick entry e.g. Aiman MC 26/05 to 02/06" autocomplete="off" spellcheck="false" oninput="qeOnInput()" onkeydown="qeOnKey(event)" onfocus="qeOnInput()" onblur="setTimeout(qeBlur,150)">
+        <button type="button" class="qe-help-btn" onclick="qeToggleHelp(event)" title="Show syntax help" aria-label="Quick entry syntax">?</button>
+      </div>
+      <div class="qe-preview" id="qe-preview"><div class="qe-pv-line">
+      <span class="qe-pv-chip">Javier</span>
+      <span class="qe-pv-chip mc">MC</span>
+      <span style="color:var(--tx2)">28 May</span>
+      <span style="color:var(--tx3)">· 1 workday</span>
+    </div><div style="font-size:10.5px;color:var(--tx3);margin-top:4px">Press Enter to apply · weekends and PH skipped</div></div>
+      <div class="qe-help-popover" id="qe-help-popover">
+        <h4>Leaves</h4>
+        <div class="qe-h-row"><code>Aiman MC 26/05</code> — single day</div>
+        <div class="qe-h-row"><code>Javier AL 26/05 to 02/06</code> — range</div>
+        <div class="qe-h-row"><code>Julian OIL AM today</code> — half-day morning</div>
+        <div class="qe-h-row"><code>Tina TRN tomorrow</code> — relative date</div>
+        <h4>Hours payback</h4>
+        <div class="qe-h-row"><code>Rina payback 2h early leave 26/05</code></div>
+        <div class="qe-h-row" style="color:var(--tx3);font-size:10.5px;margin-top:10px">Types: AL, MC, OIL, TRN, payback · Portions: AM, PM · Dates: DD/MM, DD/MM/YYYY, today, tomorrow, yesterday</div>
+      </div>
     </div>
-    <div class="cal-toolbar-right" id="cal-shrink-summary"><div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)"><span>AL</span>5</div><div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)"><span>MC</span>1</div><div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">△ 6 reduced</div></div>
   </div>
 
   <!-- Hours payback availability strip — shows agents with unsettled hours -->
@@ -991,7 +1116,7 @@ body::before {
       <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
       <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
     </div>
-    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend today"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
+    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell today" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div><div class="cell-edit">edit</div></div></div>
   </div>
 
   <!-- Shrinkage stats panel -->
@@ -1123,161 +1248,7 @@ body::before {
 
 <!-- PER-AGENT VIEW -->
 <div class="pane" id="pane-agents">
-  <div class="agent-grid" id="agent-grid"><div class="agent-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="agent-card-name" style="flex:1">Javier</div>
-        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--purple-soft);color:var(--purple)">Intern</span>
-        <div style="font-size:10px;color:var(--tx3)">Contract ends 3 Aug 2026</div>
-      </div>
-      <div class="agent-card-role">YTD turn-up 98.0% · <span style="color:var(--green)">94.4% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
-      <div class="agent-balance">
-        <div class="ab">
-          <div class="ab-label">AL Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">1.5</div>
-          <div class="ab-sub">of 2.5 days · used 1</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:60%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab">
-          <div class="ab-label">MC Remaining</div>
-          <div class="ab-val" style="color:var(--red)">-0.5 ⚠</div>
-          <div class="ab-sub">of 2.5 days · used 3</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:0%;height:100%;background:var(--red);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
-        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">1</div><div class="ab-sub">days</div></div>
-      </div>
-      <div class="agent-card-footer">
-        <span style="color:var(--tx3);font-size:11px">AL: 1 used · 1.5 left</span>
-        <span style="color:var(--tx3);font-size:11px">MC: 3 used · <span style="color:var(--red)">over by 0.5d ⚠</span></span>
-        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
-      </div>
-      
-      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px">
-        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Hours Payback</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <span style="font-size:12px;font-weight:600;color:var(--red)">Owes 2h</span>
-          
-          
-          <button onclick="openPaybackModal()" style="margin-left:auto;font-size:10px;padding:2px 9px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans)">View</button>
-        </div>
-      </div>
-    </div><div class="agent-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="agent-card-name" style="flex:1">Aiman</div>
-        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--purple-soft);color:var(--purple)">Intern</span>
-        <div style="font-size:10px;color:var(--tx3)">Contract ends 27 Aug 2026</div>
-      </div>
-      <div class="agent-card-role">YTD turn-up 99.2% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
-      <div class="agent-balance">
-        <div class="ab">
-          <div class="ab-label">AL Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">2.5</div>
-          <div class="ab-sub">of 2.5 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab">
-          <div class="ab-label">MC Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">2.5</div>
-          <div class="ab-sub">of 2.5 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
-        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">2</div><div class="ab-sub">days</div></div>
-      </div>
-      <div class="agent-card-footer">
-        <span style="color:var(--tx3);font-size:11px">AL: 0 used · 2.5 left</span>
-        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 2.5 left</span>
-        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
-    </div><div class="agent-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="agent-card-name" style="flex:1">Julian</div>
-        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
-        
-      </div>
-      <div class="agent-card-role">YTD turn-up 100.0% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
-      <div class="agent-balance">
-        <div class="ab">
-          <div class="ab-label">AL Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">18</div>
-          <div class="ab-sub">of 18 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab">
-          <div class="ab-label">MC Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">14</div>
-          <div class="ab-sub">of 14 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
-        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
-      </div>
-      <div class="agent-card-footer">
-        <span style="color:var(--tx3);font-size:11px">AL: 0 used · 18 left</span>
-        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
-        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
-    </div><div class="agent-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="agent-card-name" style="flex:1">Tina</div>
-        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
-        
-      </div>
-      <div class="agent-card-role">YTD turn-up 98.0% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
-      <div class="agent-balance">
-        <div class="ab">
-          <div class="ab-label">AL Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">13</div>
-          <div class="ab-sub">of 18 days · used 5</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:72.22222222222221%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab">
-          <div class="ab-label">MC Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">14</div>
-          <div class="ab-sub">of 14 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
-        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
-      </div>
-      <div class="agent-card-footer">
-        <span style="color:var(--tx3);font-size:11px">AL: 5 used · 13 left</span>
-        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
-        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
-    </div><div class="agent-card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="agent-card-name" style="flex:1">Rina</div>
-        <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue)">Full-timer</span>
-        
-      </div>
-      <div class="agent-card-role">YTD turn-up 97.2% · <span style="color:var(--green)">100.0% adherence<span class="metric-help" tabindex="0" role="button" aria-label="Definition of Schedule Adherence" onmouseenter="showMetricTooltip(this,'adherence')" onmouseleave="hideMetricTooltip()" onfocus="showMetricTooltip(this,'adherence')" onblur="hideMetricTooltip()">?</span></span></div>
-      <div class="agent-balance">
-        <div class="ab">
-          <div class="ab-label">AL Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">11</div>
-          <div class="ab-sub">of 18 days · used 7</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:61.111111111111114%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab">
-          <div class="ab-label">MC Remaining</div>
-          <div class="ab-val" style="color:var(--tx)">14</div>
-          <div class="ab-sub">of 14 days · used 0</div>
-          <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:100%;height:100%;background:var(--green);border-radius:2px;transition:width .3s"></div></div>
-        </div>
-        <div class="ab"><div class="ab-label">OIL</div><div class="ab-val" style="color:var(--purple)">0</div><div class="ab-sub">days</div></div>
-        <div class="ab"><div class="ab-label">Training</div><div class="ab-val" style="color:var(--orange)">0</div><div class="ab-sub">days</div></div>
-      </div>
-      <div class="agent-card-footer">
-        <span style="color:var(--tx3);font-size:11px">AL: 7 used · 11 left</span>
-        <span style="color:var(--tx3);font-size:11px">MC: 0 used · 14 left</span>
-        <button onclick="sw('roster')" style="margin-left:auto;font-family:var(--sans);font-size:10px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--tx2);cursor:pointer">Edit Contracts →</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>
-    </div></div>
+  <div class="agent-grid" id="agent-grid"></div>
 </div>
 
 <!-- YEAR VIEW -->
@@ -1291,7 +1262,228 @@ body::before {
     <div class="slabel" style="margin:0;flex:1">Persistent activity log</div>
     <button onclick="clearLog()" style="font-family:var(--sans);font-size:11px;background:var(--red-soft);border:1px solid var(--red-border);color:var(--red);padding:5px 12px;border-radius:8px;cursor:pointer">Clear log</button>
   </div>
-  <div id="cl-container"></div>
+  <div id="cl-container"><div class="cl-wrap"><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:49 AM</span>
+        <span class="log-tab-badge log-tab-cal">Quick Entry</span>
+        <span style="font-size:9px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.12);color:var(--green)">Anonymous</span>
+      </div>
+      <div class="cl-date">2026-05-28</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-mc">MC</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-28')">→ Calendar</button></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">04:59 PM</span>
+        <span class="log-tab-badge log-tab-roster">Agent Contracts</span>
+        
+      </div>
+      <div class="cl-date">Aiman</div>
+      <div class="cl-detail"><span class="cl-change-chip">Contract start: none → 2026-03-16</span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="sw('roster')">→ Contracts</button></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">04:57 PM</span>
+        <span class="log-tab-badge log-tab-roster">Agent Contracts</span>
+        
+      </div>
+      <div class="cl-date">Javier</div>
+      <div class="cl-detail"><span class="cl-change-chip">Contract start: none → 2026-03-16</span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="sw('roster')">→ Contracts</button></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">02:53 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Wed, Jun 24, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-trn">TRN</span>
+          </span><span class="cl-agent-diff">
+            <span class="cl-agent-name">Aiman</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-trn">TRN</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-06-24')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">02:51 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Mon, Aug 24, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Aiman</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-trn">TRN</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-24')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">02:51 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Wed, Jun 24, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Aiman</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-trn">TRN</span>
+          </span><span class="cl-agent-diff">
+            <span class="cl-agent-name">Julian</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-trn">TRN</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-06-24')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:55 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Fri, Aug 7, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Tina</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span><span class="cl-agent-diff">
+            <span class="cl-agent-name">Rina</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-07')">→ Calendar</button><span class="cl-floor" style="color:var(--red)">3/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:54 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">May 25 – May 29, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Tina</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-25')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:53 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Aug 6 – Aug 17, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Rina</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-08-06')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:52 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Wed, May 13, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-13')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:52 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Wed, May 20, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-mc">MC</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:38 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Thu, Apr 30, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-mc">MC</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-04-30')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">10:38 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">Mon, Apr 13, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-mc">MC</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-04-13')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">05:04 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">May 20 – Jun 4, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Aiman</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">03:56 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">May 20 – Jun 5, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Javier</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">03:50 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">May 20 – May 28, 2026</div>
+      <div class="cl-detail"><span class="cl-agent-diff">
+            <span class="cl-agent-name">Julian</span>
+            <span class="cl-badge clb-w">W</span><span class="cl-arrow">→</span>
+            <span class="cl-badge clb-al">AL</span>
+          </span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-20')">→ Calendar</button><span class="cl-floor" style="color:var(--yellow)">4/5</span></div>
+    </div><div class="cl-row">
+      <div class="cl-row-meta">
+        <span class="cl-time">04:27 PM</span>
+        <span class="log-tab-badge log-tab-cal">Calendar</span>
+        
+      </div>
+      <div class="cl-date">2026-05-04 → 2026-05-29</div>
+      <div class="cl-detail"><span class="cl-agent-diff"><span class="cl-agent-name">Javier</span><span class="cl-badge clb-mc">MC</span><span style="font-size:10px;color:var(--tx3)">×18 days</span></span></div>
+      <div class="cl-row-actions"><button class="cl-nav-btn" onclick="goToDate('2026-05-04')">→ Calendar</button><span class="cl-floor" style="color:var(--purple)">bulk</span></div>
+    </div></div></div>
 </div>
 
 <!-- ROSTER PANE -->
@@ -1306,197 +1498,7 @@ body::before {
       <button onclick="toggleArchivedView()" id="show-arch-btn" style="font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">View archived (0)</button>
     </div>
   </div>
-  <div class="roster-grid" id="roster-grid"><div class="roster-card" id="rc-Javier">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div class="roster-card-name" ondblclick="renameAgentPrompt('Javier')" title="Double-click to rename">Javier</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="roster-saved-tick" id="rtick-Javier">✓ Saved</div>
-          <button onclick="archiveAgent('Javier')" title="Archive this agent (preserves history)" aria-label="Archive Javier" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
-        <div class="wtype-row"><button class="wtype-btn wt-full" onclick="rosterSetType('Javier','full-timer')">Full-timer</button><button class="wtype-btn wt-intern active" onclick="rosterSetType('Javier','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Javier','contract')">Contract</button></div>
-      </div>
-      <div class="roster-ent-row">
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">AL Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-al-Javier" value="2.5" min="0" max="60" onchange="saveRosterAgent('Javier')" oninput="saveRosterAgent('Javier')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">MC Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-mc-Javier" value="2.5" min="0" max="60" onchange="saveRosterAgent('Javier')" oninput="saveRosterAgent('Javier')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="roster-field">
-          <label>Contract Start</label>
-          <input type="date" id="rent-start-Javier" value="2026-03-16" max="2027-12-31" onchange="saveRosterAgent('Javier')">
-        </div>
-        <div class="roster-field">
-          <label>Contract End</label>
-          <input type="date" id="rent-end-Javier" value="2026-08-03" max="2027-12-31" onchange="saveRosterAgent('Javier')">
-          
-        </div>
-      </div>
-      <div class="roster-field">
-        <label>Notes</label>
-        <input type="text" id="rent-note-Javier" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Javier')">
-      </div></div><div class="roster-card" id="rc-Aiman">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div class="roster-card-name" ondblclick="renameAgentPrompt('Aiman')" title="Double-click to rename">Aiman</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="roster-saved-tick" id="rtick-Aiman">✓ Saved</div>
-          <button onclick="archiveAgent('Aiman')" title="Archive this agent (preserves history)" aria-label="Archive Aiman" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
-        <div class="wtype-row"><button class="wtype-btn wt-full" onclick="rosterSetType('Aiman','full-timer')">Full-timer</button><button class="wtype-btn wt-intern active" onclick="rosterSetType('Aiman','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Aiman','contract')">Contract</button></div>
-      </div>
-      <div class="roster-ent-row">
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">AL Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-al-Aiman" value="2.5" min="0" max="60" onchange="saveRosterAgent('Aiman')" oninput="saveRosterAgent('Aiman')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">MC Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-mc-Aiman" value="2.5" min="0" max="60" onchange="saveRosterAgent('Aiman')" oninput="saveRosterAgent('Aiman')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="roster-field">
-          <label>Contract Start</label>
-          <input type="date" id="rent-start-Aiman" value="2026-03-16" max="2027-12-31" onchange="saveRosterAgent('Aiman')">
-        </div>
-        <div class="roster-field">
-          <label>Contract End</label>
-          <input type="date" id="rent-end-Aiman" value="2026-08-27" max="2027-12-31" onchange="saveRosterAgent('Aiman')">
-          
-        </div>
-      </div>
-      <div class="roster-field">
-        <label>Notes</label>
-        <input type="text" id="rent-note-Aiman" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Aiman')">
-      </div></div><div class="roster-card" id="rc-Julian">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div class="roster-card-name" ondblclick="renameAgentPrompt('Julian')" title="Double-click to rename">Julian</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="roster-saved-tick" id="rtick-Julian">✓ Saved</div>
-          <button onclick="archiveAgent('Julian')" title="Archive this agent (preserves history)" aria-label="Archive Julian" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
-        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Julian','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Julian','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Julian','contract')">Contract</button></div>
-      </div>
-      <div class="roster-ent-row">
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">AL Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-al-Julian" value="18" min="0" max="60" onchange="saveRosterAgent('Julian')" oninput="saveRosterAgent('Julian')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">MC Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-mc-Julian" value="14" min="0" max="60" onchange="saveRosterAgent('Julian')" oninput="saveRosterAgent('Julian')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="roster-field">
-          <label>Contract Start</label>
-          <input type="date" id="rent-start-Julian" value="" max="2027-12-31" onchange="saveRosterAgent('Julian')">
-        </div>
-        <div class="roster-field">
-          <label>Contract End</label>
-          <input type="date" id="rent-end-Julian" value="" max="2027-12-31" onchange="saveRosterAgent('Julian')">
-          
-        </div>
-      </div>
-      <div class="roster-field">
-        <label>Notes</label>
-        <input type="text" id="rent-note-Julian" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Julian')">
-      </div></div><div class="roster-card" id="rc-Tina">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div class="roster-card-name" ondblclick="renameAgentPrompt('Tina')" title="Double-click to rename">Tina</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="roster-saved-tick" id="rtick-Tina">✓ Saved</div>
-          <button onclick="archiveAgent('Tina')" title="Archive this agent (preserves history)" aria-label="Archive Tina" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
-        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Tina','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Tina','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Tina','contract')">Contract</button></div>
-      </div>
-      <div class="roster-ent-row">
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">AL Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-al-Tina" value="18" min="0" max="60" onchange="saveRosterAgent('Tina')" oninput="saveRosterAgent('Tina')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">MC Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-mc-Tina" value="14" min="0" max="60" onchange="saveRosterAgent('Tina')" oninput="saveRosterAgent('Tina')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="roster-field">
-          <label>Contract Start</label>
-          <input type="date" id="rent-start-Tina" value="" max="2027-12-31" onchange="saveRosterAgent('Tina')">
-        </div>
-        <div class="roster-field">
-          <label>Contract End</label>
-          <input type="date" id="rent-end-Tina" value="" max="2027-12-31" onchange="saveRosterAgent('Tina')">
-          
-        </div>
-      </div>
-      <div class="roster-field">
-        <label>Notes</label>
-        <input type="text" id="rent-note-Tina" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Tina')">
-      </div></div><div class="roster-card" id="rc-Rina">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div class="roster-card-name" ondblclick="renameAgentPrompt('Rina')" title="Double-click to rename">Rina</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="roster-saved-tick" id="rtick-Rina">✓ Saved</div>
-          <button onclick="archiveAgent('Rina')" title="Archive this agent (preserves history)" aria-label="Archive Rina" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx3);cursor:pointer;font-family:var(--sans)">Archive</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px">Work Type</div>
-        <div class="wtype-row"><button class="wtype-btn wt-full active" onclick="rosterSetType('Rina','full-timer')">Full-timer</button><button class="wtype-btn wt-intern" onclick="rosterSetType('Rina','intern')">Intern</button><button class="wtype-btn wt-contract" onclick="rosterSetType('Rina','contract')">Contract</button></div>
-      </div>
-      <div class="roster-ent-row">
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">AL Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-al-Rina" value="18" min="0" max="60" onchange="saveRosterAgent('Rina')" oninput="saveRosterAgent('Rina')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-        <div class="roster-ent-box">
-          <div class="roster-ent-label">MC Entitlement</div>
-          <input class="roster-ent-input" type="number" id="rent-mc-Rina" value="14" min="0" max="60" onchange="saveRosterAgent('Rina')" oninput="saveRosterAgent('Rina')">
-          <div class="roster-ent-sub">days / year</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="roster-field">
-          <label>Contract Start</label>
-          <input type="date" id="rent-start-Rina" value="" max="2027-12-31" onchange="saveRosterAgent('Rina')">
-        </div>
-        <div class="roster-field">
-          <label>Contract End</label>
-          <input type="date" id="rent-end-Rina" value="" max="2027-12-31" onchange="saveRosterAgent('Rina')">
-          
-        </div>
-      </div>
-      <div class="roster-field">
-        <label>Notes</label>
-        <input type="text" id="rent-note-Rina" value="" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…" onchange="saveRosterAgent('Rina')">
-      </div></div></div>
+  <div class="roster-grid" id="roster-grid"></div>
   <div id="archived-section" style="display:none;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.07)">
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:10px">Archived Agents</div>
     <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;max-width:640px">Archived agents are excluded from all current calculations and reports. Their historical attendance, MC patterns, and contract data are preserved for audit. Restore one to bring them back into the active roster.</div>
@@ -1698,7 +1700,7 @@ body::before {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
       <button class="mnav-btn" onclick="opsPrevDay()">‹</button>
-      <div class="day-nav-label" id="ops-day-label"></div>
+      <div class="day-nav-label" id="ops-day-label">Tuesday, 26 May 2026</div>
       <button class="mnav-btn" onclick="opsNextDay()">›</button>
       <button class="top-btn" onclick="opsGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
@@ -1714,7 +1716,7 @@ body::before {
   </div>
   <div class="glass-card" style="margin-bottom:16px"><div class="card-pad"><div class="card-title">Notes</div><textarea class="notes-ta" id="ops-notes" placeholder="Notable events, issues or context for today…"></textarea></div></div>
   <div class="slabel">Recent history</div>
-  <div class="glass-card"><div id="ops-history-body"></div></div>
+  <div class="glass-card"><div id="ops-history-body"><div style="padding:28px;text-align:center;font-size:12px;color:var(--tx3)">No data logged yet — enter today's metrics and save.</div></div></div>
 </div>
 
 <!-- INCIDENT ANALYSIS -->
@@ -1842,10 +1844,23 @@ body::before {
 <div class="modal-overlay" id="modal-overlay" onclick="overlayClick(event)">
   <div class="modal-box">
     <div class="modal-hdr">
-      <div><div class="modal-title" id="modal-title">-</div><div class="modal-sub" id="modal-sub">-</div></div>
+      <div><div class="modal-title" id="modal-title">Tuesday, May 19, 2026</div><div class="modal-sub" id="modal-sub">Workday</div></div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-body" id="modal-body"><div class="duration-row">
+    <div class="duration-label">Apply through</div>
+    <input type="date" class="duration-input" id="duration-end" value="2026-05-19" min="2026-05-19" max="2026-12-31">
+    <div class="duration-hint" id="duration-hint">Single day</div></div><div class="agent-row"><div class="agent-row-name">Javier</div>
+      <div class="status-group" data-agent="Javier"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
+      <div class="portion-group" data-agent="Javier" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Aiman</div>
+      <div class="status-group" data-agent="Aiman"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
+      <div class="portion-group" data-agent="Aiman" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Julian</div>
+      <div class="status-group" data-agent="Julian"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
+      <div class="portion-group" data-agent="Julian" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Tina</div>
+      <div class="status-group" data-agent="Tina"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
+      <div class="portion-group" data-agent="Tina" style="display:none"></div></div><div class="agent-row"><div class="agent-row-name">Rina</div>
+      <div class="status-group" data-agent="Rina"><span class="status-opt active" data-v="W">Working</span><span class="status-opt" data-v="AL">AL</span><span class="status-opt" data-v="MC">MC</span><span class="status-opt" data-v="OIL">OIL</span><span class="status-opt" data-v="TRN">Training</span></div>
+      <div class="portion-group" data-agent="Rina" style="display:none"></div></div></div>
     <div class="modal-foot">
       <label class="ph-toggle"><input type="checkbox" id="ph-toggle"> Mark as Public Holiday</label>
       <div class="modal-actions">
@@ -1942,7 +1957,7 @@ body::before {
   </div>
 </div>
 
-<div class="toast" id="toast">Saved</div>
+<div class="toast" id="toast">Remote overwritten with your version</div>
 
 <!-- PAYBACK HOURS MODAL -->
 <div class="modal-overlay" id="pb-overlay" onclick="pbOverlayClick(event)">
@@ -1981,6 +1996,29 @@ body::before {
       </div>
       <!-- Log table -->
       <div id="pb-log-body" style="max-height:340px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME / NAME MODAL -->
+<div class="modal-overlay" id="welcome-overlay">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(10,132,255,0.10),rgba(191,90,242,0.05))">
+      <div>
+        <div class="modal-title">Welcome to Send Operations Planner</div>
+        <div class="modal-sub">Type your name for the audit log</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <input type="text" id="welcome-name" class="ll-date-input" style="width:100%;font-size:14px;padding:10px 12px" placeholder="Your name (leave blank for Anonymous)" maxlength="40" autocomplete="off">
+      <div style="font-size:11px;color:var(--tx3);margin-top:8px">Used to tag who made each edit. You can change this later in settings.</div>
+    </div>
+    <div class="modal-foot">
+      <div style="font-size:11px;color:var(--tx3)">Press Enter to confirm</div>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" id="welcome-skip">Use Anonymous</button>
+        <button class="mbtn mbtn-save" id="welcome-ok">Continue</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2141,13 +2179,37 @@ function escapeHtml(s){
 function getCurrentUser(){ return localStorage.getItem(USER_KEY) || ''; }
 function setCurrentUser(name){ localStorage.setItem(USER_KEY, String(name).trim().slice(0,40)); }
 function ensureUserIdentity(){
-  if (getCurrentUser()) return getCurrentUser();
-  // Single, cancel-safe prompt. No loop — Cancel or empty input defaults to Anonymous.
-  // User can change their name later via setCurrentUser if needed.
-  const raw = prompt('Welcome to Send Operations Planner.\n\nType your name for the audit log.\nClick Cancel or leave blank to use "Anonymous".');
-  const name = (raw == null) ? 'Anonymous' : (raw.trim() || 'Anonymous');
-  setCurrentUser(name);
-  return name;
+  if (getCurrentUser()) return Promise.resolve(getCurrentUser());
+  return new Promise(resolve => {
+    const overlay = document.getElementById('welcome-overlay');
+    const input   = document.getElementById('welcome-name');
+    const okBtn   = document.getElementById('welcome-ok');
+    const skipBtn = document.getElementById('welcome-skip');
+    if (!overlay || !input || !okBtn || !skipBtn) { setCurrentUser('Anonymous'); return resolve('Anonymous'); }
+
+    input.value = '';
+    overlay.classList.add('open');
+    setTimeout(() => input.focus(), 60);
+
+    const finish = (name) => {
+      const clean = (name == null || !String(name).trim()) ? 'Anonymous' : String(name).trim();
+      setCurrentUser(clean);
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      skipBtn.removeEventListener('click', onSkip);
+      input.removeEventListener('keydown', onKey);
+      resolve(clean);
+    };
+    const onOk   = () => finish(input.value);
+    const onSkip = () => finish('Anonymous');
+    const onKey  = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); finish(input.value); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish('Anonymous'); }
+    };
+    okBtn.addEventListener('click', onOk);
+    skipBtn.addEventListener('click', onSkip);
+    input.addEventListener('keydown', onKey);
+  });
 }
 
 // Global error boundary — catch uncaught JS errors so the UI doesn't silently break
@@ -2482,7 +2544,6 @@ function renderMonthCal(){
   for(let i=1;i<=last;i++){const d=new Date(y,m,i);grid.appendChild(makeCell(d,false,ymd(d)===todayKey));}
   const used=offset+last,trail=(7-(used%7))%7;
   for(let i=1;i<=trail;i++){grid.appendChild(makeCell(new Date(y,m+1,i),true));}
-  renderCalSummaryPills();
 }
 
 function renderWeekCal(){
@@ -2504,7 +2565,6 @@ function renderWeekCal(){
   document.getElementById('weekLabel').textContent=
     weekCursor.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+
     wEnd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  renderCalSummaryPills();
 }
 
 function getCalDays(){
@@ -2517,30 +2577,6 @@ function getCalDays(){
   }
 }
 
-function renderCalSummaryPills(){
-  const days=getCalDays().filter(d=>isWorkday(d));
-  let AL=0,MC=0,OIL=0,TRN=0,critCount=0,warnCount=0;
-  days.forEach(d=>{
-    const key=ymd(d),day=state[key]||{};
-    AGENTS.forEach(a=>{
-      const p=splitStatus(day[a]);
-      if (p.base==='AL') AL+=p.units;
-      else if (p.base==='MC') MC+=p.units;
-      else if (p.base==='OIL') OIL+=p.units;
-      else if (p.base==='TRN') TRN+=p.units;
-    });
-    const f=floorForDay(key);
-    if(f<=3)critCount++;else if(f<5)warnCount++;
-  });
-  const el=document.getElementById('cal-shrink-summary');
-  el.innerHTML='';
-  if(AL) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)"><span>AL</span>${AL}</div>`;
-  if(MC) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)"><span>MC</span>${MC}</div>`;
-  if(OIL) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--purple-soft);color:var(--purple)"><span>OIL</span>${OIL}</div>`;
-  if(TRN) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border)"><span>TRN</span>${TRN}</div>`;
-  if(critCount) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)">⚠ ${critCount} critical</div>`;
-  else if(warnCount) el.innerHTML+=`<div class="cal-summary-pill" style="background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border)">△ ${warnCount} reduced</div>`;
-}
 
 /* ─── SHRINKAGE PANEL ────────────────────── */
 function renderShrinkPanel(){
@@ -3551,6 +3587,266 @@ function relTime(d){
   return Math.floor(s/86400)+'d ago';
 }
 function updateSyncStatus(){ setSyncStatus('synced'); /* refreshes label */ }
+
+/* ─── CALENDAR QUICK ENTRY ─────────────
+   Free-form parser. Replaces the Long Leave + Hours Payback modal buttons.
+   Examples:
+     Aiman MC 26/05
+     Javier AL 26/05 to 02/06
+     Julian OIL AM today
+     Rina payback 2h early leave 26/05
+   Weekends + public holidays are skipped on leaves (matches Long Leave defaults). */
+
+function qeParseDate(tok, refYear){
+  if (!tok) return null;
+  const t = String(tok).toLowerCase().trim();
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (t==='today'||t==='tdy')      return today;
+  if (t==='tomorrow'||t==='tmr')   { const d=new Date(today); d.setDate(d.getDate()+1); return d; }
+  if (t==='yesterday'||t==='yest') { const d=new Date(today); d.setDate(d.getDate()-1); return d; }
+  // DD/MM or DD/MM/YYYY  (Singapore convention)
+  const m = t.match(/^(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?$/);
+  if (!m) return null;
+  const dd = +m[1], mm = +m[2];
+  let yy = m[3] ? +m[3] : (refYear || today.getFullYear());
+  if (yy < 100) yy += 2000;
+  if (dd < 1 || dd > 31 || mm < 1 || mm > 12) return null;
+  const d = new Date(yy, mm-1, dd);
+  if (d.getDate()!==dd || d.getMonth()!==mm-1) return null;
+  return d;
+}
+
+function qeMatchAgent(tok){
+  if (!tok) return null;
+  const t = String(tok).toLowerCase();
+  // Exact match wins
+  const exact = AGENTS.find(a => a.toLowerCase() === t);
+  if (exact) return exact;
+  // Prefix match — must be unique among AGENTS
+  const pref = AGENTS.filter(a => a.toLowerCase().startsWith(t));
+  if (pref.length === 1) return pref[0];
+  // Substring match — also must be unique
+  const sub = AGENTS.filter(a => a.toLowerCase().includes(t));
+  if (sub.length === 1) return sub[0];
+  return null;
+}
+
+function qeParse(raw){
+  const out = { ok:false, kind:null, agent:null, type:null, portion:'full', from:null, to:null, hours:0, reason:'', error:'' };
+  if (!raw || !raw.trim()) return out;
+  // Normalise: collapse multiple spaces; replace "->" with "to"
+  const text = raw.trim().replace(/\s*->\s*/g, ' to ').replace(/\s+/g, ' ');
+  const tokens = text.split(' ');
+  const consumed = new Array(tokens.length).fill(false);
+
+  // 1) Type keyword (AL/MC/OIL/TRN/payback/pay)
+  const typeMap = { al:'AL', mc:'MC', oil:'OIL', trn:'TRN', training:'TRN', pay:'payback', payback:'payback' };
+  let typeIdx = -1;
+  for (let i=0;i<tokens.length;i++){
+    const k = tokens[i].toLowerCase();
+    if (typeMap[k]) { out.type = typeMap[k]; typeIdx = i; consumed[i] = true; break; }
+  }
+
+  // 2) Portion AM/PM (only meaningful for leaves)
+  for (let i=0;i<tokens.length;i++){
+    if (consumed[i]) continue;
+    const k = tokens[i].toLowerCase();
+    if (k==='am'||k==='pm') { out.portion = k; consumed[i] = true; break; }
+  }
+
+  // 3) Hours (Nh) for payback
+  for (let i=0;i<tokens.length;i++){
+    if (consumed[i]) continue;
+    const m = tokens[i].match(/^(\d+(?:\.\d+)?)h$/i);
+    if (m) { out.hours = parseFloat(m[1]); consumed[i] = true; break; }
+  }
+
+  // 4) Dates + optional "to" range
+  const dateIdxs = [];
+  for (let i=0;i<tokens.length;i++){
+    if (consumed[i]) continue;
+    const d = qeParseDate(tokens[i]);
+    if (d) { dateIdxs.push({i, d}); }
+  }
+  // Detect "to" between two consecutive dates
+  let rangeMarker = -1;
+  for (let i=0;i<tokens.length;i++){
+    if (!consumed[i] && tokens[i].toLowerCase() === 'to') { rangeMarker = i; break; }
+  }
+  if (dateIdxs.length >= 2 && rangeMarker > -1) {
+    // pick the date before and after the marker
+    const before = [...dateIdxs].reverse().find(x => x.i < rangeMarker);
+    const after  = dateIdxs.find(x => x.i > rangeMarker);
+    if (before && after) {
+      out.from = before.d; out.to = after.d;
+      consumed[before.i] = true; consumed[after.i] = true; consumed[rangeMarker] = true;
+    }
+  } else if (dateIdxs.length === 1) {
+    out.from = dateIdxs[0].d; out.to = dateIdxs[0].d;
+    consumed[dateIdxs[0].i] = true;
+  } else if (dateIdxs.length >= 2 && out.type === 'payback') {
+    // payback only needs one date — take the last
+    const pick = dateIdxs[dateIdxs.length - 1];
+    out.from = pick.d; out.to = pick.d;
+    consumed[pick.i] = true;
+  } else if (dateIdxs.length >= 2) {
+    // Two dates without explicit "to" → treat as range
+    out.from = dateIdxs[0].d; out.to = dateIdxs[dateIdxs.length-1].d;
+    consumed[dateIdxs[0].i] = true; consumed[dateIdxs[dateIdxs.length-1].i] = true;
+  }
+
+  // 5) Agent — first unconsumed token that matches uniquely
+  for (let i=0;i<tokens.length;i++){
+    if (consumed[i]) continue;
+    const a = qeMatchAgent(tokens[i]);
+    if (a) { out.agent = a; consumed[i] = true; break; }
+  }
+
+  // 6) Remaining = reason (payback only)
+  const leftover = tokens.filter((_, i) => !consumed[i]).filter(t => t.toLowerCase() !== 'to');
+  if (out.type === 'payback') {
+    out.reason = leftover.join(' ').trim();
+    out.kind = 'payback';
+  } else if (out.type) {
+    out.kind = 'leave';
+  }
+
+  // Validate
+  if (!out.agent) { out.error = 'Need an agent name (e.g. "Javier")'; return out; }
+  if (!out.type)  { out.error = 'Need a type (AL, MC, OIL, TRN, payback)'; return out; }
+  if (out.kind === 'payback') {
+    if (!out.hours || out.hours <= 0) { out.error = 'Payback needs hours (e.g. "2h")'; return out; }
+    if (!out.from) { out.error = 'Payback needs a date'; return out; }
+  } else {
+    if (!out.from) { out.error = 'Need a date'; return out; }
+    if (out.to < out.from) { const t = out.from; out.from = out.to; out.to = t; }
+  }
+  out.ok = true;
+  return out;
+}
+
+function qeOnInput(){
+  const inp = document.getElementById('qe-input');
+  const pv  = document.getElementById('qe-preview');
+  if (!inp || !pv) return;
+  const raw = inp.value;
+  if (!raw.trim()) { pv.classList.remove('show'); inp.classList.remove('invalid'); return; }
+  const p = qeParse(raw);
+  if (!p.ok) {
+    inp.classList.add('invalid');
+    pv.classList.add('show');
+    pv.innerHTML = `<div class="qe-pv-line qe-pv-err">⚠ ${escapeHtml(p.error||'Could not parse')}</div>`;
+    return;
+  }
+  inp.classList.remove('invalid');
+  pv.classList.add('show');
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:d.getFullYear()===new Date().getFullYear()?undefined:'numeric'});
+  const cls = (p.type||'').toLowerCase();
+  if (p.kind === 'payback') {
+    pv.innerHTML = `<div class="qe-pv-line">
+      <span class="qe-pv-chip">${escapeHtml(p.agent)}</span>
+      <span class="qe-pv-chip pay">Payback ${p.hours}h</span>
+      <span style="color:var(--tx2)">on ${escapeHtml(fmt(p.from))}</span>
+      ${p.reason?`<span style="color:var(--tx3)">· ${escapeHtml(p.reason)}</span>`:''}
+    </div><div style="font-size:10.5px;color:var(--tx3);margin-top:4px">Press Enter to log</div>`;
+  } else {
+    // Count workdays in range
+    const days = []; const d = new Date(p.from);
+    while (d <= p.to) { if (isWorkday(d)) days.push(new Date(d)); d.setDate(d.getDate()+1); }
+    const portionLabel = p.portion==='full' ? '' : ` ½${p.portion.toUpperCase()}`;
+    const range = +p.from===+p.to ? fmt(p.from) : `${fmt(p.from)} → ${fmt(p.to)}`;
+    pv.innerHTML = `<div class="qe-pv-line">
+      <span class="qe-pv-chip">${escapeHtml(p.agent)}</span>
+      <span class="qe-pv-chip ${cls}">${escapeHtml(p.type+portionLabel)}</span>
+      <span style="color:var(--tx2)">${escapeHtml(range)}</span>
+      <span style="color:var(--tx3)">· ${days.length} workday${days.length===1?'':'s'}</span>
+    </div><div style="font-size:10.5px;color:var(--tx3);margin-top:4px">${days.length?'Press Enter to apply · weekends and PH skipped':'No workdays in range'}</div>`;
+  }
+}
+
+function qeOnKey(e){
+  if (e.key === 'Enter') { e.preventDefault(); qeCommit(); }
+  else if (e.key === 'Escape') { e.preventDefault(); document.getElementById('qe-input').blur(); }
+}
+function qeBlur(){
+  // Only hide the preview on blur. The help popover closes via its own toggle
+  // button or via the global click-outside listener.
+  const pv = document.getElementById('qe-preview');
+  if (pv) pv.classList.remove('show');
+}
+function qeToggleHelp(e){
+  if (e) e.stopPropagation();
+  const hp = document.getElementById('qe-help-popover');
+  const pv = document.getElementById('qe-preview');
+  if (!hp) return;
+  hp.classList.toggle('show');
+  if (pv) pv.classList.remove('show');
+}
+
+function qeCommit(){
+  const inp = document.getElementById('qe-input');
+  if (!inp) return;
+  const p = qeParse(inp.value);
+  if (!p.ok) { showToast(p.error || 'Could not parse'); inp.classList.add('invalid'); return; }
+
+  if (p.kind === 'payback') {
+    const entry = { id: Date.now(), agent: p.agent, date: ymd(p.from), hours: p.hours,
+                    reason: p.reason || '—', settled: false, ts: new Date().toISOString() };
+    hoursLog.unshift(entry);
+    save(HK, hoursLog);
+    showToast(`${p.hours}h payback logged for ${p.agent}`);
+  } else {
+    // Apply leave across the range, skipping weekends + PH
+    const days = []; const d = new Date(p.from);
+    while (d <= p.to) { if (isWorkday(d)) days.push(ymd(d)); d.setDate(d.getDate()+1); }
+    if (!days.length) { showToast('No workdays in range'); return; }
+    pushUndo();
+    const value = joinStatus(p.type, p.portion);
+    days.forEach(k => { if (!state[k]) state[k] = {}; state[k][p.agent] = value; });
+    save(SK, state);
+    const now = new Date();
+    logChange({
+      ts: now.toISOString(),
+      timeStr: now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+      dateStr: days.length===1 ? days[0] : `${days[0]} → ${days[days.length-1]}`,
+      key: days[0], floor: null, planned: (typeof PLANNED!=='undefined'?PLANNED:null),
+      agents: { [p.agent]: value }, bulk: days.length>1, bulkDays: days.length,
+      tab: 'Quick Entry'
+    });
+    save(LK, changelog);
+    showToast(`${p.type}${p.portion==='full'?'':' ½'+p.portion.toUpperCase()} applied — ${days.length} day${days.length===1?'':'s'}`);
+  }
+  inp.value = '';
+  inp.classList.remove('invalid');
+  document.getElementById('qe-preview').classList.remove('show');
+  renderAll();
+}
+
+/* ─── TOOLBAR GEAR MENU ───────────────── */
+function toggleGearMenu(e){
+  if (e) e.stopPropagation();
+  const w = document.getElementById('gear-wrap');
+  if (!w) return;
+  w.classList.toggle('open');
+}
+function closeGearMenu(){
+  const w = document.getElementById('gear-wrap');
+  if (w) w.classList.remove('open');
+}
+// Click-outside + Esc closes the gear menu and Quick Entry help popover
+document.addEventListener('click', e => {
+  const w = document.getElementById('gear-wrap');
+  if (w && w.classList.contains('open') && !w.contains(e.target)) w.classList.remove('open');
+  const qw = document.getElementById('qe-wrap');
+  const hp = document.getElementById('qe-help-popover');
+  if (qw && hp && hp.classList.contains('show') && !qw.contains(e.target)) hp.classList.remove('show');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeGearMenu();
+    const hp = document.getElementById('qe-help-popover'); if (hp) hp.classList.remove('show');
+  }
+});
 
 function openSyncSettings(){
   document.getElementById('sync-url-input').value = getSyncUrl();
@@ -5614,9 +5910,11 @@ async function pushToGitHub() {
   };
 
   try {
+    // Capture source BEFORE flipping the button label — otherwise the captured
+    // DOM has "Pushing…" baked into the pushed HTML and the live site stays stuck.
+    const encoded = captureSourceBase64();
     setBtn('⏳ Pushing…', 'var(--tx2)', '', true);
 
-    const encoded = captureSourceBase64();
     const headers = { 'Authorization': `Bearer ${cfg.pat}`, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' };
     const apiBase = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`;
 
