@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Send Operations Planner</title>
-<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ─── LIQUID GLASS DARK SYSTEM ─────────────────────────────────── */
 :root {
@@ -190,6 +191,32 @@ body::before {
   color: var(--tx3); margin: 0 0 12px; display: flex; align-items: center; gap: 8px;
 }
 .slabel::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+/* ─── BOOT LOCK (blocks edits while initial pull runs) ─── */
+#boot-lock { position: fixed; inset: 0; z-index: 9500; background: rgba(8,8,14,0.92); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; }
+#boot-lock.open { display: flex; }
+#boot-lock .bl-card { width: 340px; max-width: 90vw; background: rgba(22,22,30,0.96); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 26px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.6); text-align: center; }
+#boot-lock .bl-kicker { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
+#boot-lock .bl-title { font-size: 16px; font-weight: 600; color: var(--tx); margin-bottom: 6px; }
+#boot-lock .bl-sub { font-size: 12.5px; color: var(--tx3); line-height: 1.5; margin-bottom: 18px; }
+#boot-lock .bl-spinner { width: 28px; height: 28px; margin: 0 auto 16px; border: 3px solid rgba(255,255,255,0.08); border-top-color: var(--blue); border-radius: 50%; animation: bl-spin 0.9s linear infinite; }
+@keyframes bl-spin { to { transform: rotate(360deg); } }
+#boot-lock .bl-actions { display: none; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+#boot-lock.failed .bl-spinner { display: none; }
+#boot-lock.failed .bl-actions { display: flex; }
+#boot-lock .bl-btn { font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: var(--tx2); cursor: pointer; }
+#boot-lock .bl-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* ─── TODAY PANEL (Calendar header) ─────────────────────── */
+.today-panel { background: var(--glass); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; }
+.today-summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); }
+.today-summary::-webkit-details-marker { display: none; }
+.today-title { color: var(--tx2); }
+.today-chev { display: inline-block; transition: transform .15s; font-size: 10px; color: var(--tx3); }
+.today-panel:not([open]) .today-chev { transform: rotate(-90deg); }
+.today-panel[open] > .today-summary { margin-bottom: 12px; }
+.today-panel .agent-status-grid { margin-bottom: 0; }
+.today-panel .alert-bar:empty { display: none; }
 
 /* ─── ALERTS ─────────────────────────────────────────────── */
 .alert-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
@@ -973,12 +1000,19 @@ body::before {
 <body>
 
 <!-- ─── LOCK SCREEN ─────────────────────────────────────────────────────── -->
-<div id="lock-screen" style="display: flex;">
+<div id="lock-screen">
   <div class="lock-box" id="lock-box">
     <div class="lock-logo">Send Operations · Planner</div>
     <div class="lock-title">Restricted Access</div>
     <div class="lock-sub">Enter your access code to continue.</div>
-    <input class="lock-input" id="lock-input" type="password" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')tryLogin()">
+    <input
+      class="lock-input"
+      id="lock-input"
+      type="password"
+      placeholder="••••"
+      autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')tryLogin()"
+    >
     <button class="lock-btn" onclick="tryLogin()">Unlock</button>
     <div class="lock-error" id="lock-error"></div>
   </div>
@@ -989,7 +1023,8 @@ body::before {
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="brand">SEND OPERATIONS<span class="brand-dot"> · </span>PLANNER</div>
-  <button class="sync-pill s-local" id="sync-pill" onclick="openSyncSettings()" title="Running on localhost — sync disabled so test edits do not reach the production Sheet">● Preview · sync off</button>
+  <span id="ver-badge" style="font-size:10px;color:var(--tx3);letter-spacing:0.04em;margin-left:2px" title="Build version"></span>
+  <button class="sync-pill s-local" id="sync-pill" onclick="openSyncSettings()" title="Click to manage Google Sheets sync">● Local only</button>
   <div class="spacer"></div>
   <div class="top-actions">
     <input type="file" id="restore-input" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
@@ -1021,9 +1056,9 @@ body::before {
   <button class="main-tab" id="mt-bmor" onclick="swMain('bmor')">BMOR</button>
   <div class="spacer"></div>
   <div class="month-nav" id="month-nav-bar">
-    <button class="mnav-btn" onclick="prevMonth()">‹</button>
+    <button class="mnav-btn" onclick="prevMonth()">&#8249;</button>
     <div class="month-label" id="monthLabel">May 2026</div>
-    <button class="mnav-btn" onclick="nextMonth()">›</button>
+    <button class="mnav-btn" onclick="nextMonth()">&#8250;</button>
     <button class="top-btn" onclick="goToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
   </div>
 </div>
@@ -1033,9 +1068,7 @@ body::before {
   <button class="tab active" id="t-calendar" onclick="sw('calendar')">Calendar</button>
   <button class="tab" id="t-agents" onclick="sw('agents')">Agent Entitlement</button>
   <button class="tab" id="t-roster" onclick="sw('roster')">Agent Contracts</button>
-  <button class="tab" id="t-daily" onclick="sw('daily')">Daily</button>
   <button class="tab" id="t-dashboard" onclick="sw('dashboard')">Dashboard</button>
-  <button class="tab" id="t-strength" onclick="sw('strength')">Strength</button>
   <button class="tab" id="t-forecast" onclick="sw('forecast')">Forecast</button>
   <button class="tab" id="t-insights" onclick="sw('insights')">Insights</button>
   <button class="tab" id="t-actions" onclick="sw('actions')">Action Plans</button>
@@ -1049,26 +1082,36 @@ body::before {
   <button class="tab active" id="t-bmor-home" onclick="swBmor('bmor-home')">Overview</button>
 </div>
 
-<!-- BODY -->
-<div class="body">
-
-<!-- DAILY VIEW -->
-<div class="pane" id="pane-daily">
-  <div class="alert-bar" id="alert-bar"><div class="alert alert-yellow">△ <strong>REDUCED COVERAGE</strong> &nbsp; 4 agents on floor — <span class="alert-dates">Day(s): 13, 20, 25, 26, 28, 29</span></div></div>
-  <div class="slabel">Today &nbsp;<span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:10px;margin-left:4px">Tuesday, May 26, 2026</span></div>
-  <div class="agent-status-grid" id="agent-status-grid"><div class="asc present"><div class="asc-init">JA</div><div class="asc-name">Javier</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">AI</div><div class="asc-name">Aiman</div><div class="asc-badge present">On Floor</div></div><div class="asc present"><div class="asc-init">JU</div><div class="asc-name">Julian</div><div class="asc-badge present">On Floor</div></div><div class="asc al"><div class="asc-init">TI</div><div class="asc-name">Tina</div><div class="asc-badge al">AL</div></div><div class="asc present"><div class="asc-init">RI</div><div class="asc-name">Rina</div><div class="asc-badge present">On Floor</div></div></div>
-  <div class="slabel">Month summary</div>
-  <div class="stat-row">
-    <div class="stat-box g" id="sb-avg"><div class="stat-label">Avg floor</div><div class="stat-val" id="sv-avg" style="color: var(--green);">4.7</div><div class="stat-sub">agents on floor avg</div></div>
-    <div class="stat-box"><div class="stat-label">Total MC</div><div class="stat-val" style="color:var(--red)" id="sv-mc">1</div><div class="stat-sub">medical leave days</div></div>
-    <div class="stat-box"><div class="stat-label">Total AL</div><div class="stat-val" style="color:var(--yellow)" id="sv-al">5</div><div class="stat-sub">annual leave days</div></div>
-    <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sv-crit">0</div><div class="stat-sub">3 or fewer on floor</div></div>
-    <div class="stat-box"><div class="stat-label">Turn-up rate</div><div class="stat-val" id="sv-att" style="color: var(--green);">93.7%</div><div class="stat-sub">tracked weekdays</div></div>
+<!-- BOOT LOCK — covers UI while the first pull runs so no edits race the pull -->
+<div id="boot-lock" role="dialog" aria-modal="true" aria-live="polite">
+  <div class="bl-card">
+    <div class="bl-spinner" aria-hidden="true"></div>
+    <div class="bl-kicker">Sync</div>
+    <div class="bl-title" id="boot-lock-title">Loading latest data</div>
+    <div class="bl-sub" id="boot-lock-sub">Pulling from Google Sheets. This usually takes a few seconds.</div>
+    <div class="bl-actions">
+      <button class="bl-btn" id="boot-lock-offline" type="button">Continue offline</button>
+      <button class="bl-btn primary" id="boot-lock-retry" type="button">Retry</button>
+    </div>
   </div>
 </div>
 
+<!-- BODY -->
+<div class="body">
+
 <!-- CALENDAR VIEW -->
 <div class="pane active" id="pane-calendar">
+  <!-- Today panel — collapsible per-agent status + month coverage alerts -->
+  <details class="today-panel" id="today-panel" open>
+    <summary class="today-summary">
+      <span class="today-chev">▾</span>
+      <span class="today-title">Today</span>
+      <span id="today-date-label" style="text-transform:none;letter-spacing:0;color:var(--tx2);font-size:11px;margin-left:6px"></span>
+    </summary>
+    <div class="alert-bar" id="alert-bar"></div>
+    <div class="agent-status-grid" id="agent-status-grid"></div>
+  </details>
+
   <!-- View toggle -->
   <div class="cal-toolbar">
     <div class="cal-view-toggle">
@@ -1076,9 +1119,9 @@ body::before {
       <button class="cvt-btn" id="cvt-week" onclick="setCalView('week')">Week</button>
     </div>
     <div id="week-nav" style="display:none;align-items:center;gap:6px">
-      <button class="mnav-btn" onclick="prevWeek()">‹</button>
+      <button class="mnav-btn" onclick="prevWeek()">&#8249;</button>
       <div class="week-label" id="weekLabel"></div>
-      <button class="mnav-btn" onclick="nextWeek()">›</button>
+      <button class="mnav-btn" onclick="nextWeek()">&#8250;</button>
     </div>
     <div class="qe-wrap" id="qe-wrap">
       <div class="qe-row">
@@ -1107,61 +1150,11 @@ body::before {
       <div class="cal-dh we">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div>
       <div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh we">Sat</div>
     </div>
-    <div class="cal-grid" id="cal-grid"><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">26</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">27</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">30</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Labour Day</span><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">2</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">3</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">6</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">7</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">8</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">9</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">10</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">11</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">12</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">13</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Javier · AL</div></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">14</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">15</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">16</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">17</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">18</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">19</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">20</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-mc">Javier · MC</div></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">21</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell"><div class="cell-top"><div class="cell-num">22</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">23</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">24</div></div><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">25</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell today" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">26</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell ph-day"><div class="cell-top"><div class="cell-num">27</div></div><span class="ph-label">Hari Raya Haji</span><div class="cell-chips"></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">28</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell" style="background: rgba(255, 214, 10, 0.035);"><div class="cell-top"><div class="cell-num">29</div><div class="cell-floor" style="color:var(--yellow)">4</div></div><div class="cell-chips"><div class="chip chip-al">Tina · AL</div></div></div><div class="cal-cell weekend"><div class="cell-top"><div class="cell-num">30</div></div><div class="cell-chips"></div></div><div class="cal-cell weekend ph-day"><div class="cell-top"><div class="cell-num">31</div></div><span class="ph-label">Vesak Day</span><div class="cell-chips"></div></div><div class="cal-cell outside ph-day"><div class="cell-top"><div class="cell-num">1</div></div><span class="ph-label">Vesak Day (substitute)</span><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">2</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">3</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">4</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside"><div class="cell-top"><div class="cell-num">5</div><div class="cell-floor" style="color:var(--green)">5</div></div><div class="cell-chips"></div></div><div class="cal-cell outside weekend"><div class="cell-top"><div class="cell-num">6</div></div><div class="cell-chips"></div></div></div>
+    <div class="cal-grid" id="cal-grid"></div>
   </div>
 
   <!-- Shrinkage stats panel -->
-  <div class="shrink-panel" id="shrink-panel"><div class="sp-card"><div class="sp-card-title">Shrinkage days <span style="color:var(--green)">6.3%</span></div><div class="sp-week-group">Wk May 10 – May 16</div><div class="sp-day-row" onclick="openModal('2026-05-13')">
-    <span class="sp-day-date">Wed, May 13</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Javier·AL</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div><div class="sp-week-group">Wk May 17 – May 23</div><div class="sp-day-row" onclick="openModal('2026-05-20')">
-    <span class="sp-day-date">Wed, May 20</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-mc">Javier·MC</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div><div class="sp-week-group">Wk May 24 – May 30</div><div class="sp-day-row" onclick="openModal('2026-05-25')">
-    <span class="sp-day-date">Mon, May 25</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div><div class="sp-day-row" onclick="openModal('2026-05-26')">
-    <span class="sp-day-date">Tue, May 26</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div><div class="sp-day-row" onclick="openModal('2026-05-28')">
-    <span class="sp-day-date">Thu, May 28</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div><div class="sp-day-row" onclick="openModal('2026-05-29')">
-    <span class="sp-day-date">Fri, May 29</span>
-    <span class="sp-day-agents"><span class="sp-agent-tag sp-tag-al">Tina·AL</span></span>
-    <span class="sp-day-floor" style="color:var(--yellow)">4/5</span>
-  </div></div><div class="sp-card"><div class="sp-card-title">By agent <span style="color:var(--tx2);font-size:13px">6 absent days</span></div>
-        <div class="sp-day-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
-          <div style="display:flex;align-items:center;width:100%;gap:8px">
-            <span style="font-size:13px;font-weight:500;min-width:70px">Tina</span>
-            <span class="sp-agent-tag sp-tag-al">AL ×4</span>
-            
-            
-            
-            <span style="margin-left:auto;font-size:11px;color:var(--tx3)">4d / 21%</span>
-          </div>
-          <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-            <div style="width:21%;height:100%;border-radius:2px;background:var(--yellow)"></div>
-          </div>
-        </div>
-        <div class="sp-day-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
-          <div style="display:flex;align-items:center;width:100%;gap:8px">
-            <span style="font-size:13px;font-weight:500;min-width:70px">Javier</span>
-            <span class="sp-agent-tag sp-tag-al">AL ×1</span>
-            <span class="sp-agent-tag sp-tag-mc">MC ×1</span>
-            
-            
-            <span style="margin-left:auto;font-size:11px;color:var(--tx3)">2d / 11%</span>
-          </div>
-          <div style="width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-            <div style="width:11%;height:100%;border-radius:2px;background:var(--purple)"></div>
-          </div>
-        </div></div></div>
+  <div class="shrink-panel" id="shrink-panel"></div>
 </div>
 
 <!-- DASHBOARD VIEW -->
@@ -1176,6 +1169,29 @@ body::before {
   </div>
   <div id="data-quality-bar"></div>
   <div class="kpi-row" id="kpi-row"></div>
+
+  <!-- Daily floor strength (merged from former Strength tab) -->
+  <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-box" id="sl-avg-box"><div class="stat-label">Avg floor</div><div class="stat-val" id="sl-avg">-</div><div class="stat-sub">weekdays</div></div>
+    <div class="stat-box r"><div class="stat-label">Lowest day</div><div class="stat-val" style="color:var(--red)" id="sl-low">-</div><div class="stat-sub">on floor</div></div>
+    <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sl-crit">-</div><div class="stat-sub">3 or fewer</div></div>
+    <div class="stat-box" id="sl-att-box"><div class="stat-label">Avg turn-up</div><div class="stat-val" id="sl-att">-</div><div class="stat-sub">this month</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:14px">
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div class="slabel" style="margin:0">Agent floor strength — weekdays</div>
+        <div class="chart-legend">
+          <div class="cli"><div class="cld" style="background:var(--green)"></div>Full (5)</div>
+          <div class="cli"><div class="cld" style="background:var(--yellow)"></div>Reduced (4)</div>
+          <div class="cli"><div class="cld" style="background:var(--red)"></div>Critical (≤3)</div>
+        </div>
+      </div>
+      <div style="height:280px"><canvas id="strChart"></canvas></div>
+      <div class="breakdown-row" id="breakdown-row"><span class="br-hint">Click a bar to see who is absent that day</span></div>
+    </div>
+  </div>
+
   <div class="glass-card" style="margin-bottom:14px">
     <div class="card-pad">
       <div class="card-title">Rolling 13-week shrinkage trend</div>
@@ -1209,30 +1225,6 @@ body::before {
         <thead><tr><th>Month</th><th class="num">Workdays</th><th class="num">Capacity</th><th class="num">AL</th><th class="num">MC</th><th class="num">OIL</th><th class="num">TRN</th><th class="num">Unplanned%</th><th class="num">Shrinkage</th><th class="num">Turn-up</th></tr></thead>
         <tbody></tbody>
       </table>
-    </div>
-  </div>
-</div>
-
-<!-- STRENGTH VIEW -->
-<div class="pane" id="pane-strength">
-  <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-box" id="sl-avg-box"><div class="stat-label">Avg floor</div><div class="stat-val" id="sl-avg">-</div><div class="stat-sub">weekdays</div></div>
-    <div class="stat-box r"><div class="stat-label">Lowest day</div><div class="stat-val" style="color:var(--red)" id="sl-low">-</div><div class="stat-sub">on floor</div></div>
-    <div class="stat-box r"><div class="stat-label">Critical days</div><div class="stat-val" style="color:var(--red)" id="sl-crit">-</div><div class="stat-sub">3 or fewer</div></div>
-    <div class="stat-box" id="sl-att-box"><div class="stat-label">Avg turn-up</div><div class="stat-val" id="sl-att">-</div><div class="stat-sub">this month</div></div>
-  </div>
-  <div class="glass-card">
-    <div class="chart-wrap">
-      <div class="chart-header">
-        <div class="slabel" style="margin:0">Agent floor strength — weekdays</div>
-        <div class="chart-legend">
-          <div class="cli"><div class="cld" style="background:var(--green)"></div>Full (5)</div>
-          <div class="cli"><div class="cld" style="background:var(--yellow)"></div>Reduced (4)</div>
-          <div class="cli"><div class="cld" style="background:var(--red)"></div>Critical (≤3)</div>
-        </div>
-      </div>
-      <div style="height:280px"><canvas id="strChart"></canvas></div>
-      <div class="breakdown-row" id="breakdown-row"><span class="br-hint">Click a bar to see who is absent that day</span></div>
     </div>
   </div>
 </div>
@@ -1284,7 +1276,7 @@ body::before {
         <div class="modal-title">Add New Agent</div>
         <div class="modal-sub">Adds to the active roster with default entitlements</div>
       </div>
-      <button class="modal-x" onclick="closeAddAgentModal()">✕</button>
+      <button class="modal-x" onclick="closeAddAgentModal()">&#10005;</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
       <div>
@@ -1350,7 +1342,7 @@ body::before {
         <div class="modal-title" id="action-modal-title">New Action Plan</div>
         <div class="modal-sub">Corrective action — captured for COPC audit trail</div>
       </div>
-      <button class="modal-x" onclick="closeActionModal()">✕</button>
+      <button class="modal-x" onclick="closeActionModal()">&#10005;</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1469,9 +1461,9 @@ body::before {
 <div class="pane" id="pane-ops">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
-      <button class="mnav-btn" onclick="opsPrevDay()">‹</button>
+      <button class="mnav-btn" onclick="opsPrevDay()">&#8249;</button>
       <div class="day-nav-label" id="ops-day-label"></div>
-      <button class="mnav-btn" onclick="opsNextDay()">›</button>
+      <button class="mnav-btn" onclick="opsNextDay()">&#8250;</button>
       <button class="top-btn" onclick="opsGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
     <button class="mbtn mbtn-save" onclick="saveOpsDay()" style="padding:7px 22px">Save</button>
@@ -1530,9 +1522,9 @@ body::before {
 <div class="pane" id="pane-orders">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="day-nav">
-      <button class="mnav-btn" onclick="ordPrevDay()">‹</button>
+      <button class="mnav-btn" onclick="ordPrevDay()">&#8249;</button>
       <div class="day-nav-label" id="ord-day-label"></div>
-      <button class="mnav-btn" onclick="ordNextDay()">›</button>
+      <button class="mnav-btn" onclick="ordNextDay()">&#8250;</button>
       <button class="top-btn" onclick="ordGoToday()" style="margin-left:4px;font-size:11px;padding:4px 10px">Today</button>
     </div>
     <button class="mbtn mbtn-save" onclick="saveOrderDay()" style="padding:7px 22px">Save</button>
@@ -1559,7 +1551,7 @@ body::before {
   <div class="modal-box" style="width:480px">
     <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(191,90,242,0.08),rgba(10,132,255,0.04))">
       <div><div class="modal-title">Long Leave Entry</div><div class="modal-sub">Apply leave to an agent across a date range in one shot</div></div>
-      <button class="modal-x" onclick="closeLongLeave()">✕</button>
+      <button class="modal-x" onclick="closeLongLeave()">&#10005;</button>
     </div>
     <div class="modal-body">
 
@@ -1591,10 +1583,10 @@ body::before {
           </div>
         </div>
         <label class="ll-skip-row">
-          <input type="checkbox" id="ll-skip-we" checked="" onchange="llPreview()"> Skip weekends
+          <input type="checkbox" id="ll-skip-we" checked onchange="llPreview()"> Skip weekends
         </label>
         <label class="ll-skip-row">
-          <input type="checkbox" id="ll-skip-ph" checked="" onchange="llPreview()"> Skip public holidays
+          <input type="checkbox" id="ll-skip-ph" checked onchange="llPreview()"> Skip public holidays
         </label>
       </div>
 
@@ -1615,7 +1607,7 @@ body::before {
   <div class="modal-box">
     <div class="modal-hdr">
       <div><div class="modal-title" id="modal-title">-</div><div class="modal-sub" id="modal-sub">-</div></div>
-      <button class="modal-x" onclick="closeModal()">✕</button>
+      <button class="modal-x" onclick="closeModal()">&#10005;</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot">
@@ -1636,7 +1628,7 @@ body::before {
         <div class="modal-title">Google Sheets Sync</div>
         <div class="modal-sub">Optional · keeps data in sync across devices</div>
       </div>
-      <button class="modal-x" onclick="closeSyncSettings()">✕</button>
+      <button class="modal-x" onclick="closeSyncSettings()">&#10005;</button>
     </div>
     <div class="modal-body">
       <div class="ll-section">
@@ -1648,6 +1640,7 @@ body::before {
         <button class="mbtn mbtn-cancel" onclick="syncTest()">Test Connection</button>
         <button class="mbtn mbtn-cancel" onclick="syncPullNow()" style="border-color:var(--blue-border);color:var(--blue)">⇧ Pull from Sheet</button>
         <button class="mbtn mbtn-cancel" onclick="syncPushNow()" style="border-color:var(--green-border);color:var(--green)">⇩ Push to Sheet</button>
+        <button class="mbtn mbtn-cancel" onclick="openRestoreSnapshots()" style="border-color:var(--yellow-border);color:var(--yellow)" title="Restore from local snapshots taken before each sync">↺ Restore snapshot…</button>
       </div>
       <div style="font-size:11px;color:var(--tx3);margin-top:18px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);line-height:1.5">
         <strong style="color:var(--tx2)">How sync works:</strong> Once configured, every save auto-pushes to the Sheet (1.5s debounce). Open the HTML on another device with the same URL → click "Pull from Sheet" to load. Last write wins — coordinate with teammates editing simultaneously.<br><br>
@@ -1667,6 +1660,30 @@ body::before {
   </div>
 </div>
 
+<!-- ─── RESTORE FROM SNAPSHOT MODAL ──────────────────────────────────────── -->
+<div class="modal-overlay" id="restore-modal" onclick="restoreOverlayClick(event)">
+  <div class="modal-box" style="width:680px;max-width:92vw">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Restore from snapshot</div>
+        <div class="modal-sub">Local snapshots are captured automatically before every sync, so you can roll back if data gets overwritten.</div>
+      </div>
+      <button class="modal-x" onclick="closeRestoreSnapshots()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="restore-list" style="display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto"></div>
+      <div id="restore-empty" style="display:none;padding:32px;text-align:center;color:var(--tx3);font-size:13px">No snapshots yet. One will be captured on the next sync.</div>
+      <div id="restore-preview" style="display:none;margin-top:14px;padding:14px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.08)"></div>
+    </div>
+    <div class="modal-foot">
+      <div style="font-size:11px;color:var(--tx3);flex:1">Restoring snapshots replaces in-memory data and saves to this device only. A push to the Sheet still needs your confirm.</div>
+      <div class="modal-actions">
+        <button class="mbtn mbtn-cancel" onclick="closeRestoreSnapshots()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ─── GITHUB PUSH SETTINGS MODAL ───────────────────────────────────────── -->
 <div class="modal-overlay" id="gh-modal" onclick="ghOverlayClick(event)">
   <div class="modal-box" style="width:480px">
@@ -1675,7 +1692,7 @@ body::before {
         <div class="modal-title">GitHub Push Settings</div>
         <div class="modal-sub">One-time setup — push index.html to GitHub Pages in one click</div>
       </div>
-      <button class="modal-x" onclick="closeGhSettings()">✕</button>
+      <button class="modal-x" onclick="closeGhSettings()">&#10005;</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1721,7 +1738,7 @@ body::before {
   <div class="modal-box" style="width:500px">
     <div class="modal-hdr" style="background:linear-gradient(135deg,rgba(10,132,255,0.08),rgba(48,209,88,0.04))">
       <div><div class="modal-title">Hours Payback Log</div><div class="modal-sub">Track hours agents owe the company</div></div>
-      <button class="modal-x" onclick="closePaybackModal()">✕</button>
+      <button class="modal-x" onclick="closePaybackModal()">&#10005;</button>
     </div>
     <div class="modal-body" style="padding:0">
       <!-- Add entry form -->
@@ -1913,13 +1930,19 @@ function showMetricTooltip(anchor, key){
 function hideMetricTooltip(){ document.getElementById('metric-tip')?.remove(); }
 
 /* ─── ENTERPRISE HARDENING UTILITIES ──────────────────────────────────── */
-const APP_VERSION       = '2026.05.21';
+const APP_VERSION       = '2026.06.11';
+// Build version badge in the top bar — compare against the live site to spot a pending deploy
+document.getElementById('ver-badge').textContent = 'v' + APP_VERSION;
 // PLANNING_YEAR is declared earlier (just before `cursor`) to avoid TDZ.
 const MAX_CHANGELOG     = 500;       // hard cap; oldest entries get archived to backup history
 const PAYLOAD_WARN_AT   = 40000;     // warn at 80% of the 50K Sheets cell limit
 const USER_KEY          = 'sops-user-v1';
 const BACKUP_HIST_KEY   = 'sops-backup-snap-v1';
 const LAST_PULL_TS_KEY  = 'sops-last-pull-ts-v1';
+const PREPULL_RING_KEY  = 'sops-prepull-ring-v1';  // ring buffer of state snapshots taken before any destructive sync op
+const PREPULL_RING_MAX  = 20;                       // keep last 20 snapshots
+const SYNC_AUDIT_KEY    = 'sops-sync-audit-v1';     // append-only log of every sync op
+const SYNC_AUDIT_MAX    = 500;                      // hard cap on audit entries
 
 // XSS protection — wrap any user-supplied string before injecting into innerHTML
 function escapeHtml(s){
@@ -2012,6 +2035,136 @@ function takeDailySnapshot(){
     const trimmed = {}; keep.forEach(k => trimmed[k] = hist[k]);
     localStorage.setItem(BACKUP_HIST_KEY, JSON.stringify(trimmed));
   } catch(e) { console.warn('Snapshot failed:', e); }
+}
+
+/* ─── PRE-PULL SNAPSHOT RING ──────────────────────────────────────
+   Captures the full local state into a ring buffer BEFORE any operation
+   that could overwrite it (pulls, force-overwrites, restores). Cap is
+   PREPULL_RING_MAX. Each entry is fully self-contained for restore.   */
+function snapshotBeforePull(reason){
+  try {
+    const entry = {
+      ts: new Date().toISOString(),
+      reason: reason || 'pull',
+      user: (typeof getCurrentUser === 'function' ? getCurrentUser() : null) || (localStorage.getItem(USER_KEY) || 'Anonymous'),
+      counts: {
+        state: Object.keys(state || {}).length,
+        changelog: Array.isArray(changelog) ? changelog.length : 0,
+        roster: Object.keys(roster || {}).length,
+        hcLog: Array.isArray(hcLog) ? hcLog.length : 0,
+        hoursLog: Array.isArray(hoursLog) ? hoursLog.length : 0,
+        actions: Array.isArray(actions) ? actions.length : 0,
+        agents: Array.isArray(AGENTS) ? AGENTS.length : 0
+      },
+      data: {
+        state: state || {},
+        phMap: phMap || {},
+        hoursLog: hoursLog || [],
+        changelog: changelog || [],
+        roster: roster || {},
+        hcLog: hcLog || [],
+        actions: actions || [],
+        AGENTS: AGENTS || [],
+        archivedAgents: archivedAgents || [],
+        opsData: (typeof opsData !== 'undefined' ? opsData : {}),
+        ordersData: (typeof ordersData !== 'undefined' ? ordersData : {})
+      }
+    };
+    let ring = [];
+    try { ring = JSON.parse(localStorage.getItem(PREPULL_RING_KEY) || '[]'); } catch { ring = []; }
+    if (!Array.isArray(ring)) ring = [];
+    ring.push(entry);
+    if (ring.length > PREPULL_RING_MAX) ring = ring.slice(-PREPULL_RING_MAX);
+    localStorage.setItem(PREPULL_RING_KEY, JSON.stringify(ring));
+    return entry;
+  } catch(e) {
+    console.warn('snapshotBeforePull failed:', e);
+    return null;
+  }
+}
+
+function loadPrepullRing(){
+  try {
+    const ring = JSON.parse(localStorage.getItem(PREPULL_RING_KEY) || '[]');
+    return Array.isArray(ring) ? ring : [];
+  } catch { return []; }
+}
+
+/* ─── SYNC AUDIT LOG ────────────────────────────────────────────────
+   Every pull, push, conflict decision, restore, and force-overwrite is
+   appended here. Capped at SYNC_AUDIT_MAX. Visible in Diagnostics.    */
+function logSyncAudit(op, detail){
+  try {
+    const entry = {
+      ts: new Date().toISOString(),
+      op: String(op || 'unknown'),
+      user: (localStorage.getItem(USER_KEY) || 'Anonymous'),
+      detail: detail || null
+    };
+    let log = [];
+    try { log = JSON.parse(localStorage.getItem(SYNC_AUDIT_KEY) || '[]'); } catch { log = []; }
+    if (!Array.isArray(log)) log = [];
+    log.push(entry);
+    if (log.length > SYNC_AUDIT_MAX) log = log.slice(-SYNC_AUDIT_MAX);
+    localStorage.setItem(SYNC_AUDIT_KEY, JSON.stringify(log));
+  } catch(e) { /* never let logging fail the actual op */ }
+}
+function loadSyncAudit(){
+  try {
+    const log = JSON.parse(localStorage.getItem(SYNC_AUDIT_KEY) || '[]');
+    return Array.isArray(log) ? log : [];
+  } catch { return []; }
+}
+function clearSyncAudit(){
+  if (!confirm('Clear the sync audit log? This cannot be undone.')) return;
+  localStorage.setItem(SYNC_AUDIT_KEY, '[]');
+  renderSyncAudit();
+}
+
+/* Apply a snapshot's `data` payload to in-memory + localStorage.
+   Does NOT push to remote — caller decides (so restore can be undone with
+   another restore before push). Returns the previous state's counts for diffing. */
+function applySnapshot(snap){
+  if (!snap || !snap.data) throw new Error('Empty snapshot');
+  const d = snap.data;
+  const prevCounts = {
+    state: Object.keys(state || {}).length,
+    changelog: Array.isArray(changelog) ? changelog.length : 0,
+    roster: Object.keys(roster || {}).length,
+    hcLog: Array.isArray(hcLog) ? hcLog.length : 0,
+    actions: Array.isArray(actions) ? actions.length : 0
+  };
+  // Snapshot the CURRENT state first so the restore itself is undoable
+  snapshotBeforePull('pre-restore');
+  state = d.state || {};
+  phMap = d.phMap || phMap || {};
+  hoursLog = d.hoursLog || [];
+  changelog = d.changelog || [];
+  roster = d.roster || {};
+  hcLog = d.hcLog || [];
+  actions = d.actions || [];
+  if (Array.isArray(d.AGENTS) && d.AGENTS.length) AGENTS = [...d.AGENTS];
+  if (Array.isArray(d.archivedAgents)) archivedAgents = [...d.archivedAgents];
+  if (typeof opsData !== 'undefined' && d.opsData) opsData = d.opsData;
+  if (typeof ordersData !== 'undefined' && d.ordersData) ordersData = d.ordersData;
+  saveLocal(SK, state);
+  saveLocal(PK, phMap);
+  saveLocal(HK, hoursLog);
+  saveLocal(LK, changelog);
+  saveLocal(ROSTER_KEY, roster);
+  saveLocal(HCL_KEY, hcLog);
+  saveLocal('sops-actions-v1', actions);
+  saveLocal(AGENTS_KEY, AGENTS);
+  saveLocal(AGENTS_ARCH_KEY, archivedAgents);
+  if (typeof OPS_KEY !== 'undefined') saveLocal(OPS_KEY, opsData);
+  if (typeof ORD_KEY !== 'undefined') saveLocal(ORD_KEY, ordersData);
+  logSyncAudit('restore', {
+    snapshotTs: snap.ts,
+    snapshotReason: snap.reason || null,
+    before: prevCounts,
+    after: { state: Object.keys(state).length, changelog: changelog.length, roster: Object.keys(roster).length, hcLog: hcLog.length, actions: actions.length }
+  });
+  return prevCounts;
 }
 
 function load(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
@@ -2193,11 +2346,9 @@ function activatePane(t){
   if(pane) pane.classList.add('active');
   if(t==='calendar')renderCalendar();
   if(t==='dashboard')renderDashboard();
-  if(t==='strength')setTimeout(renderStrength,50);
   if(t==='agents')renderAgents();
   if(t==='year')renderYear();
   if(t==='log')renderLog();
-  if(t==='daily')renderDaily();
   if(t==='forecast')renderForecast();
   if(t==='insights')renderInsights();
   if(t==='headcount')renderHeadcount();
@@ -2207,6 +2358,11 @@ function activatePane(t){
 
 /* ─── TAB SWITCH ─────────────────────── */
 function sw(t){
+  // Map removed tabs to their new home so stale sessionStorage doesn't break the UI
+  if(t==='daily') t='calendar';
+  if(t==='strength') t='dashboard';
+  const btn=document.getElementById('t-'+t);
+  if(!btn){ t='calendar'; }
   document.querySelectorAll('#subtabbar-manpower .tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
   document.getElementById('t-'+t).classList.add('active');
@@ -2214,8 +2370,8 @@ function sw(t){
   activatePane(t);
 }
 
-/* ─── DAILY VIEW ─────────────────────── */
-function renderDaily(){
+/* ─── TODAY PANEL (rendered at top of Calendar) ─────────── */
+function renderTodayPanel(){
   const y=cursor.getFullYear(),m=cursor.getMonth(),now=new Date();
   const isNow=now.getFullYear()===y&&now.getMonth()===m;
   const d=isNow?now.getDate():1;
@@ -2234,23 +2390,9 @@ function renderDaily(){
     const init=n.slice(0,2).toUpperCase();
     grid.innerHTML+=`<div class="asc ${sc}"><div class="asc-init">${init}</div><div class="asc-name">${escapeHtml(n)}</div><div class="asc-badge ${sc}">${escapeHtml(lb)}</div></div>`;
   });
-  // Stats
-  const s=statsForMonth(y,m);
+  // Month coverage alerts
   const y2=cursor.getFullYear(),m2=cursor.getMonth();
-  const wdays=[];
   const dim2=new Date(y2,m2+1,0).getDate();
-  for(let dd=1;dd<=dim2;dd++){const dobj=new Date(y2,m2,dd);if(!isWeekend(dobj)&&!isPH(ymd(dobj))){const f=floorForDay(ymd(dobj));wdays.push(f);}}
-  const tracked=wdays.filter(f=>f<PLANNED);
-  const avgF=wdays.length?+(wdays.reduce((a,b)=>a+b,0)/wdays.length).toFixed(1):PLANNED;
-  const crit=wdays.filter(f=>f<=3).length;
-  document.getElementById('sv-avg').textContent=avgF;document.getElementById('sv-avg').style.color=fc(Math.round(avgF));
-  document.getElementById('sb-avg').className='stat-box '+fcl(Math.round(avgF));
-  document.getElementById('sv-mc').textContent=s.MC;
-  document.getElementById('sv-al').textContent=s.AL;
-  document.getElementById('sv-crit').textContent=crit;
-  const ae=document.getElementById('sv-att');ae.textContent=s.turnup.toFixed(1)+'%';
-  ae.style.color=s.turnup>=85?'var(--green)':s.turnup>=70?'var(--yellow)':'var(--red)';
-  // Alerts
   const ab=document.getElementById('alert-bar');ab.innerHTML='';
   const critDays=[];const warnDays=[];
   for(let dd=1;dd<=dim2;dd++){
@@ -2285,6 +2427,7 @@ function prevWeek(){ weekCursor.setDate(weekCursor.getDate()-7); renderCalendar(
 function nextWeek(){ weekCursor.setDate(weekCursor.getDate()+7); renderCalendar(); }
 
 function renderCalendar(){
+  renderTodayPanel();
   if(calView==='week') renderWeekCal();
   else renderMonthCal();
   renderShrinkPanel();
@@ -2467,6 +2610,7 @@ function makeCell(d,outside,isToday){
 
 /* ─── DASHBOARD ──────────────────────── */
 function renderDashboard(){
+  setTimeout(renderStrength,50);
   const y=cursor.getFullYear(),m=cursor.getMonth();
   document.getElementById('dash-month').textContent=monthName(m)+' '+y;
   const s=statsForMonth(y,m);
@@ -3200,6 +3344,7 @@ async function pushToRemote(){
       _syncing = false;
       _activeSyncController = null;
       const stashedBody = body;
+      logSyncAudit('push.conflict', { remoteAt: data.remoteAt, lastSeenRemoteAt: data.lastSeenRemoteAt, bodySize: body.length });
       showConflictModal({
         remoteAt: data.remoteAt,
         lastSeenRemoteAt: data.lastSeenRemoteAt,
@@ -3207,33 +3352,129 @@ async function pushToRemote(){
       });
       return;
     }
+    if (data.blindOverwriteRejected) {
+      // Layer 7: server refused a push that has no lastSeenRemoteAt against a non-empty sheet.
+      // This is a new device or stale session. Treat exactly like a conflict — never silently overwrite.
+      _syncing = false;
+      _activeSyncController = null;
+      logSyncAudit('push.blindOverwriteRejected', { remoteAt: data.remoteAt, bodySize: body.length });
+      showBlindOverwriteModal({ remoteAt: data.remoteAt, stashedBody: body });
+      return;
+    }
     localStorage.setItem(SYNC_TS_KEY, data.savedAt || new Date().toISOString());
     if (data.savedAt) localStorage.setItem(LAST_PULL_TS_KEY, data.savedAt);
     setSyncStatus('synced');
+    logSyncAudit('push.success', { savedAt: data.savedAt || null, bodySize: body.length, stateDays: Object.keys(state||{}).length, changelog: (changelog||[]).length });
   } catch (err) {
     if (err.name === 'AbortError') {
       // Superseded by a newer push — not a failure
       return;
     }
     setSyncStatus('failed', err.message);
+    logSyncAudit('push.failure', { error: err.message });
   } finally {
     if (_activeSyncController === controller) _activeSyncController = null;
     _syncing = false;
   }
 }
 
-/* Conflict resolution UI — replaces silent pull-and-discard.
-   Shows what was found on the server vs locally and lets the user pick. */
+/* Conflict resolution UI. Layer 5 of the sync hardening: when the modal opens
+   we fetch the remote payload and show a side-by-side diff so the user can see
+   exactly what each path will discard. The Force button stamps `force:true` on
+   the push so the server's blind-overwrite guard knows this is deliberate. */
+async function _snapshotRemoteIntoRing(reason){
+  try {
+    const peek = await fetch(getSyncUrl(), { method:'GET', mode:'cors', redirect:'follow' });
+    const remoteData = await peek.json();
+    if (remoteData && remoteData.schema === 'send-ops-manpower') {
+      const ring = loadPrepullRing();
+      ring.push({
+        ts: new Date().toISOString(),
+        reason: reason || 'pre-overwrite (remote side)',
+        user: (localStorage.getItem(USER_KEY) || 'Anonymous'),
+        counts: {
+          state: Object.keys(remoteData.state || {}).length,
+          changelog: (remoteData.changelog || []).length,
+          roster: Object.keys(remoteData.roster || {}).length,
+          hcLog: (remoteData.hcLog || []).length,
+          hoursLog: (remoteData.hoursLog || []).length,
+          actions: (remoteData.actions || []).length,
+          agents: (remoteData.agents || []).length
+        },
+        data: {
+          state: remoteData.state || {},
+          phMap: remoteData.phMap || {},
+          hoursLog: remoteData.hoursLog || [],
+          changelog: remoteData.changelog || [],
+          roster: remoteData.roster || {},
+          hcLog: remoteData.hcLog || [],
+          actions: remoteData.actions || [],
+          AGENTS: remoteData.agents || [],
+          archivedAgents: remoteData.archivedAgents || []
+        }
+      });
+      const trimmed = ring.slice(-PREPULL_RING_MAX);
+      localStorage.setItem(PREPULL_RING_KEY, JSON.stringify(trimmed));
+      return remoteData;
+    }
+  } catch(snapErr) {
+    console.warn('Remote snapshot failed:', snapErr);
+  }
+  return null;
+}
+
+function _conflictDiffHtml(localCounts, remoteCounts, localExtras, remoteExtras){
+  function row(label, l, r){
+    const same = l === r;
+    const lostIfPull = Math.max(0, l - r);
+    const lostIfForce = Math.max(0, r - l);
+    return `<tr>
+      <td style="padding:5px 14px 5px 0;font-size:11px;color:var(--tx2)">${escapeHtml(label)}</td>
+      <td class="num" style="padding:5px 14px;font-size:11px;font-family:var(--mono);color:${same?'var(--tx3)':'var(--tx)'}">${l}</td>
+      <td class="num" style="padding:5px 14px;font-size:11px;font-family:var(--mono);color:${same?'var(--tx3)':'var(--tx)'}">${r}</td>
+      <td class="num" style="padding:5px 0;font-size:11px;font-family:var(--mono);color:${lostIfPull?'var(--red)':'var(--tx3)'}">${lostIfPull?'-'+lostIfPull:'·'}</td>
+      <td class="num" style="padding:5px 0;font-size:11px;font-family:var(--mono);color:${lostIfForce?'var(--red)':'var(--tx3)'}">${lostIfForce?'-'+lostIfForce:'·'}</td>
+    </tr>`;
+  }
+  let extras = '';
+  if (localExtras && localExtras.length) {
+    extras += `<div style="margin-top:14px;font-size:11px;color:var(--tx3)"><strong style="color:var(--yellow)">If you pull, these local items are lost:</strong> ${escapeHtml(localExtras.slice(0,8).join(', '))}${localExtras.length>8?' and '+(localExtras.length-8)+' more':''}</div>`;
+  }
+  if (remoteExtras && remoteExtras.length) {
+    extras += `<div style="margin-top:6px;font-size:11px;color:var(--tx3)"><strong style="color:var(--red)">If you force, these remote items are lost:</strong> ${escapeHtml(remoteExtras.slice(0,8).join(', '))}${remoteExtras.length>8?' and '+(remoteExtras.length-8)+' more':''}</div>`;
+  }
+  return `
+    <table style="width:100%;border-collapse:collapse;margin-top:6px">
+      <thead><tr>
+        <th style="text-align:left;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 14px 4px 0">Bucket</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 14px">Local</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 14px">Remote</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--yellow);padding:4px 0">Lost if pull</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--red);padding:4px 0">Lost if force</th>
+      </tr></thead>
+      <tbody>
+        ${row('Attendance days', localCounts.state, remoteCounts.state)}
+        ${row('Changelog entries', localCounts.changelog, remoteCounts.changelog)}
+        ${row('Agents on roster', localCounts.roster, remoteCounts.roster)}
+        ${row('Headcount events', localCounts.hcLog, remoteCounts.hcLog)}
+        ${row('Hours payback', localCounts.hoursLog, remoteCounts.hoursLog)}
+        ${row('Action plans', localCounts.actions, remoteCounts.actions)}
+      </tbody>
+    </table>
+    ${extras}`;
+}
+
 function showConflictModal({ remoteAt, lastSeenRemoteAt, stashedBody }) {
   // Remove any prior notice
   document.getElementById('conflict-modal')?.remove();
 
-  // Summarise local divergence at a glance
   const localCounts = {
     state: Object.keys(state).length,
     changelog: changelog.length,
     roster: Object.keys(roster).length,
-    hcLog: hcLog.length
+    hcLog: hcLog.length,
+    hoursLog: (hoursLog||[]).length,
+    actions: (actions||[]).length
   };
 
   const remoteAgo = remoteAt ? relTime(new Date(remoteAt)) : 'just now';
@@ -3241,34 +3482,70 @@ function showConflictModal({ remoteAt, lastSeenRemoteAt, stashedBody }) {
   overlay.id = 'conflict-modal';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
   overlay.innerHTML = `
-    <div style="width:520px;max-width:92vw;background:var(--bg2,#16161e);border:1px solid var(--yellow-border);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
+    <div style="width:600px;max-width:92vw;background:var(--bg2,#16161e);border:1px solid var(--yellow-border);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
       <div style="padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.08)">
         <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin-bottom:6px">⚠ Sync conflict</div>
         <div style="font-size:15px;font-weight:600;color:var(--tx)">Someone else updated the sheet ${escapeHtml(remoteAgo)}.</div>
       </div>
-      <div style="padding:18px 22px;font-size:13px;color:var(--tx2);line-height:1.6">
-        Your edit hasn't been saved to the sheet yet. Pick what to do:
-        <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-family:var(--mono);font-size:11px;color:var(--tx3)">
-          local: ${localCounts.state} attendance days · ${localCounts.changelog} log entries · ${localCounts.roster} agents · ${localCounts.hcLog} headcount events
+      <div style="padding:18px 22px;font-size:13px;color:var(--tx2);line-height:1.5">
+        Your edit hasn't been saved to the sheet yet. Each option below is logged in the audit and snapshots are taken before anything destructive runs.
+        <div id="cf-diff" style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:11px;color:var(--tx3)">Loading remote payload for diff…</div>
         </div>
       </div>
       <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-        <button id="cf-cancel" style="font-family:var(--sans);font-size:12px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Cancel — keep editing</button>
-        <button id="cf-pull" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">Discard mine — pull latest</button>
+        <button id="cf-cancel" style="font-family:var(--sans);font-size:12px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Cancel, keep editing</button>
+        <button id="cf-pull" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">Discard mine, pull latest</button>
         <button id="cf-force" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer">Overwrite remote with mine</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
-  document.getElementById('cf-cancel').onclick = () => { overlay.remove(); setSyncStatus('failed', 'Conflict unresolved — your local edits are still pending'); };
-  document.getElementById('cf-pull').onclick = async () => { overlay.remove(); await pullFromRemote(); };
+  // Fetch remote and populate the diff. Falls back gracefully if the fetch fails.
+  (async () => {
+    try {
+      const resp = await fetch(getSyncUrl(), { method:'GET', mode:'cors', redirect:'follow' });
+      const remote = await resp.json();
+      if (!remote || remote.schema !== 'send-ops-manpower') throw new Error('remote schema mismatch');
+      const remoteCounts = {
+        state: Object.keys(remote.state || {}).length,
+        changelog: (remote.changelog || []).length,
+        roster: Object.keys(remote.roster || {}).length,
+        hcLog: (remote.hcLog || []).length,
+        hoursLog: (remote.hoursLog || []).length,
+        actions: (remote.actions || []).length
+      };
+      // Compute "in local, not in remote" and vice versa for state day keys (most user-meaningful)
+      const localStateKeys = new Set(Object.keys(state || {}));
+      const remoteStateKeys = new Set(Object.keys(remote.state || {}));
+      const localExtras = [...localStateKeys].filter(k => !remoteStateKeys.has(k)).sort();
+      const remoteExtras = [...remoteStateKeys].filter(k => !localStateKeys.has(k)).sort();
+      const diffEl = document.getElementById('cf-diff');
+      if (diffEl) diffEl.innerHTML = _conflictDiffHtml(localCounts, remoteCounts, localExtras, remoteExtras);
+    } catch (e) {
+      const diffEl = document.getElementById('cf-diff');
+      if (diffEl) diffEl.innerHTML = `<div style="font-size:11px;color:var(--tx3)">Could not load remote for diff (${escapeHtml(e.message || 'error')}). Local: ${localCounts.state} days · ${localCounts.changelog} log · ${localCounts.roster} agents · ${localCounts.hcLog} hc.</div>`;
+    }
+  })();
+
+  document.getElementById('cf-cancel').onclick = () => {
+    overlay.remove();
+    setSyncStatus('failed', 'Conflict unresolved — your local edits are still pending');
+    logSyncAudit('conflict.cancelled', { remoteAt });
+  };
+  document.getElementById('cf-pull').onclick = async () => {
+    overlay.remove();
+    logSyncAudit('conflict.discardLocal', { remoteAt });
+    await pullFromRemote({ reason: 'conflict.discardLocal' });
+  };
   document.getElementById('cf-force').onclick = async () => {
     overlay.remove();
-    // Re-push without the lastSeenRemoteAt token so the server skips the conflict check.
-    // We mutate the stashed body to strip that field, preserving everything else.
     try {
+      // Snapshot the current remote into the ring BEFORE we overwrite it.
+      await _snapshotRemoteIntoRing('pre-force-overwrite (remote side)');
       const obj = JSON.parse(stashedBody);
       delete obj.lastSeenRemoteAt;
+      obj.force = true;  // tell the server this is a deliberate override (Layer 7)
       const forcedBody = JSON.stringify(obj);
       _syncing = true;
       setSyncStatus('syncing');
@@ -3284,17 +3561,126 @@ function showConflictModal({ remoteAt, lastSeenRemoteAt, stashedBody }) {
       localStorage.setItem(LAST_PULL_TS_KEY, stamp);
       setSyncStatus('synced');
       showToast('Remote overwritten with your version');
+      logSyncAudit('conflict.forceOverwrite', { savedAt: stamp });
     } catch (err) {
       setSyncStatus('failed', err.message);
+      logSyncAudit('conflict.forceOverwrite.failure', { error: err.message });
     } finally {
       _syncing = false;
     }
   };
+  logSyncAudit('conflict.shown', { remoteAt, lastSeenRemoteAt });
+}
+
+/* Layer 7 client side: when the server rejects a blind first-push (no
+   lastSeenRemoteAt + non-empty remote), surface the same conflict diff and
+   require the user to explicitly opt into overwriting the remote. */
+function showBlindOverwriteModal({ remoteAt, stashedBody }) {
+  document.getElementById('conflict-modal')?.remove();
+  const localCounts = {
+    state: Object.keys(state).length,
+    changelog: changelog.length,
+    roster: Object.keys(roster).length,
+    hcLog: hcLog.length,
+    hoursLog: (hoursLog||[]).length,
+    actions: (actions||[]).length
+  };
+  const remoteAgo = remoteAt ? relTime(new Date(remoteAt)) : 'recently';
+  const overlay = document.createElement('div');
+  overlay.id = 'conflict-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
+  overlay.innerHTML = `
+    <div style="width:600px;max-width:92vw;background:var(--bg2,#16161e);border:1px solid var(--red-border);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
+      <div style="padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">⛔ Blind overwrite blocked</div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx)">This device pushed without first pulling from the sheet.</div>
+        <div style="font-size:12px;color:var(--tx3);margin-top:4px">Remote was last updated ${escapeHtml(remoteAgo)}. The server refused to accept a write that could overwrite data this device has never seen.</div>
+      </div>
+      <div style="padding:18px 22px;font-size:13px;color:var(--tx2);line-height:1.5">
+        Pulling first is almost always the right move. Force-overwrite is logged and snapshots the remote first.
+        <div id="cf-diff" style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:11px;color:var(--tx3)">Loading remote payload for diff…</div>
+        </div>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button id="bo-cancel" style="font-family:var(--sans);font-size:12px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Cancel</button>
+        <button id="bo-pull" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer">Pull from sheet</button>
+        <button id="bo-force" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer">Force overwrite remote</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  (async () => {
+    try {
+      const resp = await fetch(getSyncUrl(), { method:'GET', mode:'cors', redirect:'follow' });
+      const remote = await resp.json();
+      if (!remote || remote.schema !== 'send-ops-manpower') throw new Error('remote schema mismatch');
+      const remoteCounts = {
+        state: Object.keys(remote.state || {}).length,
+        changelog: (remote.changelog || []).length,
+        roster: Object.keys(remote.roster || {}).length,
+        hcLog: (remote.hcLog || []).length,
+        hoursLog: (remote.hoursLog || []).length,
+        actions: (remote.actions || []).length
+      };
+      const localStateKeys = new Set(Object.keys(state || {}));
+      const remoteStateKeys = new Set(Object.keys(remote.state || {}));
+      const localExtras = [...localStateKeys].filter(k => !remoteStateKeys.has(k)).sort();
+      const remoteExtras = [...remoteStateKeys].filter(k => !localStateKeys.has(k)).sort();
+      const diffEl = document.getElementById('cf-diff');
+      if (diffEl) diffEl.innerHTML = _conflictDiffHtml(localCounts, remoteCounts, localExtras, remoteExtras);
+    } catch (e) {
+      const diffEl = document.getElementById('cf-diff');
+      if (diffEl) diffEl.innerHTML = `<div style="font-size:11px;color:var(--tx3)">Could not load remote for diff (${escapeHtml(e.message || 'error')}).</div>`;
+    }
+  })();
+
+  document.getElementById('bo-cancel').onclick = () => { overlay.remove(); setSyncStatus('failed', 'Push cancelled'); logSyncAudit('blindOverwrite.cancelled', { remoteAt }); };
+  document.getElementById('bo-pull').onclick = async () => { overlay.remove(); logSyncAudit('blindOverwrite.pulledInstead', { remoteAt }); await pullFromRemote({ reason: 'blindOverwrite.pulledInstead' }); };
+  document.getElementById('bo-force').onclick = async () => {
+    overlay.remove();
+    try {
+      await _snapshotRemoteIntoRing('pre-blind-force-overwrite (remote side)');
+      const obj = JSON.parse(stashedBody);
+      obj.force = true;
+      const forcedBody = JSON.stringify(obj);
+      _syncing = true;
+      setSyncStatus('syncing');
+      const resp = await fetch(getSyncUrl(), {
+        method: 'POST', mode: 'cors', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: forcedBody
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      const stamp = data.savedAt || new Date().toISOString();
+      localStorage.setItem(SYNC_TS_KEY, stamp);
+      localStorage.setItem(LAST_PULL_TS_KEY, stamp);
+      setSyncStatus('synced');
+      showToast('Remote overwritten — remote snapshot saved locally');
+      logSyncAudit('blindOverwrite.forced', { savedAt: stamp });
+    } catch (err) {
+      setSyncStatus('failed', err.message);
+      logSyncAudit('blindOverwrite.forced.failure', { error: err.message });
+    } finally {
+      _syncing = false;
+    }
+  };
+  logSyncAudit('blindOverwrite.shown', { remoteAt });
 }
 
 async function pullFromRemote(opts){
   const url = getSyncUrl();
   if(!url) return false;
+  // Always snapshot current local state before we let a remote payload overwrite it.
+  // Cheap insurance against bad pulls, slow networks, and surprise schema changes.
+  snapshotBeforePull((opts && opts.reason) || 'pull');
+  const preCounts = {
+    state: Object.keys(state||{}).length,
+    changelog: (changelog||[]).length,
+    roster: Object.keys(roster||{}).length,
+    hcLog: (hcLog||[]).length
+  };
   setSyncStatus('syncing');
   try {
     const resp = await fetch(url, { method:'GET', mode:'cors', redirect:'follow' });
@@ -3302,7 +3688,7 @@ async function pullFromRemote(opts){
     if(data.error) throw new Error(data.error);
     if(data.schema !== 'send-ops-manpower'){
       // Sheet is empty — first time setup. Push local state to seed it.
-      if(opts && opts.allowSeed){ await pushToRemote(); setSyncStatus('synced'); return true; }
+      if(opts && opts.allowSeed){ await pushToRemote(); setSyncStatus('synced'); logSyncAudit('pull.seeded', { reason: opts && opts.reason }); return true; }
       throw new Error('Sheet has no Send Ops data yet');
     }
     state = data.state || {};
@@ -3313,8 +3699,15 @@ async function pullFromRemote(opts){
     ordersData = data.ordersData || {};
     hcLog = data.hcLog || [];
     roster = data.roster || {};
+    // Actions and the live/archived agent lists are in every push payload, so a
+    // pull must apply them too — otherwise this device's stale copies overwrite
+    // the sheet on its next push. Same never-empty guard as restoreData.
+    actions = data.actions || [];
+    if (Array.isArray(data.agents) && data.agents.length) AGENTS = [...data.agents];
+    if (Array.isArray(data.archivedAgents)) archivedAgents = [...data.archivedAgents];
     saveLocal(SK,state); saveLocal(PK,phMap); saveLocal(HK,hoursLog); saveLocal(LK,changelog);
     saveLocal(OPS_KEY,opsData); saveLocal(ORD_KEY,ordersData); saveLocal(HCL_KEY,hcLog); saveLocal(ROSTER_KEY,roster);
+    saveLocal(ACT_KEY,actions); saveLocal(AGENTS_KEY,AGENTS); saveLocal(AGENTS_ARCH_KEY,archivedAgents);
     // The server's authoritative C1 stamp (added in the .gs response as _remoteAt).
     // Falls back to data.updatedAt for backwards compat with old script versions,
     // but only the _remoteAt path avoids the client-time/server-time conflict loop.
@@ -3323,15 +3716,26 @@ async function pullFromRemote(opts){
     // Record what we last saw on the server so the next push can detect conflicts.
     localStorage.setItem(LAST_PULL_TS_KEY, serverStamp);
     setSyncStatus('synced');
+    logSyncAudit('pull.success', {
+      reason: (opts && opts.reason) || 'manual',
+      serverStamp,
+      before: preCounts,
+      after: { state: Object.keys(state).length, changelog: changelog.length, roster: Object.keys(roster).length, hcLog: hcLog.length }
+    });
     renderAll();
     return true;
   } catch (err) {
     setSyncStatus('failed', err.message);
+    logSyncAudit('pull.failure', { reason: (opts && opts.reason) || 'manual', error: err.message });
     return false;
   }
 }
 
+// Last sync outcome ('syncing'|'synced'|'failed') — lets the remote-change poll
+// tell a clean local (safe to auto-pull) from one with unpushed edits at risk.
+let _lastSyncState = 'synced';
 function setSyncStatus(state, detail){
+  if(state) _lastSyncState = state;
   const pill = document.getElementById('sync-pill');
   if(!pill) return;
   pill.classList.remove('s-local','s-syncing','s-synced','s-failed');
@@ -3360,7 +3764,7 @@ function relTime(d){
   if(s<86400) return Math.floor(s/3600)+'h ago';
   return Math.floor(s/86400)+'d ago';
 }
-function updateSyncStatus(){ setSyncStatus('synced'); /* refreshes label */ }
+function updateSyncStatus(){ setSyncStatus(_lastSyncState); /* refreshes label without clobbering a failed state */ }
 
 /* ─── CALENDAR QUICK ENTRY ─────────────
    Free-form parser. Replaces the Long Leave + Hours Payback modal buttons.
@@ -3629,6 +4033,162 @@ function openSyncSettings(){
 }
 function closeSyncSettings(){ document.getElementById('sync-modal').classList.remove('open'); }
 function syncOverlayClick(e){ if(e.target.id==='sync-modal') closeSyncSettings(); }
+
+/* ─── RESTORE-FROM-SNAPSHOT UI ─────────────────────────────────────
+   Lists every snapshot in the pre-pull ring + daily safety snapshots.
+   Each entry shows counts; the user can preview a diff against the
+   current in-memory state before confirming a restore.                 */
+function openRestoreSnapshots(){
+  closeSyncSettings();
+  renderRestoreList();
+  document.getElementById('restore-modal').classList.add('open');
+}
+function closeRestoreSnapshots(){ document.getElementById('restore-modal').classList.remove('open'); document.getElementById('restore-preview').style.display='none'; }
+function restoreOverlayClick(e){ if(e.target.id==='restore-modal') closeRestoreSnapshots(); }
+
+function _allSnapshotsForRestore(){
+  // Ring entries are richest. Daily backup-snap entries are converted to the same shape.
+  const ring = loadPrepullRing().map((e,i)=>({...e, _src:'ring', _key:'ring:'+i}));
+  let daily = [];
+  try {
+    const hist = JSON.parse(localStorage.getItem(BACKUP_HIST_KEY) || '{}');
+    daily = Object.keys(hist).sort().reverse().map(day => {
+      const d = hist[day] || {};
+      return {
+        ts: d.ts || (day + 'T00:00:00.000Z'),
+        reason: 'daily snapshot · ' + day,
+        user: d.user || '—',
+        counts: {
+          state: Object.keys(d.state || {}).length,
+          changelog: (d.changelog || []).length,
+          roster: Object.keys(d.roster || {}).length,
+          hcLog: (d.hcLog || []).length,
+          hoursLog: (d.hoursLog || []).length,
+          actions: (d.actions || []).length,
+          agents: (d.AGENTS || []).length
+        },
+        data: {
+          state: d.state || {},
+          phMap: d.phMap || {},
+          hoursLog: d.hoursLog || [],
+          changelog: d.changelog || [],
+          roster: d.roster || {},
+          hcLog: d.hcLog || [],
+          actions: d.actions || [],
+          AGENTS: d.AGENTS || [],
+          archivedAgents: d.archivedAgents || []
+        },
+        _src: 'daily',
+        _key: 'daily:'+day
+      };
+    });
+  } catch(e) { /* daily backup unreadable, skip */ }
+  // Newest first across both sources
+  return [...ring, ...daily].sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+}
+
+function renderRestoreList(){
+  const list = document.getElementById('restore-list');
+  const empty = document.getElementById('restore-empty');
+  list.innerHTML = '';
+  const all = _allSnapshotsForRestore();
+  if (!all.length) {
+    list.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  list.style.display = 'flex';
+  empty.style.display = 'none';
+  // Stash for handler lookup
+  window._restoreIndex = {};
+  all.forEach((snap, i) => {
+    window._restoreIndex[snap._key] = snap;
+    const when = snap.ts ? new Date(snap.ts) : null;
+    const whenStr = when ? when.toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const c = snap.counts || {};
+    const srcBadge = snap._src === 'daily'
+      ? '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(91,140,255,0.12);color:#7aa8ff;border:1px solid rgba(91,140,255,0.25);letter-spacing:.08em;text-transform:uppercase">Daily</span>'
+      : '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,201,71,0.12);color:var(--yellow);border:1px solid var(--yellow-border);letter-spacing:.08em;text-transform:uppercase">Pre-sync</span>';
+    const row = document.createElement('div');
+    row.style.cssText = 'background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+    row.innerHTML = `
+      <div style="flex:1;min-width:240px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">${srcBadge}<span style="font-size:13px;font-weight:600;color:var(--tx)">${escapeHtml(whenStr)}</span></div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:6px">${escapeHtml(snap.reason || '—')} · by ${escapeHtml(snap.user || '—')}</div>
+        <div style="font-size:11px;color:var(--tx2);font-family:var(--mono)">${c.state||0} days · ${c.changelog||0} log · ${c.roster||0} agents · ${c.hcLog||0} hc · ${c.actions||0} actions</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="mbtn mbtn-cancel" data-key="${snap._key}" data-act="preview" style="font-size:11px;padding:6px 12px">Preview</button>
+        <button class="mbtn mbtn-cancel" data-key="${snap._key}" data-act="restore" style="font-size:11px;padding:6px 12px;border-color:var(--yellow-border);color:var(--yellow)">Restore</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('button[data-key]').forEach(b => {
+    b.onclick = () => {
+      const snap = window._restoreIndex[b.getAttribute('data-key')];
+      if (!snap) return;
+      if (b.getAttribute('data-act') === 'preview') showRestorePreview(snap);
+      else confirmRestore(snap);
+    };
+  });
+}
+
+function showRestorePreview(snap){
+  const cur = {
+    state: Object.keys(state||{}).length,
+    changelog: (changelog||[]).length,
+    roster: Object.keys(roster||{}).length,
+    hcLog: (hcLog||[]).length,
+    hoursLog: (hoursLog||[]).length,
+    actions: (actions||[]).length,
+    agents: (AGENTS||[]).length
+  };
+  const s = snap.counts || {};
+  function row(label, a, b){
+    const delta = b - a;
+    const sign = delta > 0 ? '+' : '';
+    const col = delta === 0 ? 'var(--tx3)' : delta > 0 ? 'var(--green)' : 'var(--red)';
+    return `<tr><td style="padding:4px 12px 4px 0;font-size:11px;color:var(--tx2)">${label}</td><td class="num" style="padding:4px 12px;font-size:11px;font-family:var(--mono);color:var(--tx3)">${a}</td><td style="padding:4px;color:var(--tx3)">→</td><td class="num" style="padding:4px 12px;font-size:11px;font-family:var(--mono);color:var(--tx)">${b}</td><td class="num" style="padding:4px 0;font-size:11px;font-family:var(--mono);color:${col}">${sign}${delta}</td></tr>`;
+  }
+  const html = `
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:8px">If you restore</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 12px 4px 0">Bucket</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 12px">Now</th>
+        <th></th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 12px">After</th>
+        <th style="text-align:right;font-size:10px;font-weight:600;color:var(--tx3);padding:4px 0">Δ</th>
+      </tr></thead>
+      <tbody>
+        ${row('Attendance days', cur.state, s.state||0)}
+        ${row('Changelog entries', cur.changelog, s.changelog||0)}
+        ${row('Active agents', cur.agents, s.agents||0)}
+        ${row('Roster records', cur.roster, s.roster||0)}
+        ${row('Headcount events', cur.hcLog, s.hcLog||0)}
+        ${row('Hours payback', cur.hoursLog, s.hoursLog||0)}
+        ${row('Action plans', cur.actions, s.actions||0)}
+      </tbody>
+    </table>`;
+  const pv = document.getElementById('restore-preview');
+  pv.innerHTML = html;
+  pv.style.display = 'block';
+}
+
+function confirmRestore(snap){
+  showRestorePreview(snap);
+  const when = snap.ts ? new Date(snap.ts).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'this snapshot';
+  if (!confirm('Restore the snapshot from ' + when + '?\n\nThis replaces all in-memory data with the snapshot. Current data will be captured as a new snapshot first, so you can undo by restoring that.')) return;
+  try {
+    applySnapshot(snap);
+    renderAll();
+    showToast('Restored from snapshot · saved locally · not pushed yet');
+    renderRestoreList();
+  } catch(e) {
+    showToast('Restore failed: ' + (e && e.message ? e.message : 'unknown error'));
+  }
+}
 
 async function syncTest(){
   const url = document.getElementById('sync-url-input').value.trim();
@@ -4399,10 +4959,8 @@ function renderAll(){
 
   const activeSubTab = document.querySelector('#subtabbar-manpower .tab.active');
   const tab = activeSubTab ? activeSubTab.id.replace('t-','') : 'calendar';
-  safeRender('daily', renderDaily);
   if(tab==='calendar'){ safeRender('calendar', renderCalendar); safeRender('paybackStrip', renderPaybackStrip); }
   if(tab==='dashboard') safeRender('dashboard', renderDashboard);
-  if(tab==='strength')  safeRender('strength', renderStrength);
   if(tab==='agents')    safeRender('agents', renderAgents);
   if(tab==='year')      safeRender('year', renderYear);
   if(tab==='log')       safeRender('log', renderLog);
@@ -4436,7 +4994,34 @@ renderAll();
 updateUndoUI();
 updateSyncStatus();
 
-// Boot sequence: ask for identity (once per device), pull latest data, take a snapshot
+/* ─── BOOT LOCK CONTROLLER ───────────────────────────────────────────
+   While the initial pull is in flight, the boot lock overlay blocks all
+   edits so an edit cannot race the pull (FM1). The overlay is shown
+   only when a sync URL is configured AND auth has been passed. */
+function showBootLock(){
+  const el = document.getElementById('boot-lock');
+  if (!el) return;
+  el.classList.remove('failed');
+  el.classList.add('open');
+  document.getElementById('boot-lock-title').textContent = 'Loading latest data';
+  document.getElementById('boot-lock-sub').textContent = 'Pulling from Google Sheets. This usually takes a few seconds.';
+}
+function hideBootLock(){
+  const el = document.getElementById('boot-lock');
+  if (!el) return;
+  el.classList.remove('open','failed');
+}
+function bootLockFailed(msg){
+  const el = document.getElementById('boot-lock');
+  if (!el) return;
+  el.classList.add('failed');
+  document.getElementById('boot-lock-title').textContent = 'Could not pull from Google Sheets';
+  document.getElementById('boot-lock-sub').textContent = (msg || 'Network or permission error.') + ' Retry to try again, or continue offline with the data already on this device.';
+}
+
+// Boot sequence — order matters: snapshot first, then pull behind the lock,
+// so a slow / failed pull cannot race an edit (FM1) and cannot overwrite the
+// daily safety snapshot (FM2).
 (async function boot(){
   // 1) Establish honor-system user identity for the audit log
   //    Wait a moment so the lock screen has time to render — auth happens AFTER unlock,
@@ -4450,11 +5035,28 @@ updateSyncStatus();
     localStorage.setItem(SYNC_URL_KEY, DEFAULT_SYNC_URL);
   }
 
-  // 3) Pull latest remote data
-  await pullFromRemote({ allowSeed: true });
-
-  // 4) Take a daily safety snapshot (rolling 14-day history in localStorage)
+  // 3) Take a daily safety snapshot of LOCAL state BEFORE any pull.
+  //    Previously this ran AFTER the pull, so a lossy pull was the only thing
+  //    the snapshot ever captured (FM2). Snapshot first, then pull.
   takeDailySnapshot();
+
+  // 4) Pull latest remote data behind the boot lock so edits can't race it.
+  if (getSyncUrl()) {
+    showBootLock();
+    document.getElementById('boot-lock-retry').onclick = async () => {
+      showBootLock();
+      const ok = await pullFromRemote({ allowSeed: true, reason: 'boot-retry' });
+      if (ok) hideBootLock(); else bootLockFailed();
+    };
+    document.getElementById('boot-lock-offline').onclick = () => { hideBootLock(); };
+    try {
+      const ok = await pullFromRemote({ allowSeed: true, reason: 'boot' });
+      if (ok) hideBootLock();
+      else bootLockFailed('Pull returned an error.');
+    } catch(e) {
+      bootLockFailed(e && e.message ? e.message : '');
+    }
+  }
 
   // 5) COPC: auto-snapshot this week's forecast (idempotent — won't overwrite)
   autoSnapForecast();
@@ -4463,10 +5065,14 @@ updateSyncStatus();
 // Refresh the "X minutes ago" label on the sync pill periodically
 setInterval(()=>{ if(getSyncUrl()) updateSyncStatus(); }, 30000);
 
-// Concurrent-edit detection: poll the sheet every 45s. If someone else wrote
-// since our last pull, surface a soft notice so the user can refresh before they
-// overwrite the newer data. Skipped while we're actively syncing or editing a modal.
-setInterval(async () => {
+// Concurrent-edit detection: poll the sheet every 45s. Compares the server's
+// authoritative C1 stamp (_remoteAt) against the stamp we last saw — our own
+// pushes store that same server stamp, so they never read as foreign changes.
+// (data.updatedAt is client time and is NOT comparable to LAST_PULL_TS_KEY.)
+// If the remote moved on and local is clean, pull it in quietly; only surface
+// the notice when local has unpushed edits a pull could lose.
+let _dismissedRemoteStamp = null;
+async function checkRemoteForUpdates() {
   if (_syncing || _syncTimer) return;
   if (document.querySelector('.modal-overlay.open')) return;
   if (!getSyncUrl()) return;
@@ -4474,16 +5080,24 @@ setInterval(async () => {
     const resp = await fetch(getSyncUrl(), { method: 'GET', mode: 'cors' });
     const data = await resp.json();
     if (data.schema !== 'send-ops-manpower') return;
-    const remoteStamp = data.updatedAt || '';
+    const remoteStamp = data._remoteAt || '';
     const ourStamp = localStorage.getItem(LAST_PULL_TS_KEY) || '';
-    if (remoteStamp && ourStamp && remoteStamp !== ourStamp) {
-      showRemoteUpdateNotice(data.updatedBy);
+    if (!remoteStamp || !ourStamp || remoteStamp === ourStamp) return;
+    if (remoteStamp === _dismissedRemoteStamp) return;
+    if (_lastSyncState === 'synced') {
+      // pullFromRemote snapshots local state first, so this stays reversible
+      const ok = await pullFromRemote({ reason: 'auto-poll' });
+      if (ok) showToast('Pulled latest from sheet' + (data.updatedBy ? ' · updated by ' + data.updatedBy : ''));
+      return;
     }
+    showRemoteUpdateNotice(data.updatedBy, remoteStamp);
   } catch (e) { /* network hiccup; ignore */ }
-}, 45000);
+}
+setInterval(checkRemoteForUpdates, 45000);
 
-// Soft, dismissible notice that someone else updated the sheet
-function showRemoteUpdateNotice(who) {
+// Soft, dismissible notice that someone else updated the sheet. Dismiss is
+// remembered per server stamp, so the notice only returns for a NEWER change.
+function showRemoteUpdateNotice(who, remoteStamp) {
   if (document.getElementById('remote-update-notice')) return; // already showing
   const n = document.createElement('div');
   n.id = 'remote-update-notice';
@@ -4493,7 +5107,7 @@ function showRemoteUpdateNotice(who) {
     <button style="font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--tx2);cursor:pointer">Dismiss</button>`;
   const [pull, dismiss] = n.querySelectorAll('button');
   pull.onclick = async () => { n.remove(); await pullFromRemote(); };
-  dismiss.onclick = () => n.remove();
+  dismiss.onclick = () => { _dismissedRemoteStamp = remoteStamp || null; n.remove(); };
   document.body.appendChild(n);
 }
 
@@ -5002,14 +5616,112 @@ function openDiagnosticsModal(){
       <button onclick="document.getElementById('diag-modal').remove()" style="background:transparent;border:none;color:var(--tx3);font-size:20px;cursor:pointer">✕</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:4px 0">${rowsHtml}</div>
-    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:var(--tx3);display:flex;justify-content:space-between;align-items:center">
+    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:var(--tx3);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
       <span>Run any time. Results are computed live — no data is altered.</span>
-      <button onclick="copyDiagResults()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">Copy results</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="openSyncAuditModal()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--yellow-border);background:rgba(255,201,71,0.08);color:var(--yellow);cursor:pointer">📜 Sync audit log</button>
+        <button onclick="copyDiagResults()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">Copy results</button>
+      </div>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   // Stash for copy
   window._lastDiagResults = results;
+}
+
+/* ─── SYNC AUDIT LOG VIEWER ────────────────────────────────────────
+   Read-only list of every sync op the app has performed on this device.
+   Useful when reconstructing what happened around a suspected data loss. */
+function openSyncAuditModal(){
+  document.getElementById('sync-audit-modal')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'sync-audit-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `<div style="width:760px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;background:var(--bg2,#16161e);border:1px solid rgba(255,255,255,0.1);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px">Sync audit log</div>
+        <div style="font-size:13px;color:var(--tx2)" id="sync-audit-summary">—</div>
+      </div>
+      <button onclick="document.getElementById('sync-audit-modal').remove()" style="background:transparent;border:none;color:var(--tx3);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:4px 0" id="sync-audit-body"></div>
+    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:var(--tx3);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <span>Capped at ${SYNC_AUDIT_MAX} entries (oldest dropped). Stays on this device only.</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="copySyncAudit()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:var(--tx2);cursor:pointer">Copy log</button>
+        <button onclick="clearSyncAudit()" style="font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--red-border);background:var(--red-soft);color:var(--red);cursor:pointer">Clear</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  renderSyncAudit();
+}
+
+function renderSyncAudit(){
+  const body = document.getElementById('sync-audit-body');
+  const summary = document.getElementById('sync-audit-summary');
+  if (!body) return;
+  const log = loadSyncAudit();
+  if (!log.length) {
+    body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--tx3);font-size:13px">No sync activity logged on this device yet.</div>';
+    if (summary) summary.textContent = '0 entries';
+    return;
+  }
+  // newest first
+  const sorted = [...log].sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+  if (summary) {
+    const counts = {};
+    sorted.forEach(e => { counts[e.op] = (counts[e.op]||0) + 1; });
+    const top = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,3).map(([k,v]) => k+': '+v).join(' · ');
+    summary.textContent = sorted.length + ' entries · ' + top;
+  }
+  body.innerHTML = sorted.map(e => {
+    const when = e.ts ? new Date(e.ts) : null;
+    const whenStr = when ? when.toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '—';
+    const opColour = e.op.includes('failure') || e.op.includes('cancelled') ? 'var(--red)'
+                    : e.op.includes('forceOverwrite') || e.op.includes('blindOverwrite') ? 'var(--yellow)'
+                    : e.op === 'pull.success' || e.op === 'push.success' ? 'var(--green)'
+                    : e.op === 'restore' ? 'var(--blue)'
+                    : 'var(--tx2)';
+    let detailText = '';
+    if (e.detail) {
+      const d = e.detail;
+      const parts = [];
+      if (d.reason) parts.push(d.reason);
+      if (d.error) parts.push('error: ' + d.error);
+      if (d.savedAt) parts.push('saved ' + d.savedAt.slice(11,19));
+      if (d.serverStamp) parts.push('stamp ' + d.serverStamp.slice(11,19));
+      if (d.bodySize) parts.push((Math.round(d.bodySize/1024*10)/10) + 'KB');
+      if (d.before && d.after) {
+        const ds = d.after.state - d.before.state;
+        const dc = d.after.changelog - d.before.changelog;
+        if (ds || dc) parts.push((ds>=0?'+':'')+ds+' days, '+(dc>=0?'+':'')+dc+' log');
+      } else if (d.stateDays != null) {
+        parts.push(d.stateDays + ' days · ' + d.changelog + ' log');
+      }
+      if (d.snapshotTs) parts.push('snap ' + new Date(d.snapshotTs).toLocaleTimeString('en-GB'));
+      detailText = parts.join(' · ');
+    }
+    return `<div style="display:grid;grid-template-columns:170px 180px 1fr 1fr;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;align-items:center">
+      <div style="font-family:var(--mono);color:var(--tx3)">${escapeHtml(whenStr)}</div>
+      <div style="font-weight:600;color:${opColour}">${escapeHtml(e.op)}</div>
+      <div style="color:var(--tx3)">${escapeHtml(e.user||'—')}</div>
+      <div style="color:var(--tx2)">${escapeHtml(detailText || '—')}</div>
+    </div>`;
+  }).join('');
+}
+
+function copySyncAudit(){
+  const log = loadSyncAudit();
+  if (!log.length) { showToast('Nothing to copy'); return; }
+  const text = `Send Ops Sync Audit · ${new Date().toLocaleString('en-GB')}\n${'-'.repeat(80)}\n` +
+    log.map(e => `${e.ts}  ${e.user.padEnd(12)} ${e.op}  ${JSON.stringify(e.detail||{})}`).join('\n');
+  navigator.clipboard?.writeText(text).then(
+    () => showToast('Audit log copied to clipboard'),
+    () => showToast('Could not copy — select text manually')
+  );
 }
 
 function copyDiagResults(){
@@ -5736,5 +6448,5 @@ function saveGhSettings() {
   pushToGitHub();
 }
 </script>
-
-</body></html>
+</body>
+</html>
