@@ -1040,6 +1040,7 @@ body::before {
         <div class="gear-divider"></div>
         <button class="gear-item" onclick="closeGearMenu();exportCSV()"><span class="gear-icon">⇲</span> Export CSV</button>
         <button class="gear-item" onclick="closeGearMenu();window.print()"><span class="gear-icon">⎙</span> Print</button>
+        <button class="gear-item" onclick="closeGearMenu();openYearClose()"><span class="gear-icon">📦</span> Close out a year…</button>
         <div class="gear-divider"></div>
         <button class="gear-item danger" onclick="closeGearMenu();resetAll()"><span class="gear-icon">⚠</span> Reset all data…</button>
       </div>
@@ -1930,7 +1931,7 @@ function showMetricTooltip(anchor, key){
 function hideMetricTooltip(){ document.getElementById('metric-tip')?.remove(); }
 
 /* ─── ENTERPRISE HARDENING UTILITIES ──────────────────────────────────── */
-const APP_VERSION       = '2026.06.11';
+const APP_VERSION       = '2026.06.12';
 // Build version badge in the top bar — compare against the live site to spot a pending deploy
 document.getElementById('ver-badge').textContent = 'v' + APP_VERSION;
 // PLANNING_YEAR is declared earlier (just before `cursor`) to avoid TDZ.
@@ -2170,9 +2171,25 @@ function applySnapshot(snap){
 function load(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
 function save(k,v){localStorage.setItem(k,JSON.stringify(v));scheduleSync();}
 // Returns the stored roster record for an agent, with defaults if not yet configured
-function getAgentRoster(a){ return Object.assign({type:'full-timer',AL:ENTITLEMENT.AL,MC:ENTITLEMENT.MC,contractStart:'',contractEnd:'',note:''},roster[a]||{}); }
+function getAgentRoster(a){ return Object.assign({type:'full-timer',AL:ENTITLEMENT.AL,MC:ENTITLEMENT.MC,contractStart:'',contractEnd:'',note:'',prorate:false,alCarryOver:0},roster[a]||{}); }
 // Returns {AL, MC} entitlement for an agent — uses per-agent roster if set
 function getEnt(a){ const r=getAgentRoster(a); return {AL:+r.AL||ENTITLEMENT.AL, MC:+r.MC||ENTITLEMENT.MC}; }
+// Effective AL/MC for the planning year. If prorate is on and contractStart is in PLANNING_YEAR,
+// applies first-year proration (SG practice, rounds to 0.5). alCarryOver adds to AL only.
+function effectiveEnt(a){
+  const r=getAgentRoster(a);const full=getEnt(a);
+  const carry=+r.alCarryOver||0;
+  let AL=full.AL,MC=full.MC,prorated=false,months=12;
+  if(r.prorate&&r.contractStart){
+    const cs=new Date(r.contractStart+'T00:00:00');
+    if(cs.getFullYear()===PLANNING_YEAR){
+      months=12-cs.getMonth();
+      const f=months/12;
+      AL=Math.round(full.AL*f*2)/2;MC=Math.round(full.MC*f*2)/2;prorated=true;
+    }
+  }
+  return{AL:Math.max(0,AL+carry),MC:Math.max(0,MC),prorated,alFull:full.AL,carry,months};
+}
 // Internal save (no sync trigger) — used by pullFromRemote so we don't loop
 function saveLocal(k,v){localStorage.setItem(k,JSON.stringify(v));}
 const pad = n => String(n).padStart(2,'0');
@@ -2202,6 +2219,19 @@ function floorForDay(key){
 }
 // Pretty-print a floor that may be a half value
 function fmtFloor(f){ return Number.isInteger(f) ? String(f) : f.toFixed(1); }
+// Floor a given day WOULD have if dayObj (agent→status map) were applied over current state.
+function floorIfApplied(dayObj){
+  let absent=0;
+  AGENTS.forEach(a=>{const p=splitStatus(dayObj[a]);if([...PLANNED_CATS,...UNPLANNED_CATS].includes(p.base))absent+=p.units;});
+  return PLANNED-absent;
+}
+const CRITICAL_FLOOR=3;
+// Returns true if OK to proceed (no breach, or user confirmed).
+function confirmFloorBreach(breaches){
+  if(!breaches.length)return true;
+  const lines=breaches.map(b=>`  • ${b.key}: floor would be ${fmtFloor(b.projectedFloor)}`).join('\n');
+  return confirm(`Heads up — ${breaches.length} day${breaches.length===1?'':'s'} would drop to ${CRITICAL_FLOOR} or fewer on the floor:\n\n${lines}\n\nApply anyway?`);
+}
 function selForDay(key){
   const day = state[key]||{};
   const mc=[],al=[],oil=[],trn=[];
@@ -2736,7 +2766,7 @@ function renderAgents(){
           <button onclick="openPaybackModal()" style="margin-left:auto;font-size:10px;padding:2px 9px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans)">View</button>
         </div>
       </div>`:'<div style="margin-top:10px;font-size:11px;color:var(--tx3)">No payback hours logged. <button onclick="openPaybackModal()" style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-soft);color:var(--blue);cursor:pointer;font-family:var(--sans);margin-left:4px">Add</button></div>';
-    const ent=getEnt(a);
+    const ent=effectiveEnt(a);
     const rr=getAgentRoster(a);
     const typeLabel={['full-timer']:'Full-timer',intern:'Intern',contract:'Contract'}[rr.type]||rr.type;
     const typeColor={['full-timer']:'var(--blue)',intern:'var(--purple)',contract:'var(--yellow)'}[rr.type]||'var(--tx3)';
@@ -2769,6 +2799,8 @@ function renderAgents(){
           <div class="ab-label">AL Remaining</div>
           <div class="ab-val" style="color:${alOver?'var(--red)':alRemPct<0.2?'var(--red)':alRemPct<0.4?'var(--yellow)':'var(--tx)'}">${alRem}${alOver?' ⚠':''}</div>
           <div class="ab-sub">of ${ent.AL} days · used ${alUsed}</div>
+          ${ent.prorated?`<div class="ab-sub" style="color:var(--yellow)">prorated · ${ent.months}/12 of ${ent.alFull}d</div>`:''}
+          ${ent.carry>0?`<div class="ab-sub" style="color:var(--green)">+${ent.carry}d carried over</div>`:''}
           <div style="margin-top:4px;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);overflow:hidden"><div style="width:${alRemPct*100}%;height:100%;background:${alBarCol};border-radius:2px;transition:width .3s"></div></div>
         </div>
         <div class="ab">
@@ -2917,7 +2949,6 @@ function updateDurationHint(){
   hint.classList.add('range');
 }
 function saveModal(){
-  pushUndo();
   const key=modalKey;
   // Capture the before-state for changelog diff
   const beforeState={};
@@ -2934,10 +2965,25 @@ function saveModal(){
   const isRange = endStr && endStr > key;
 
   if(isRange){
-    // Propagate per-agent leave statuses across all workdays in range (skip weekends/PHs)
     const sd=new Date(key+'T00:00:00'),ed=new Date(endStr+'T00:00:00');
+    // Floor breach pre-check (read-only pass — cancel leaves state untouched)
+    const breaches=[];
+    for(let d=new Date(sd);d<=ed;d.setDate(d.getDate()+1)){
+      const k=ymd(d);
+      if(isWeekend(d)||isPH(k))continue;
+      const merged={...(state[k]||{})};
+      AGENTS.forEach(a=>{
+        if(modalDraft[a]&&modalDraft[a]!=='W')merged[a]=modalDraft[a];
+        else if(modalDraft[a]==='W'&&k===key)delete merged[a];
+      });
+      const f=floorIfApplied(merged);
+      if(f<=CRITICAL_FLOOR)breaches.push({key:k,projectedFloor:f});
+    }
+    if(!confirmFloorBreach(breaches))return;
+    // Propagate per-agent leave statuses across all workdays in range (skip weekends/PHs)
+    pushUndo();
     let touched=0;
-    for(let d=new Date(sd); d<=ed; d.setDate(d.getDate()+1)){
+    for(let d=new Date(sd);d<=ed;d.setDate(d.getDate()+1)){
       const k=ymd(d);
       if(isWeekend(d)||isPH(k)) continue;
       const existing=state[k]||{};
@@ -2959,6 +3005,10 @@ function saveModal(){
     return;
   }
 
+  // Single-day floor breach check
+  const projFloor=floorIfApplied(clean);
+  if(!confirmFloorBreach(projFloor<=CRITICAL_FLOOR?[{key,projectedFloor:projFloor}]:[])) return;
+  pushUndo();
   if(Object.keys(clean).length)state[key]=clean;else delete state[key];
   save(SK,state);
   const now=new Date(),d=new Date(key+'T00:00:00');
@@ -3186,6 +3236,63 @@ function backupData(){
   a.click();
   URL.revokeObjectURL(a.href);
   showToast('Backup downloaded');
+}
+function openYearClose(){
+  const yearStr = prompt('Archive and prune which year? (Enter a past year — current year cannot be archived)', String(PLANNING_YEAR-1));
+  if (!yearStr) return;
+  const year = parseInt(yearStr, 10);
+  if (isNaN(year)) { showToast('Invalid year'); return; }
+  if (year >= PLANNING_YEAR) { showToast(`Cannot archive ${year} — it is the current planning year or later`); return; }
+  // Collect dated state keys and changelog entries for that year
+  const stateKeys = Object.keys(state).filter(k => k.startsWith(`${year}-`));
+  const logEntries = changelog.filter(e => { try{ return new Date(e.ts).getFullYear()===year; }catch{ return false; } });
+  // Build archive export using the same schema as backupData
+  const payload = {
+    schema: 'send-ops-manpower',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    archiveYear: year,
+    agents: AGENTS,
+    state: Object.fromEntries(stateKeys.map(k=>[k,state[k]])),
+    changelog: logEntries,
+    phMap, hoursLog, roster, hcLog, actions, archivedAgents
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const filename = `send-ops-manpower-archive-${year}.json`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  // Confirm prune — wording notes that the JSON has been downloaded
+  const msg = `Archive ${stateKeys.length} dated entries + ${logEntries.length} log lines for ${year}?\n\nA JSON has been downloaded. This removes them from live sync.\n\nOnly proceed once you have confirmed the download.`;
+  if (!confirm(msg)) return;
+  pushUndo();
+  stateKeys.forEach(k => delete state[k]);
+  const prunedChangelog = changelog.filter(e => { try{ return new Date(e.ts).getFullYear()!==year; }catch{ return true; } });
+  changelog.length=0; prunedChangelog.forEach(e=>changelog.push(e));
+  save(SK, state);
+  save(LK, changelog);
+  // Log a closed action plan for audit trail
+  const now = new Date();
+  const closureEvidence = `${stateKeys.length} dated entries + ${logEntries.length} log lines pruned for ${year}. Archived to ${filename}.`;
+  actions.unshift({
+    id: Date.now(),
+    ts: now.toISOString(),
+    trigger: `Year-end archive ${year}`,
+    rootCause: 'data-retention',
+    owner: getCurrentUser() || 'Ops Lead',
+    dueDate: '',
+    status: 'closed',
+    closedAt: now.toISOString(),
+    closedBy: getCurrentUser() || 'Ops Lead',
+    note: closureEvidence,
+    closure: closureEvidence
+  });
+  save(ACT_KEY, actions);
+  renderAll();
+  const payloadSize = JSON.stringify(state).length + JSON.stringify(changelog).length;
+  showToast(`${year} archived. Payload ~${Math.round(payloadSize/1024)}KB`);
 }
 function restoreData(evt){
   const file = evt.target.files && evt.target.files[0];
@@ -3978,8 +4085,16 @@ function qeCommit(){
     const days = []; const d = new Date(p.from);
     while (d <= p.to) { if (isWorkday(d)) days.push(ymd(d)); d.setDate(d.getDate()+1); }
     if (!days.length) { showToast('No workdays in range'); return; }
-    pushUndo();
     const value = joinStatus(p.type, p.portion);
+    // Floor breach pre-check
+    const breaches=[];
+    days.forEach(k=>{
+      const merged={...(state[k]||{}),[p.agent]:value};
+      const f=floorIfApplied(merged);
+      if(f<=CRITICAL_FLOOR)breaches.push({key:k,projectedFloor:f});
+    });
+    if(!confirmFloorBreach(breaches))return;
+    pushUndo();
     days.forEach(k => { if (!state[k]) state[k] = {}; state[k][p.agent] = value; });
     save(SK, state);
     const now = new Date();
@@ -4457,6 +4572,20 @@ function renderRoster(){
         <label>Notes</label>
         <input type="text" id="rent-note-${a}" value="${escapeHtml(r.note||'')}" maxlength="200" placeholder="e.g. 6-month internship, renewal pending…"
           onchange="saveRosterAgent('${a}')">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="roster-field">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="rent-prorate-${a}" ${r.prorate?'checked':''} onchange="saveRosterAgent('${a}')">
+            Pro-rate first year
+          </label>
+        </div>
+        <div class="roster-ent-box">
+          <div class="roster-ent-label">AL carried over</div>
+          <input class="roster-ent-input" type="number" id="rent-carry-${a}" value="${+r.alCarryOver||0}" min="0" max="30"
+            onchange="saveRosterAgent('${a}')" oninput="saveRosterAgent('${a}')">
+          <div class="roster-ent-sub">days</div>
+        </div>
       </div>`;
     grid.appendChild(card);
   });
@@ -4498,6 +4627,9 @@ function saveRosterAgent(agent, overrideType){
   // Cap notes at 200 chars
   let note = document.getElementById(`rent-note-${agent}`)?.value ?? existing.note ?? '';
   if (note.length > 200) note = note.slice(0, 200);
+  const proRate = !!(document.getElementById(`rent-prorate-${agent}`)?.checked);
+  const carryRaw = document.getElementById(`rent-carry-${agent}`)?.value;
+  const alCarryOver = (carryRaw===''||carryRaw==null) ? (+existing.alCarryOver||0) : clampInt(carryRaw,0,30,+existing.alCarryOver||0);
   // Detect what changed for changelog
   const changes = [];
   if(type !== existing.type) changes.push(`Type: ${existing.type} → ${type}`);
@@ -4506,7 +4638,9 @@ function saveRosterAgent(agent, overrideType){
   if(contractStart !== (existing.contractStart||'')) changes.push(`Contract start: ${existing.contractStart||'none'} → ${contractStart||'removed'}`);
   if(contractEnd !== (existing.contractEnd||'')) changes.push(`Contract end: ${existing.contractEnd||'none'} → ${contractEnd||'removed'}`);
   if(note !== (existing.note||'')) changes.push('Note updated');
-  roster[agent] = { type, AL: al, MC: mc, contractStart, contractEnd, note };
+  if(proRate !== !!(existing.prorate)) changes.push(`Pro-rate: ${existing.prorate?'on':'off'} → ${proRate?'on':'off'}`);
+  if(alCarryOver !== (+existing.alCarryOver||0)) changes.push(`AL carry-over: ${+existing.alCarryOver||0}d → ${alCarryOver}d`);
+  roster[agent] = { type, AL: al, MC: mc, contractStart, contractEnd, note, prorate: proRate, alCarryOver };
   save(ROSTER_KEY, roster);
   if(changes.length){
     const now=new Date();
@@ -4823,6 +4957,63 @@ function renderInsights(){
   card2.innerHTML=`<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Per-Agent · Rolling 30-Day MC Rate</div>${agRows}
     <div style="margin-top:8px;font-size:10px;color:var(--tx3)">Target: unplanned (MC) shrinkage ≤${SHRINK_TARGET_UNPLANNED}% · Pattern flag triggers when 1 day of week accounts for ≥50% of an agent's MC</div>`;
   body.appendChild(card2);
+
+  // ─── CARD 3: Total shrinkage by day of week (all categories)
+  const card3=document.createElement('div');
+  card3.style.cssText='background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px';
+  const allDow=[0,0,0,0,0,0,0];
+  Object.keys(state).sort().forEach(k=>{
+    const d=new Date(k+'T00:00:00');if(!isWorkday(d))return;
+    AGENTS.forEach(a=>{
+      const p=splitStatus((state[k]||{})[a]);
+      if([...PLANNED_CATS,...UNPLANNED_CATS].includes(p.base))allDow[d.getDay()]+=p.units;
+    });
+  });
+  const totalAll=allDow.slice(1,6).reduce((s,n)=>s+n,0);
+  const maxAllDow=Math.max(...allDow.slice(1,6),1);
+  let dowBar3='';
+  [1,2,3,4,5].forEach(dow=>{
+    const n=allDow[dow];const pct=Math.round(n/maxAllDow*100);
+    const teamPct=totalAll?(n/totalAll*100).toFixed(0):0;
+    dowBar3+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:30px;font-size:11px;font-weight:600;color:var(--tx2)">${dowNames[dow]}</div>
+      <div style="flex:1;height:14px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:var(--blue);border-radius:3px;opacity:0.75"></div>
+      </div>
+      <div style="width:50px;text-align:right;font-size:11px;color:var(--tx2)">${fmtFloor(n)} (${teamPct}%)</div>
+    </div>`;
+  });
+  card3.innerHTML=`<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">Total Shrinkage by Day of Week</div>
+    ${totalAll===0?'<div style="font-size:13px;color:var(--green)">No absences logged yet — clean record.</div>':dowBar3}`;
+  body.appendChild(card3);
+
+  // ─── CARD 4: 6-month total-shrinkage trend
+  const card4=document.createElement('div');
+  card4.style.cssText='background:var(--glass);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 18px';
+  const todayRef=new Date();
+  let trendRows='';
+  for(let i=5;i>=0;i--){
+    let tm=todayRef.getMonth()-i,ty=todayRef.getFullYear();
+    if(tm<0){tm+=12;ty--;}
+    const st=statsForMonth(ty,tm);
+    const shrinkPct=st.shrink.toFixed(1);
+    const unplPct=st.shrinkUnplanned.toFixed(1);
+    const over=st.shrink>SHRINK_TARGET_TOTAL;
+    // Bar scaled so the target line sits at ~70% width
+    const barW=Math.min(100,(st.capacity?st.shrink/SHRINK_TARGET_TOTAL*70:0)).toFixed(0);
+    trendRows+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:38px;font-size:11px;font-weight:600;color:var(--tx2)">${monthName(tm).slice(0,3)} ${ty!==todayRef.getFullYear()?String(ty).slice(2):''}</div>
+      <div style="flex:1;height:14px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+        <div style="width:${barW}%;height:100%;background:${over?'var(--red)':'var(--green)'};border-radius:3px;opacity:0.8"></div>
+      </div>
+      <div style="width:44px;text-align:right;font-size:11px;font-weight:600;color:${over?'var(--red)':'var(--green)'}">${shrinkPct}%</div>
+      <div style="width:64px;font-size:10px;color:var(--tx3)">${unplPct}% MC</div>
+    </div>`;
+  }
+  card4.innerHTML=`<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px">6-Month Shrinkage Trend</div>
+    ${trendRows}
+    <div style="margin-top:8px;font-size:10px;color:var(--tx3)">Target: total shrinkage ≤${SHRINK_TARGET_TOTAL}% · unplanned (MC) ≤${SHRINK_TARGET_UNPLANNED}%</div>`;
+  body.appendChild(card4);
 }
 
 /* ─── HEADCOUNT LOG ─────────────────────── */
